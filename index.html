@@ -196,6 +196,148 @@
             
               
                 
+                <a class="post-title-link" href="/2016/04/07/万能的APT！编译时注解的妙用/" itemprop="url">
+                  万能的APT！编译时注解的妙用
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-07T15:51:42+08:00" content="2016-04-07">
+              2016-04-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/07/万能的APT！编译时注解的妙用/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/07/万能的APT！编译时注解的妙用/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/04/07/万能的APT！编译时注解的妙用/" class="leancloud_visitors" data-flag-title="万能的APT！编译时注解的妙用">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="不要脸的推广"><a href="#不要脸的推广" class="headerlink" title="不要脸的推广"></a>不要脸的推广</h1><p>在开始这篇文章之前，请允许我不要脸的推广一下我写的一个库，使用编译时注解＋apt＋javapoet去完成白天/夜间模式的切换，现在鲁棒性还不强，我还会继续维护，欢迎大家star和fork。</p>
+<p><a href="https://github.com/zjutkz/Knight" target="_blank" rel="external">地址在这，戳我戳我戳我</a></p>
+<p>注解，字面意思是注释，解释，这个东西在jdk 5被添加进来之后发挥了很大的用处。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>.onCreate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这个场景大家几乎每天都会看到吧，上面的那个@Override就是一个注解，它是什么意思呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">**</span><br><span class="line"> * Annotation type used to mark methods that override a method declaration in a</span><br><span class="line"> * superclass. Compilers produce an error <span class="keyword">if</span> a method annotated with <span class="meta">@Override</span></span><br><span class="line"> * does not actually override a method in a superclass.</span><br><span class="line"> *</span><br><span class="line"> * <span class="meta">@since</span> <span class="number">1.5</span></span><br><span class="line"> */</span><br><span class="line"><span class="meta">@Target</span>(ElementType.METHOD)</span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.SOURCE)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Override &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注释写的很清楚了。哦对了，这里要区分两个概念，注解是我们这篇文章的主角，而注释则是用来标注代码用的，如果你高兴你可以这样。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//                            _ooOoo_  </span></span><br><span class="line"><span class="comment">//                           o8888888o  </span></span><br><span class="line"><span class="comment">//                           88" . "88  </span></span><br><span class="line"><span class="comment">//                           (| -_- |)  </span></span><br><span class="line"><span class="comment">//                            O\ = /O  </span></span><br><span class="line"><span class="comment">//                        ____/`---'\____  </span></span><br><span class="line"><span class="comment">//                      .   ' \\| |// `.  </span></span><br><span class="line"><span class="comment">//                       / \\||| : |||// \  </span></span><br><span class="line"><span class="comment">//                     / _||||| -:- |||||- \  </span></span><br><span class="line"><span class="comment">//                       | | \\\ - /// | |  </span></span><br><span class="line"><span class="comment">//                     | \_| ''\---/'' | |  </span></span><br><span class="line"><span class="comment">//                      \ .-\__ `-` ___/-. /  </span></span><br><span class="line"><span class="comment">//                   ___`. .' /--.--\ `. . __  </span></span><br><span class="line"><span class="comment">//                ."" '&lt; `.___\_&lt;|&gt;_/___.' &gt;'"".  </span></span><br><span class="line"><span class="comment">//               | | : `- \`.;`\ _ /`;.`/ - ` : | |  </span></span><br><span class="line"><span class="comment">//                 \ \ `-. \_ __\ /__ _/ .-` / /  </span></span><br><span class="line"><span class="comment">//         ======`-.____`-.___\_____/___.-`____.-'======  </span></span><br><span class="line"><span class="comment">//                            `=---='  </span></span><br><span class="line"><span class="comment">//  </span></span><br><span class="line"><span class="comment">//         .............................................  </span></span><br><span class="line"><span class="comment">//                  佛祖镇楼                  BUG辟易  </span></span><br><span class="line"><span class="comment">//          佛曰:  </span></span><br><span class="line"><span class="comment">//                  写字楼里写字间，写字间里程序员；  </span></span><br><span class="line"><span class="comment">//                  程序人员写程序，又拿程序换酒钱。  </span></span><br><span class="line"><span class="comment">//                  酒醒只在网上坐，酒醉还来网下眠；  </span></span><br><span class="line"><span class="comment">//                  酒醉酒醒日复日，网上网下年复年。  </span></span><br><span class="line"><span class="comment">//                  但愿老死电脑间，不愿鞠躬老板前；  </span></span><br><span class="line"><span class="comment">//                  奔驰宝马贵者趣，公交自行程序员。  </span></span><br><span class="line"><span class="comment">//                  别人笑我忒疯癫，我笑自己命太贱；  </span></span><br><span class="line"><span class="comment">//                  不见满街漂亮妹，哪个归得程序员？  </span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyClass</span></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>是不是很炫酷，哈哈哈。好了好了，言归正传，大家在看到上面@Override的代码的时候，如果不了解注解，是不是对上面所写的东西一头雾水呢？@Target是什么鬼？@Retantion又是啥，怎么注解里还用注解呢？没关系，下面让我带大家一起走进注解的世界。（如果有的同学对注解有所了解了，可以选择性的跳过这一段）</p>
+<h1 id="了解注解"><a href="#了解注解" class="headerlink" title="了解注解"></a>了解注解</h1><h3 id="注解的定义："><a href="#注解的定义：" class="headerlink" title="注解的定义："></a>注解的定义：</h3><p>注解（也被成为元数据）为我们在代码中添加信息提供了一种形式化的方法，使我们可以在稍后某个时刻非常方便地使用这些数据。 ——————摘自《Thinking in Java》</p>
+<p>简单来说注解的作用就是将我们的需要的数据储存起来，在以后的某一个时刻（可能是编译时，也可能是运行时）去调用它。</p>
+<h3 id="注解的使用方式："><a href="#注解的使用方式：" class="headerlink" title="注解的使用方式："></a>注解的使用方式：</h3><p>首先如果你想定义一个注解，那么你必须在类的开头使用@interface这个限定符，像这样</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> MyAnnotation &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样你就完成了一个最简单的注解，可以去使用它了，就像这样</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@MyAnnotation</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestClass</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是这样的注解并没有什么卵用，因为它什么也没做啊，定义出来干嘛呢？好玩吗？肯定不是，想要注解发挥它的作用，你必须要再写那么一点点代码。首先，刚刚说过，注解的作用是保存一些数据，那怎么保存呢？你可以在你的注解中定义一个属性，像这样</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> MyAnnotation &#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">String <span class="title">value</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后你就可以这样去修饰你想要注解的东西</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@MyAnnotation</span>(<span class="string">"TestClass"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestClass</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样，通过MyAnnotation这个注解，TestClass类就保存了”TestClass”这样一个String值，但是要怎么拿到这个值呢？是不是也可以用同样的方式去注解一个方法或者一个变量呢？</p>
+<p>还记得上面提到的@Override吗？在这个类的上面还有两个注解@Target和@Retantion，它们被成为元注解，什么是元注解呢？元注解就是修饰注解的注解，意思就是你想要选择你的注解在编译期还是运行期其作用，就选择使用@Target，你想要选择你的注解去注解的东西是一个类，方法还是变量，就使用@Retantion。下面看看这两个元注解的具体内容。</p>
+<h4 id="Retantion"><a href="#Retantion" class="headerlink" title="Retantion"></a>Retantion</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Retention &#123;</span><br><span class="line">    <span class="function">RetentionPolicy <span class="title">value</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> RetentionPolicy &#123;</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Annotation is only available in the source code.</span><br><span class="line">     */</span></span><br><span class="line">    SOURCE,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Annotation is available in the source code and in the class file, but not</span><br><span class="line">     * at runtime. This is the default policy.</span><br><span class="line">     */</span></span><br><span class="line">    CLASS,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Annotation is available in the source code, the class file and is</span><br><span class="line">     * available at runtime.</span><br><span class="line">     */</span></span><br><span class="line">    RUNTIME</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Retention注解有一个属性value，是RetentionPolicy类型的，Enum RetentionPolicy是一个枚举类型，<br>这个枚举决定了Retention注解应该如何去保持，也可理解为Rentention 搭配 RententionPolicy使用。</p>
+<p>RetentionPolicy有3个值：CLASS,RUNTIME,SOURCE</p>
+<p>用@Retention(RetentionPolicy.CLASS)修饰的注解，表示注解的信息被保留在class文件(字节码文件)中当程序编译时，但不会被虚拟机读取在运行的时候；<br>用@Retention(RetentionPolicy.SOURCE )修饰的注解,表示注解的信息会被编译器抛弃，不会留在class文件中，注解的信息只会留在源文件中；<br>用@Retention(RetentionPolicy.RUNTIME )修饰的注解，表示注解的信息被保留在class文件(字节码文件)中当程序编译时，会被虚拟机保留在运行时，<br>所以他们可以用反射的方式读取。<br>RetentionPolicy.RUNTIME 可以让你从JVM中读取Annotation注解的信息，以便在分析程序的时候使用.</p>
+<h4 id="Target"><a href="#Target" class="headerlink" title="Target"></a>Target</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Target &#123;</span><br><span class="line">    ElementType[] value();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> ElementType &#123;</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Class, interface or enum declaration.</span><br><span class="line">     */</span></span><br><span class="line">    TYPE,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Field declaration.</span><br><span class="line">     */</span></span><br><span class="line">    FIELD,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Method declaration.</span><br><span class="line">     */</span></span><br><span class="line">    METHOD,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Parameter declaration.</span><br><span class="line">     */</span></span><br><span class="line">    PARAMETER,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Constructor declaration.</span><br><span class="line">     */</span></span><br><span class="line">    CONSTRUCTOR,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Local variable declaration.</span><br><span class="line">     */</span></span><br><span class="line">    LOCAL_VARIABLE,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Annotation type declaration.</span><br><span class="line">     */</span></span><br><span class="line">    ANNOTATION_TYPE,</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Package declaration.</span><br><span class="line">     */</span></span><br><span class="line">    PACKAGE</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它有一个属性ElementType也是枚举类型，值就是上面代码中写的这样。</p>
+<p>如@Target(ElementType.METHOD) 修饰的注解表示该注解只能用来修饰在方法上。 其他同理。</p>
+<p>这样大家清楚了吧？如果你想要你的注解在运行时起作用，并且只能修饰一个类，那你可以这样定义</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="meta">@Target</span>(ElementType.TYPE)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> MyAnnotation &#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">String <span class="title">value</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="注解的分类："><a href="#注解的分类：" class="headerlink" title="注解的分类："></a>注解的分类：</h3><p>从取值的方式上来说，注解可以分成两类——编译时注解和运行时注解。</p>
+<h4 id="运行时注解"><a href="#运行时注解" class="headerlink" title="运行时注解"></a>运行时注解</h4><p>运行时注解表示你只能在程序运行时去操作它，那怎么样才能在运行时去操作呢？很简单，使用反射。</p>
+<p>有一个非常非常著名的开源库就用到了运行时注解，那就是<a href="https://github.com/square/retrofit" target="_blank" rel="external">retrofit</a>,Github上star数破万，现今最火的网络库，特别是结合RxJava来使用。如果大家想了解retrofit内部的源码，大家可以参考<a href="http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0602/2975.html" target="_blank" rel="external">这篇文章</a>。</p>
+<p>好了，说完retrofit，大家有没有想自己动手写一个注解框架呢？这里再给大家推荐<a href="http://blog.csdn.net/lmj623565791/article/details/39269193" target="_blank" rel="external">一篇文章</a>，hongyang大神写的，看完相信大家会对运行时注解有很好的理解。</p>
+<h4 id="编译时注解"><a href="#编译时注解" class="headerlink" title="编译时注解"></a>编译时注解</h4><p>既然运行时注解这么屌，那为什么我们这篇文章的主角是编译时注解呢？因为运行时注解毕竟是在程序运行时去进行操作的，用到了反射，在效率方面嘛。。。都懂的，所以，编译时注解势在必行！</p>
+<p>上面在介绍运行时注解的时候提到了retrofit，那有没有什么第三方库是使用编译时注解的呢？那真是多了去了。。。<a href="https://github.com/square/dagger" target="_blank" rel="external">dagger</a>，<a href="https://github.com/JakeWharton/butterknife" target="_blank" rel="external">butterKnife</a>，包括谷歌官方推荐的data binding库，都用到了编译时注解，而且，和retrofit不同的是，retrofit的核心是动态代理（个人理解，不喜勿喷。。）而像dagger，dagger2，butterKnife这些库，核心就是编译时注解＋APT＋动态生成字节码！可见其强大之处。</p>
+<h1 id="butterKnife源码分析"><a href="#butterKnife源码分析" class="headerlink" title="butterKnife源码分析"></a>butterKnife源码分析</h1><h1 id="打造使用编译时注解完成的一个换肤框架——Knight。"><a href="#打造使用编译时注解完成的一个换肤框架——Knight。" class="headerlink" title="打造使用编译时注解完成的一个换肤框架——Knight。"></a>打造使用编译时注解完成的一个换肤框架——Knight。</h1>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" itemprop="url">
                   重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析
                 </a>
@@ -525,7 +667,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">1</span>
+              <span class="site-state-item-count">2</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -535,7 +677,7 @@
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">2</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
@@ -779,89 +921,5 @@
 
   
 
-     <!-- custom analytics part create by xiamo -->
-<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
-<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
-<script>
-function showTime(Counter) {
-	var query = new AV.Query(Counter);
-	$(".leancloud_visitors").each(function() {
-		var url = $(this).attr("id").trim();
-		query.equalTo("url", url);
-		query.find({
-			success: function(results) {
-				if (results.length == 0) {
-					var content = $(document.getElementById(url)).text() + ': 0';
-					$(document.getElementById(url)).text(content);
-					return;
-				}
-				for (var i = 0; i < results.length; i++) {
-					var object = results[i];
-					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
-					$(document.getElementById(url)).text(content);
-				}
-			},
-			error: function(object, error) {
-				console.log("Error: " + error.code + " " + error.message);
-			}
-		});
-
-	});
-}
-
-function addCount(Counter) {
-	var Counter = AV.Object.extend("Counter");
-	url = $(".leancloud_visitors").attr('id').trim();
-	title = $(".leancloud_visitors").attr('data-flag-title').trim();
-	var query = new AV.Query(Counter);
-	query.equalTo("url", url);
-	query.find({
-		success: function(results) {
-			if (results.length > 0) {
-				var counter = results[0];
-				counter.fetchWhenSave(true);
-				counter.increment("time");
-				counter.save(null, {
-					success: function(counter) {
-						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
-						$(document.getElementById(url)).text(content);
-					},
-					error: function(counter, error) {
-						console.log('Failed to save Visitor num, with error message: ' + error.message);
-					}
-				});
-			} else {
-				var newcounter = new Counter();
-				newcounter.set("title", title);
-				newcounter.set("url", url);
-				newcounter.set("time", 1);
-				newcounter.save(null, {
-					success: function(newcounter) {
-					    console.log("newcounter.get('time')="+newcounter.get('time'));
-						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
-						$(document.getElementById(url)).text(content);
-					},
-					error: function(newcounter, error) {
-						console.log('Failed to create');
-					}
-				});
-			}
-		},
-		error: function(error) {
-			console.log('Error:' + error.code + " " + error.message);
-		}
-	});
-}
-$(function() {
-	var Counter = AV.Object.extend("Counter");
-	if ($('.leancloud_visitors').length == 1) {
-		addCount(Counter);
-	} else if ($('.post-title-link').length > 1) {
-		showTime(Counter);
-	}
-}); 
-</script>
-
-  
 </body>
 </html>
