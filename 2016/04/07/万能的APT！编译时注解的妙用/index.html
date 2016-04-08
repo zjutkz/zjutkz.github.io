@@ -57,18 +57,12 @@
 
 
 
-<meta name="description" content="不要脸的推广在开始这篇文章之前，请允许我不要脸的推广一下我写的一个库，使用编译时注解＋apt＋javapoet去完成白天/夜间模式的切换，现在鲁棒性还不强，我还会继续维护，欢迎大家star和fork。
-地址在这，戳我戳我戳我
-注解，字面意思是注释，解释，这个东西在jdk 5被添加进来之后发挥了很大的用处。
-1234@Overridepublic void onCreate() &amp;#123;">
+<meta name="description" content="本篇文章会带你了解什么是注解，注解的用法和分类，并且从knight和butterKnife的使用方式和源码着手让你更加了解编译时注解的好处。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="万能的APT！编译时注解的妙用">
 <meta property="og:url" content="http://yoursite.com/2016/04/07/万能的APT！编译时注解的妙用/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="不要脸的推广在开始这篇文章之前，请允许我不要脸的推广一下我写的一个库，使用编译时注解＋apt＋javapoet去完成白天/夜间模式的切换，现在鲁棒性还不强，我还会继续维护，欢迎大家star和fork。
-地址在这，戳我戳我戳我
-注解，字面意思是注释，解释，这个东西在jdk 5被添加进来之后发挥了很大的用处。
-1234@Overridepublic void onCreate() &amp;#123;">
+<meta property="og:description" content="本篇文章会带你了解什么是注解，注解的用法和分类，并且从knight和butterKnife的使用方式和源码着手让你更加了解编译时注解的好处。">
 <meta property="og:image" content="http://yoursite.com/images/万能的APT！编译时注解的妙用/services.png">
 <meta property="og:image" content="http://yoursite.com/images/万能的APT！编译时注解的妙用/build.png">
 <meta property="og:image" content="http://yoursite.com/images/万能的APT！编译时注解的妙用/error.png">
@@ -76,13 +70,10 @@
 <meta property="og:image" content="http://yoursite.com/images/万能的APT！编译时注解的妙用/output.png">
 <meta property="og:image" content="http://yoursite.com/images/万能的APT！编译时注解的妙用/day.png">
 <meta property="og:image" content="http://yoursite.com/images/万能的APT！编译时注解的妙用/ night.png">
-<meta property="og:updated_time" content="2016-04-08T10:06:13.000Z">
+<meta property="og:updated_time" content="2016-04-08T12:56:04.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="万能的APT！编译时注解的妙用">
-<meta name="twitter:description" content="不要脸的推广在开始这篇文章之前，请允许我不要脸的推广一下我写的一个库，使用编译时注解＋apt＋javapoet去完成白天/夜间模式的切换，现在鲁棒性还不强，我还会继续维护，欢迎大家star和fork。
-地址在这，戳我戳我戳我
-注解，字面意思是注释，解释，这个东西在jdk 5被添加进来之后发挥了很大的用处。
-1234@Overridepublic void onCreate() &amp;#123;">
+<meta name="twitter:description" content="本篇文章会带你了解什么是注解，注解的用法和分类，并且从knight和butterKnife的使用方式和源码着手让你更加了解编译时注解的好处。">
 <meta name="twitter:image" content="http://yoursite.com/images/万能的APT！编译时注解的妙用/services.png">
 
 
@@ -266,7 +257,9 @@
       
 
       
-        <h1 id="不要脸的推广"><a href="#不要脸的推广" class="headerlink" title="不要脸的推广"></a>不要脸的推广</h1><p>在开始这篇文章之前，请允许我不要脸的推广一下我写的一个库，使用编译时注解＋apt＋javapoet去完成白天/夜间模式的切换，现在鲁棒性还不强，我还会继续维护，欢迎大家star和fork。</p>
+        <p>本篇文章会带你了解什么是注解，注解的用法和分类，并且从knight和butterKnife的使用方式和源码着手让你更加了解编译时注解的好处。</p>
+<a id="more"></a>
+<h1 id="不要脸的推广"><a href="#不要脸的推广" class="headerlink" title="不要脸的推广"></a>不要脸的推广</h1><p>在开始这篇文章之前，请允许我不要脸的推广一下我写的一个库，使用编译时注解＋apt＋javapoet去完成白天/夜间模式的切换，现在鲁棒性还不强，我还会继续维护，欢迎大家star和fork。</p>
 <p><a href="https://github.com/zjutkz/Knight" target="_blank" rel="external">地址在这，戳我戳我戳我</a></p>
 <p>注解，字面意思是注释，解释，这个东西在jdk 5被添加进来之后发挥了很大的用处。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>.onCreate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
