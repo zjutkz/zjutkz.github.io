@@ -71,7 +71,7 @@
 <meta property="og:image" content="http://yoursite.com/images/选择恐惧症的福音！教你认清MVC-MVP和MVVM/mvp.png">
 <meta property="og:image" content="http://yoursite.com/images/选择恐惧症的福音！教你认清MVC-MVP和MVVM/mvvm.png">
 <meta property="og:image" content="http://yoursite.com/images/选择恐惧症的福音！教你认清MVC-MVP和MVVM/wrong_viewmodel.png">
-<meta property="og:updated_time" content="2016-04-13T09:49:01.000Z">
+<meta property="og:updated_time" content="2016-04-13T10:04:52.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="选择恐惧症的福音！教你认清MVC，MVP和MVVM">
 <meta name="twitter:description" content="相信大家对MVC，MVP和MVVM都不陌生，作为三个最耳熟能详的Android框架，它们的应用可以是非常广泛的，但是对于一些新手来说，可能对于区分它们三个都有困难，更别说在实际的项目中应用了，有些时候想用MVP的，代码写着写着就变成了MVC，久而久之就对它们三个的选择产生了恐惧感，如果你也是这样的人群，那么这篇文章可能会对你有很大的帮助，希望大家看完都会有收获吧！
@@ -342,7 +342,7 @@
 <p>我为什么说Contributor是一个viewmodel呢。大家还记得viewmodel的概念吗？view和viewmodel相互绑定在一起，viewmodel的改变会同步到view层，从而view层作出响应。这不就是Contributor和xml中那些组件元素的关系吗？所以，大家不要被binding类迷惑了，data binding框架中的viewmodel是自己定义的那些看似是model类的东西！比如这里的Contributor！</p>
 <p>话说到这里，那binding类又是什么呢？其实具体对应到之前MVVM的那张图就很好理解了，我们想一下，binding类的工作是什么？</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">binding = DataBindingUtil.setContentView(<span class="keyword">this</span>, R.layout.mvvm_activity_main);</span><br><span class="line"></span><br><span class="line">binding.setContributor(contributor);</span><br></pre></td></tr></table></figure>
-<p>首先，binding要通过DataBindingUtil.setContentView()方法将xml，也就是view层。</p>
+<p>首先，binding要通过DataBindingUtil.setContentView()方法将xml，也就是view层设定。</p>
 <p>接着，通过setXXX()方法将viewmodel层注入进去。</p>
 <p>由于这两个工作，view层(xml的各个组件)和viewmodel层(contributor)绑定在了一起。</p>
 <p>好了，大家知道了吗，binding类，其实就是上图中view和viewmodel中间的那根线啊！！</p>
