@@ -71,7 +71,7 @@
 <meta property="og:image" content="http://yoursite.com/images/选择恐惧症的福音！教你认清MVC-MVP和MVVM/mvp.png">
 <meta property="og:image" content="http://yoursite.com/images/选择恐惧症的福音！教你认清MVC-MVP和MVVM/mvvm.png">
 <meta property="og:image" content="http://yoursite.com/images/选择恐惧症的福音！教你认清MVC-MVP和MVVM/wrong_viewmodel.png">
-<meta property="og:updated_time" content="2016-04-13T05:54:24.000Z">
+<meta property="og:updated_time" content="2016-04-13T05:59:03.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="选择恐惧症的福音！教你认清MVC，MVP和MVVM">
 <meta name="twitter:description" content="相信大家对MVC，MVP和MVVM都不陌生，作为三个最耳熟能详的Android框架，它们的应用可以是非常广泛的，但是对于一些新手来说，可能对于区分它们三个都有困难，更别说在实际的项目中应用了，有些时候想用MVP的，代码写着写着就变成了MVC，久而久之就对它们三个的选择产生了恐惧感，如果你也是这样的人群，那么这篇文章可能会对你有很大的帮助，希望大家看完都会有收获吧！
@@ -326,7 +326,7 @@
 <p>好了，我们来捋一捋。</p>
 <p>首先，和MVC最大的不同，MVP把activity作为了view层，通过代码也可以看到，整个activity没有任何和model层相关的逻辑代码，取而代之的是把代码放到了presenter层中，presenter获取了model层的数据之后，通过接口的形式将view层需要的数据返回给它就OK了。</p>
 <p>这样的好处是什么呢？首先，activity的代码逻辑减少了，其次，view层和model层完全解耦，具体来说，如果你需要测试一个http请求是否顺利，你不需要写一个activity，只需要写一个java类，实现对应的接口，presenter获取了数据自然会调用相应的方法，相应的，你也可以自己在presenter中mock数据，分发给view层，用来测试布局是否正确。</p>
-<h3 id="MVVM-1"><a href="#MVVM-1" class="headerlink" title="MVVM"></a>MVVM</h3><p>首先在看这段内容之前，你需要保证你对data binding框架有基础的了解。不了解的同学可以去看下<a href="http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0603/2992.html" target="_blank" rel="external">这篇文章</a>。在接下去让我们开始探索MVVM，MVVM最近在Android上可谓十分之火，最主要的原因就是谷歌推出了data binding这个框架，可以轻松的实现MVVM。但是，我在网上查阅关于Android的data binding资料的时候，发现国内有很多人都误解了，首先，我们从一篇<a href="http://www.thinksaas.cn/group/topic/379469/" target="_blank" rel="external">错误的文章</a>开始。当然我在这里引用这篇文章也是对是不对人，如果对文章的作者产生了不好的影响我这里说一声抱歉。</p>
+<h3 id="MVVM-1"><a href="#MVVM-1" class="headerlink" title="MVVM"></a>MVVM</h3><p>首先在看这段内容之前，你需要保证你对data binding框架有基础的了解。不了解的同学可以去看下<a href="http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0603/2992.html" target="_blank" rel="external">这篇文章</a>。在接下去让我们开始探索MVVM，MVVM最近在Android上可谓十分之火，最主要的原因就是谷歌推出了data binding这个框架，可以轻松的实现MVVM。但是，我在网上查阅关于Android的data binding资料的时候，发现国内有很多人都误解了，首先，我们从一篇<a href="http://www.thinksaas.cn/group/topic/379469/" target="_blank" rel="external">错误的文章</a>开始。当然我在这里引用这篇文章也是对事不对人，如果对文章的作者产生了不好的影响我这里说一声抱歉。</p>
 <p>上面那篇文章是一个关于data binding的使用，看起来很美好，但是，其中有一个错误可以说是非常，非常，非常严重的。</p>
 <p> <img src="/images/选择恐惧症的福音！教你认清MVC-MVP和MVVM/wrong_viewmodel.png" alt="wrong_viewmodel"></p>
 <p>它竟然说data binding的viewmodel层是binding类，其实不止是这篇文章，其他有一些开发者写的关于data binding的文章里都犯了一样的错误。大家如果也有这样的概念，请务必纠正过来！！</p>
