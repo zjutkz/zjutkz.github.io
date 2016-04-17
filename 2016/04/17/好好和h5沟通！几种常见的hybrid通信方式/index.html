@@ -1,0 +1,929 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="hybrid," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="说起hybrid大家不会陌生，主要意思就是native和h5混合开发。为什么要这样做呢？大家可以想象一下针对于同一个活动，如果使用纯native的开发方式，Android和iOS两边都要维护同一套界面甚至是逻辑，这样开发和维护的成本会很大，而使用hybrid的开发方式的话，让前端的同学去写一套界面和逻辑，对于native端来说只要使用对应的容器去展示就可以了(对于Android来说这个容器当然就是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="好好和h5沟通！几种常见的hybrid通信方式">
+<meta property="og:url" content="http://yoursite.com/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="说起hybrid大家不会陌生，主要意思就是native和h5混合开发。为什么要这样做呢？大家可以想象一下针对于同一个活动，如果使用纯native的开发方式，Android和iOS两边都要维护同一套界面甚至是逻辑，这样开发和维护的成本会很大，而使用hybrid的开发方式的话，让前端的同学去写一套界面和逻辑，对于native端来说只要使用对应的容器去展示就可以了(对于Android来说这个容器当然就是">
+<meta property="og:image" content="http://yoursite.com/images/好好和h5沟通！几种常见的hybrid通信方式/jsinterface.png">
+<meta property="og:image" content="http://yoursite.com/images/好好和h5沟通！几种常见的hybrid通信方式/warning.png">
+<meta property="og:image" content="http://yoursite.com/images/好好和h5沟通！几种常见的hybrid通信方式/jsbridge.png">
+<meta property="og:image" content="http://yoursite.com/images/好好和h5沟通！几种常见的hybrid通信方式/jsmessage.png">
+<meta property="og:image" content="http://yoursite.com/images/好好和h5沟通！几种常见的hybrid通信方式/output.png">
+<meta property="og:updated_time" content="2016-04-17T10:22:02.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="好好和h5沟通！几种常见的hybrid通信方式">
+<meta name="twitter:description" content="说起hybrid大家不会陌生，主要意思就是native和h5混合开发。为什么要这样做呢？大家可以想象一下针对于同一个活动，如果使用纯native的开发方式，Android和iOS两边都要维护同一套界面甚至是逻辑，这样开发和维护的成本会很大，而使用hybrid的开发方式的话，让前端的同学去写一套界面和逻辑，对于native端来说只要使用对应的容器去展示就可以了(对于Android来说这个容器当然就是">
+<meta name="twitter:image" content="http://yoursite.com/images/好好和h5沟通！几种常见的hybrid通信方式/jsinterface.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 好好和h5沟通！几种常见的hybrid通信方式 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                好好和h5沟通！几种常见的hybrid通信方式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-17T18:01:39+08:00" content="2016-04-17">
+              2016-04-17
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/" class="leancloud_visitors" data-flag-title="好好和h5沟通！几种常见的hybrid通信方式">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>说起hybrid大家不会陌生，主要意思就是native和h5混合开发。为什么要这样做呢？大家可以想象一下针对于同一个活动，如果使用纯native的开发方式，Android和iOS两边都要维护同一套界面甚至是逻辑，这样开发和维护的成本会很大，而使用hybrid的开发方式的话，让前端的同学去写一套界面和逻辑，对于native端来说只要使用对应的容器去展示就可以了(对于Android来说这个容器当然就是WebView)。那为什么不所有的页面都使用这种方式开发呢？因为使用h5来展示界面的话用户体验始终是不如native的，所以在这两者之间我们需要一个权衡。</p>
+<p>介绍完了何为hybrid，我们来思考下面几个场景。</p>
+<p>场景1，前端那边的页面有一个按钮，点击这个按钮需要显示一个native的组件(比如一个toast)，或者点击这个按钮需要去在native端执行一个耗时的任务。</p>
+<p>场景2，还是前端页面有一个按钮，点击这个按钮的逻辑是：如果登录了，则跳转到相应的界面，如果没有登录，则跳转到登录界面。而这个登录界面是我们native维护的。</p>
+<p>看完上面两个场景，相信大家也发现了一个问题，hybrid这样的开发方式有一个问题需要解决，那就是前端和本地的通信。</p>
+<p>下面让我带大家了解一下几种常见的通信方式吧。</p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在看这篇文章之前你要确保你有那么一点点的js知识，没错只需要一点点，能看懂最简单的代码就可以。如果你之前没接触过js的话。。也没关系，我会把其中对应的逻辑用语言表达出来。</p>
+<p>为什么需要用到js呢，因为前端体系中，像我们说的点击按钮这样的逻辑都是放在js脚本中执行的，有点像我们Android中的model层。(由于本人对前端的知识也只是略知一二，这个比方可能不太恰当，见谅见谅)。所以说到hybrid通信，主要就是前端的js和我们Android端的通信。</p>
+<h1 id="传统的JSInterface"><a href="#传统的JSInterface" class="headerlink" title="传统的JSInterface"></a>传统的JSInterface</h1><p>首先先介绍一下最普通的一种通信方式，就是使用Android原生的JavascriptInterface来进行js和java的通信。具体方式如下：</p>
+<p>首先先看一段html代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">xmlns</span>=<span class="string">"http://www.w3.org/1999/xhtml"</span> <span class="attr">xml:lang</span>=<span class="string">"zh-CN"</span> <span class="attr">dir</span>=<span class="string">"ltr"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">"Content-Type"</span> <span class="attr">content</span>=<span class="string">"text/html; charset=UTF-8"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/javascript"</span>&gt;</span><span class="undefined"></span><br><span class="line">        function showToast(toast) &#123;</span><br><span class="line">            javascript:control.showToast(toast);</span><br><span class="line">        &#125;</span><br><span class="line">        function log(msg)&#123;</span><br><span class="line">            console.log(msg);</span><br><span class="line">        &#125;</span><br><span class="line">    </span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"button"</span> <span class="attr">value</span>=<span class="string">"toast"</span></span><br><span class="line">       <span class="attr">onClick</span>=<span class="string">"showToast('Hello world')"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>很简单，一个button，点击这个button就执行js脚本中的showToast方法。</p>
+<p> <img src="/images/好好和h5沟通！几种常见的hybrid通信方式/jsinterface.png" alt="jsinterface"></p>
+<p>而这个showToast方法做了什么呢？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">showToast</span>(<span class="params">toast</span>) </span>&#123;</span><br><span class="line">    javascript:control.showToast(toast);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到control.showToast，这个是什么我们等下再说，下面看我们java的代码。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">LinearLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span><br><span class="line">    <span class="attr">xmlns:tools</span>=<span class="string">"http://schemas.android.com/tools"</span></span><br><span class="line">    <span class="attr">android:orientation</span>=<span class="string">"vertical"</span></span><br><span class="line">    <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span><br><span class="line">    <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span></span><br><span class="line">    <span class="attr">android:fitsSystemWindows</span>=<span class="string">"true"</span></span><br><span class="line">    <span class="attr">tools:context</span>=<span class="string">"zjutkz.com.tranditionaljsdemo.MainActivity"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">WebView</span></span><br><span class="line">        <span class="attr">android:id</span>=<span class="string">"@+id/webView"</span></span><br><span class="line">        <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span><br><span class="line">        <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;/<span class="name">WebView</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">LinearLayout</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> WebView webView;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line"></span><br><span class="line">        webView = (WebView)findViewById(R.id.webView);</span><br><span class="line"></span><br><span class="line">        WebSettings webSettings = webView.getSettings();</span><br><span class="line"></span><br><span class="line">        webSettings.setJavaScriptEnabled(<span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">        webView.addJavascriptInterface(<span class="keyword">new</span> JsInterface(), <span class="string">"control"</span>);</span><br><span class="line"></span><br><span class="line">        webView.loadUrl(<span class="string">"file:///android_asset/interact.html"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JsInterface</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@JavascriptInterface</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">showToast</span><span class="params">(String toast)</span> </span>&#123;</span><br><span class="line">            Toast.makeText(MainActivity.<span class="keyword">this</span>, toast, Toast.LENGTH_SHORT).show();</span><br><span class="line">            log(<span class="string">"show toast success"</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">log</span><span class="params">(<span class="keyword">final</span> String msg)</span></span>&#123;</span><br><span class="line">            webView.post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    webView.loadUrl(<span class="string">"javascript: log("</span> + <span class="string">"'"</span> + msg + <span class="string">"'"</span> + <span class="string">")"</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先界面很简单，一个WebView。在对应的activity中做的事也就几件，首先打开js通道。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">WebSettings webSettings = webView.getSettings();</span><br><span class="line"></span><br><span class="line">webSettings.setJavaScriptEnabled(<span class="keyword">true</span>);</span><br></pre></td></tr></table></figure>
+<p>然后通过WebView的addJavascriptInterface方法去注入一个我们自己写的interface。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">webView.addJavascriptInterface(<span class="keyword">new</span> JsInterface(), <span class="string">"control"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JsInterface</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@JavascriptInterface</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">showToast</span><span class="params">(String toast)</span> </span>&#123;</span><br><span class="line">            Toast.makeText(MainActivity.<span class="keyword">this</span>, toast, Toast.LENGTH_SHORT).show();</span><br><span class="line">            log(<span class="string">"show toast success"</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">log</span><span class="params">(<span class="keyword">final</span> String msg)</span></span>&#123;</span><br><span class="line">            webView.post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    webView.loadUrl(<span class="string">"javascript: log("</span> + <span class="string">"'"</span> + msg + <span class="string">"'"</span> + <span class="string">")"</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到这个interface我们给它取名叫control。</p>
+<p>最后loadUrl。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">webView.loadUrl(<span class="string">"file:///android_asset/interact.html"</span>);</span><br></pre></td></tr></table></figure>
+<p>好了，让我们再看看js脚本中的那个showToast()方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">showToast</span>(<span class="params">toast</span>) </span>&#123;</span><br><span class="line">            javascript:control.showToast(toast);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>这里的control就是我们的那个interface，调用了interface的showToast方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@JavascriptInterface</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">showToast</span><span class="params">(String toast)</span> </span>&#123;</span><br><span class="line">    Toast.makeText(MainActivity.<span class="keyword">this</span>, toast, Toast.LENGTH_SHORT).show();</span><br><span class="line">    log(<span class="string">"show toast success"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到先显示一个toast，然后调用log()方法，log()方法里调用了js脚本的log()方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">log</span>(<span class="params">msg</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(msg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>js的log()方法做的事就是在控制台输出msg。</p>
+<p>这样我们就完成了js和java的互调，是不是很简单。但是大家想过这样有什么问题吗？如果你使用的是AndroidStudio，在你的webSettings.setJavaScriptEnabled(true);这句函数中，AndroidStudio会给你一个提示。 <img src="/images/好好和h5沟通！几种常见的hybrid通信方式/warning.png" alt="warning"></p>
+<p>这个提示的意思呢，就是如果你使用了这种方式去开启js通道，你就要小心XSS攻击了，具体的大家可以参考<a href="http://drops.wooyun.org/papers/548" target="_blank" rel="external">wooyun上的这篇文章</a>。</p>
+<p>虽然这个漏洞已经在Android 4.2上修复了，就是使用@JavascriptInterface这个注解。但是你得考虑兼容性啊，你不能保证，尤其在中国这样碎片化严重的地方，每个用户使用的都是4.2+的系统。所以基本上我们不会再利用Android系统为我们提供的addJavascriptInterface方法或者@JavascriptInterface注解来实现js和java的通信了。那怎么办呢？方法都是人想出来的嘛，下面让我们看解决方案。</p>
+<h1 id="JSBridge"><a href="#JSBridge" class="headerlink" title="JSBridge"></a>JSBridge</h1><p>JSBridge，顾名思义，就是和js沟通的桥梁。其实这个技术在Android中已经不算新了，相信有些同学也看到过不少实现方案，这里说一种我的想法吧。其实说是我的想法，实际是公司里的大牛实现的，我现在做的就是维护并且扩展，不过这里还是拿出来和大家分享一下。</p>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>首先先说思路，有经验的同学可能都知道Android的WebView中有一个WebChromeClient类，这个类其实就是用来监听一些WebView中的事件的，我们发现其中有三个这样的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onJsPrompt</span><span class="params">(WebView view, String url, String message, String defaultValue, JsPromptResult result)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">super</span>.onJsPrompt(view, url, message, defaultValue, result);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onJsAlert</span><span class="params">(WebView view, String url, String message, JsResult result)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">super</span>.onJsAlert(view, url, message, result);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onJsConfirm</span><span class="params">(WebView view, String url, String message, JsResult result)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">super</span>.onJsConfirm(view, url, message, result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这三个方法其实就对应于js中的alert(警告框)，comfirm(确认框)和prompt(提示框)方法，那这三个方法有什么用呢？前面我们说了JSBridge的作用是提供一种js和java通信的框架，其实我们可以利用这三个方法去完成这样的事。比如我们可以在js脚本中调用alert方法，这样对应的就会走到WebChromeClient类的onJsAlert()方法中，我们就可以拿到其中的信息去解析，并且做java层的事情。那是不是这三个方法随便选一个就可以呢？其实不是的，因为我们知道，在js中，alert和confirm的使用概率还是很高的，特别是alert，所以我们最好不要使用这两个通道，以免出现不必要的问题。</p>
+<p>好了，说到这里我们前期的准备工作也就做好了，其实就是通过重写WebView中WebChromeClient类的onJsPrompt()方法来进行js和java的通信。</p>
+<p>有了实现方案，下面就是一些具体的细节了，大家有没有想过，怎么样才能让java层知道js脚本需要调用的哪一个方法呢？怎么把js脚本的参数传递进来呢？同步异步的方式又该怎么实现呢？下面提供一种我的思路。</p>
+<p>首先大家都知道http是什么，其实我们的JSBridge也可以效仿一下http，定义一个自己的协议。比如规定sheme，path等等。下面来看一下一些的具体内容：</p>
+<p>hybrid://JSBridge:1538351/method?{“message”:”msg”}</p>
+<p>是不是和http协议有一点像，其实我们可以通过js脚本把这段协议文本传递到onPropmt()方法中并且进行解析。比如，sheme是hyrid://开头的就表示是一个hybrid方法，需要进行解析。后面的method表示方法名，message表示传递的参数等等。</p>
+<p>有了这样一套协议，我们就可以去进行我们的通信了。</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p>先看一下我们html和js的代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE HTML&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"utf-8"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"file:///android_asset/jsBridge.js"</span> <span class="attr">type</span>=<span class="string">"text/javascript"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"blog-header"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">h3</span>&gt;</span>JSBridge<span class="tag">&lt;/<span class="name">h3</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">ul</span> <span class="attr">class</span>=<span class="string">"entry"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span></span><br><span class="line">        toast展示<span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">button</span> <span class="attr">onclick</span>=<span class="string">"JsBridge.call('JSBridge','toast',&#123;'message':'我是气泡','isShowLong':0&#125;,function(res)&#123;&#125;);"</span>&gt;</span>toast<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span></span><br><span class="line">        异步任务<span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">button</span> <span class="attr">onclick</span>=<span class="string">"JsBridge.call('JSBridge','plus',&#123;'data':1&#125;,function(res)&#123;console.log(JSON.stringify(res))&#125;);"</span>&gt;</span>plus<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">win, lib</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> doc = win.document;</span><br><span class="line">    <span class="keyword">var</span> hasOwnProperty = <span class="built_in">Object</span>.prototype.hasOwnProperty;</span><br><span class="line">    <span class="keyword">var</span> JsBridge = win.JsBridge || (win.JsBridge = &#123;&#125;);</span><br><span class="line">    <span class="keyword">var</span> inc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">var</span> LOCAL_PROTOCOL = <span class="string">'hybrid'</span>;</span><br><span class="line">    <span class="keyword">var</span> CB_PROTOCOL = <span class="string">'cb_hybrid'</span>;</span><br><span class="line">    <span class="keyword">var</span> CALLBACK_PREFIX = <span class="string">'callback_'</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//核心功能，对外暴露</span></span><br><span class="line">    <span class="keyword">var</span> Core = &#123;</span><br><span class="line"></span><br><span class="line">        call: <span class="function"><span class="keyword">function</span> (<span class="params">obj, method, params, callback, timeout</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">var</span> sid;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">typeof</span> callback !== <span class="string">'function'</span>) &#123;</span><br><span class="line">                callback = <span class="literal">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            sid = Private.getSid();</span><br><span class="line"></span><br><span class="line">            Private.registerCall(sid, callback);</span><br><span class="line">            Private.callMethod(obj, method, params, sid);</span><br><span class="line"></span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        <span class="comment">//native代码处理 成功/失败 后，调用该方法来通知js</span></span><br><span class="line">        onComplete: <span class="function"><span class="keyword">function</span> (<span class="params">sid, data</span>) </span>&#123;</span><br><span class="line">            Private.onComplete(sid, data);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//私有功能集合</span></span><br><span class="line">    <span class="keyword">var</span> Private = &#123;</span><br><span class="line">        params: &#123;&#125;,</span><br><span class="line">        chunks: &#123;&#125;,</span><br><span class="line">        calls: &#123;&#125;,</span><br><span class="line"></span><br><span class="line">        getSid: <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">Math</span>.floor(<span class="built_in">Math</span>.random() * (<span class="number">1</span> &lt;&lt; <span class="number">50</span>)) + <span class="string">''</span> + inc++;</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        buildParam: <span class="function"><span class="keyword">function</span> (<span class="params">obj</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (obj &amp;&amp; <span class="keyword">typeof</span> obj === <span class="string">'object'</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="built_in">JSON</span>.stringify(obj);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> obj || <span class="string">''</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        parseData: <span class="function"><span class="keyword">function</span> (<span class="params">str</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">var</span> rst;</span><br><span class="line">            <span class="keyword">if</span> (str &amp;&amp; <span class="keyword">typeof</span> str === <span class="string">'string'</span>) &#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    rst = <span class="built_in">JSON</span>.parse(str);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">                    rst = &#123;</span><br><span class="line">                        status: &#123;</span><br><span class="line">                            code: <span class="number">1</span>,</span><br><span class="line">                            msg: <span class="string">'PARAM_PARSE_ERROR'</span></span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                rst = str || &#123;&#125;;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> rst;</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        <span class="comment">//根据sid注册calls的回调函数</span></span><br><span class="line">        registerCall: <span class="function"><span class="keyword">function</span> (<span class="params">sid, callback</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (callback) &#123;</span><br><span class="line">                <span class="keyword">this</span>.calls[CALLBACK_PREFIX + sid] = callback;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        <span class="comment">//根据sid删除calls对应的回调函数，并返回call对象</span></span><br><span class="line">        unregisterCall: <span class="function"><span class="keyword">function</span> (<span class="params">sid</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">var</span> callbackId = CALLBACK_PREFIX + sid;</span><br><span class="line">            <span class="keyword">var</span> call = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">this</span>.calls[callbackId]) &#123;</span><br><span class="line">                call.callback = <span class="keyword">this</span>.calls[callbackId];</span><br><span class="line">                <span class="keyword">delete</span> <span class="keyword">this</span>.calls[callbackId];</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> call;</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        <span class="comment">//生成URI，调用native功能</span></span><br><span class="line">        callMethod: <span class="function"><span class="keyword">function</span> (<span class="params">obj, method, params, sid</span>) </span>&#123;</span><br><span class="line">            <span class="comment">// hybrid://objectName:sid/methodName?params</span></span><br><span class="line">            params = Private.buildParam(params);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">var</span> uri = LOCAL_PROTOCOL + <span class="string">'://'</span> + obj + <span class="string">':'</span> + sid + <span class="string">'/'</span> + method + <span class="string">'?'</span> + params;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">var</span> value = CB_PROTOCOL + <span class="string">':'</span>;</span><br><span class="line">            <span class="built_in">window</span>.prompt(uri, value);</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        onComplete: <span class="function"><span class="keyword">function</span> (<span class="params">sid, data</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">var</span> callObj = <span class="keyword">this</span>.unregisterCall(sid);</span><br><span class="line">            <span class="keyword">var</span> callback = callObj.callback;</span><br><span class="line"></span><br><span class="line">            data = <span class="keyword">this</span>.parseData(data);</span><br><span class="line"></span><br><span class="line">            callback &amp;&amp; callback(data);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> key <span class="keyword">in</span> Core) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!hasOwnProperty.call(JsBridge, key)) &#123;</span><br><span class="line">            JsBridge[key] = Core[key];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)(<span class="built_in">window</span>);</span><br></pre></td></tr></table></figure>
+<p>有前端经验的同学应该能很轻松的看懂这样的代码，对于看不懂的同学我来解释一下，首先看界面。</p>
+<p> <img src="/images/好好和h5沟通！几种常见的hybrid通信方式/jsbridge.png" alt="jsinterface"></p>
+<p>可以看到有两个按钮，对应着html的这段代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">li</span>&gt;</span></span><br><span class="line">    toast展示<span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">onclick</span>=<span class="string">"JsBridge.call('JSBridge','toast',&#123;'message':'我是气泡','isShowLong':0&#125;,function(res)&#123;&#125;);"</span>&gt;</span>toast<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">li</span>&gt;</span></span><br><span class="line">    异步任务<span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">onclick</span>=<span class="string">"JsBridge.call('JSBridge','plus',&#123;'data':1&#125;,function(res)&#123;console.log(JSON.stringify(res))&#125;);"</span>&gt;</span>toast<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">br</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+<p>点击按钮会执行js脚本的这段代码</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">call: <span class="function"><span class="keyword">function</span> (<span class="params">obj, method, params, callback, timeout</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> sid;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> callback !== <span class="string">'function'</span>) &#123;</span><br><span class="line">        callback = <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    sid = Private.getSid();</span><br><span class="line"></span><br><span class="line">    Private.registerCall(sid, callback);</span><br><span class="line">    Private.callMethod(obj, method, params, sid);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它其实就是一个函数，名字叫call，括号里的是它的参数(obj, method, params, callback, timeout)。那这几个参数是怎么传递的呢？回过头看我们的html代码，点击第一个按钮，会执行这个语句</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">button</span> <span class="attr">onclick</span>=<span class="string">"JsBridge.call('JSBridge','toast',&#123;'message':'我是气泡','isShowLong':0&#125;,function(res)&#123;&#125;);"</span>&gt;</span>toast<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>其中括号(‘JSBridge’,’toast’,{‘message’:’我是气泡’,’isShowLong’:0},function(res){})里的第一个参数’JSBridge’对应着前面的obj，’toast’对应着method，以此类推。第二个按钮也是一样。</p>
+<p>然后在call这个方法内，会执行Private类的registerCall和callMethod，我们来看callMehod()。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//生成URI，调用native功能</span></span><br><span class="line">callMethod: <span class="function"><span class="keyword">function</span> (<span class="params">obj, method, params, sid</span>) </span>&#123;</span><br><span class="line">    <span class="comment">// hybrid://objectName:sid/methodName?params</span></span><br><span class="line">    params = Private.buildParam(params);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> uri = LOCAL_PROTOCOL + <span class="string">'://'</span> + obj + <span class="string">':'</span> + sid + <span class="string">'/'</span> + method + <span class="string">'?'</span> + params;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> value = CB_PROTOCOL + <span class="string">':'</span>;</span><br><span class="line">    <span class="built_in">window</span>.prompt(uri, value);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注释说的很清楚了，就是通过传递进来的参数生成uri，并且调用window.prompt()方法，这个方法大家应该很眼熟吧，没错，在调用这个方法之后，程序就会相应的走到java代码的onJsPrompt()方法中。而生成的uri则是我们上面说过的那个我们自己定义的协议格式。</p>
+<p>好了，我们总结一下这两个前端的代码。其实很简单，以界面的第一个按钮toast为例，点击这个按钮，它会执行相应的js脚本代码，然后就会像我们前面所讲的那样，走到onJsPrompt()方法中，下面让我们看看对应的java代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">InjectedChromeClient</span> <span class="keyword">extends</span> <span class="title">WebChromeClient</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> String TAG = <span class="string">"InjectedChromeClient"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> JsCallJava mJsCallJava;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">InjectedChromeClient</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        mJsCallJava = <span class="keyword">new</span> JsCallJava();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onJsPrompt</span><span class="params">(WebView view, String url, String message, String defaultValue, JsPromptResult result)</span> </span>&#123;</span><br><span class="line">        result.confirm(mJsCallJava.call(view, message));</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是对应的WebChromeClient类，可以看到在onJsPrompt()方法中我们只做了一件事，就是丢给JsCallJava类去解析，再看JsCallJava类之前，我们可以先看看onJsPrompt()这个方法到底传进来了什么。</p>
+<p> <img src="/images/好好和h5沟通！几种常见的hybrid通信方式/jsmessage.png" alt="jsmessage"></p>
+<p>可以看到，我们传给JsCallJava类的那个message，就像我们前面定义的协议一样。sheme是hybrid://，表示这是一个hybrid方法，host是JSBridge，方法名字是toast，传递的参数是以json格式传递的，具体内容如图。不知道大家有没有发现，这里我有一个东西没有讲，就是JSBridge:后面的那串数字，这串数字是干什么用的呢？大家应该知道，现在我们整个调用过程都是同步的，这意味着我们没有办法在里面做一些异步的操作，为了满足异步的需求，我们就需要定义这样的port，有了这串数字，我们在java层就可以做异步的操作，等操作完成以后回调给js脚本，js脚本就通过这串数字去得到对应的callback，有点像startActivity中的那个requestCode。大家没听懂也没关系，后面我会在代码中具体讲解。</p>
+<p>好了，下面我们可以来看JsCallJava这个类的具体代码了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JsCallJava</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> String TAG = <span class="string">"JsCallJava"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String BRIDGE_NAME = <span class="string">"JSBridge"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String SCHEME=<span class="string">"hybrid"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> RESULT_SUCCESS=<span class="number">200</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> RESULT_FAIL=<span class="number">500</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> ArrayMap&lt;String, ArrayMap&lt;String, Method&gt;&gt; mInjectNameMethods = <span class="keyword">new</span> ArrayMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> JSBridge mWDJSBridge = JSBridge.getInstance();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">JsCallJava</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            ArrayMap&lt;String, Class&lt;? extends IInject&gt;&gt; externals = mWDJSBridge.getInjectPair();</span><br><span class="line">            <span class="keyword">if</span> (externals.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                Iterator&lt;String&gt; iterator = externals.keySet().iterator();</span><br><span class="line">                <span class="keyword">while</span> (iterator.hasNext()) &#123;</span><br><span class="line">                    String key = iterator.next();</span><br><span class="line">                    Class clazz = externals.get(key);</span><br><span class="line">                    <span class="keyword">if</span> (!mInjectNameMethods.containsKey(key)) &#123;</span><br><span class="line">                        mInjectNameMethods.put(key, getAllMethod(clazz));</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            Log.e(TAG, <span class="string">"init js error:"</span> + e.getMessage());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> ArrayMap&lt;String, Method&gt; <span class="title">getAllMethod</span><span class="params">(Class injectedCls)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        ArrayMap&lt;String, Method&gt; mMethodsMap = <span class="keyword">new</span> ArrayMap&lt;&gt;();</span><br><span class="line">        <span class="comment">//获取自身声明的所有方法（包括public private protected）， getMethods会获得所有继承与非继承的方法</span></span><br><span class="line">        Method[] methods = injectedCls.getDeclaredMethods();</span><br><span class="line">        <span class="keyword">for</span> (Method method : methods) &#123;</span><br><span class="line">            String name;</span><br><span class="line">            <span class="keyword">if</span> (method.getModifiers() != (Modifier.PUBLIC | Modifier.STATIC) || (name = method.getName()) == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">           Class[] parameters=method.getParameterTypes();</span><br><span class="line">           <span class="keyword">if</span>(<span class="keyword">null</span>!=parameters &amp;&amp; parameters.length==<span class="number">3</span>)&#123;</span><br><span class="line">               <span class="keyword">if</span>(parameters[<span class="number">0</span>]==WebView.class &amp;&amp; parameters[<span class="number">1</span>]==JSONObject.class &amp;&amp; parameters[<span class="number">2</span>]==JsCallback.class)&#123;</span><br><span class="line">                   mMethodsMap.put(name, method);</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> mMethodsMap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">call</span><span class="params">(WebView webView, String jsonStr)</span> </span>&#123;</span><br><span class="line">        String methodName = <span class="string">""</span>;</span><br><span class="line">        String name = BRIDGE_NAME;</span><br><span class="line">        String param = <span class="string">"&#123;&#125;"</span>;</span><br><span class="line">        String result = <span class="string">""</span>;</span><br><span class="line">        String sid=<span class="string">""</span>;</span><br><span class="line">        <span class="keyword">if</span> (!TextUtils.isEmpty(jsonStr) &amp;&amp; jsonStr.startsWith(SCHEME)) &#123;</span><br><span class="line">            Uri uri = Uri.parse(jsonStr);</span><br><span class="line">            name = uri.getHost();</span><br><span class="line">            param = uri.getQuery();</span><br><span class="line">            sid = getPort(jsonStr);</span><br><span class="line">            String path = uri.getPath();</span><br><span class="line">            <span class="keyword">if</span> (!TextUtils.isEmpty(path)) &#123;</span><br><span class="line">                methodName = path.replace(<span class="string">"/"</span>, <span class="string">""</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!TextUtils.isEmpty(jsonStr)) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                ArrayMap&lt;String, Method&gt; methodMap = mInjectNameMethods.get(name);</span><br><span class="line"></span><br><span class="line">                Object[] values = <span class="keyword">new</span> Object[<span class="number">3</span>];</span><br><span class="line">                values[<span class="number">0</span>] = webView;</span><br><span class="line">                values[<span class="number">1</span>] = <span class="keyword">new</span> JSONObject(param);</span><br><span class="line">                values[<span class="number">2</span>]=<span class="keyword">new</span> JsCallback(webView,sid);</span><br><span class="line">                Method currMethod = <span class="keyword">null</span>;</span><br><span class="line">                <span class="keyword">if</span> (<span class="keyword">null</span> != methodMap &amp;&amp; !TextUtils.isEmpty(methodName)) &#123;</span><br><span class="line">                    currMethod = methodMap.get(methodName);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// 方法匹配失败</span></span><br><span class="line">                <span class="keyword">if</span> (currMethod == <span class="keyword">null</span>) &#123;</span><br><span class="line">                    result = getReturn(jsonStr, RESULT_FAIL, <span class="string">"not found method("</span> + methodName + <span class="string">") with valid parameters"</span>);</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    result = getReturn(jsonStr, RESULT_SUCCESS, currMethod.invoke(<span class="keyword">null</span>, values));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            result = getReturn(jsonStr, RESULT_FAIL, <span class="string">"call data empty"</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> String <span class="title">getPort</span><span class="params">(String url)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (!TextUtils.isEmpty(url)) &#123;</span><br><span class="line">            String[] arrays = url.split(<span class="string">":"</span>);</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">null</span> != arrays &amp;&amp; arrays.length &gt;= <span class="number">3</span>) &#123;</span><br><span class="line">                String portWithQuery = arrays[<span class="number">2</span>];</span><br><span class="line">                arrays = portWithQuery.split(<span class="string">"/"</span>);</span><br><span class="line">                <span class="keyword">if</span> (<span class="keyword">null</span> != arrays &amp;&amp; arrays.length &gt; <span class="number">1</span>) &#123;</span><br><span class="line">                    <span class="keyword">return</span> arrays[<span class="number">0</span>];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> String <span class="title">getReturn</span><span class="params">(String reqJson, <span class="keyword">int</span> stateCode, Object result)</span> </span>&#123;</span><br><span class="line">        String insertRes;</span><br><span class="line">        <span class="keyword">if</span> (result == <span class="keyword">null</span>) &#123;</span><br><span class="line">            insertRes = <span class="string">"null"</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (result <span class="keyword">instanceof</span> String) &#123;</span><br><span class="line">            <span class="comment">//result = ((String) result).replace("\"", "\\\"");</span></span><br><span class="line">            insertRes = String.valueOf(result);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!(result <span class="keyword">instanceof</span> Integer)</span><br><span class="line">                &amp;&amp; !(result <span class="keyword">instanceof</span> Long)</span><br><span class="line">                &amp;&amp; !(result <span class="keyword">instanceof</span> Boolean)</span><br><span class="line">                &amp;&amp; !(result <span class="keyword">instanceof</span> Float)</span><br><span class="line">                &amp;&amp; !(result <span class="keyword">instanceof</span> Double)</span><br><span class="line">                &amp;&amp; !(result <span class="keyword">instanceof</span> JSONObject)) &#123;    <span class="comment">// 非数字或者非字符串的构造对象类型都要序列化后再拼接</span></span><br><span class="line">            insertRes = result.toString();<span class="comment">//mGson.toJson(result);</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  <span class="comment">//数字直接转化</span></span><br><span class="line">            insertRes = String.valueOf(result);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//String resStr = String.format(RETURN_RESULT_FORMAT, stateCode, insertRes);</span></span><br><span class="line">        Log.d(TAG, <span class="string">" call json: "</span> + reqJson + <span class="string">" result:"</span> + insertRes);</span><br><span class="line">        <span class="keyword">return</span> insertRes;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有点长，不过其实逻辑很好理解。首先我们调用的是call这个方法。它里面做了什么呢</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">call</span><span class="params">(WebView webView, String jsonStr)</span> </span>&#123;</span><br><span class="line">    String methodName = <span class="string">""</span>;</span><br><span class="line">    String name = BRIDGE_NAME;</span><br><span class="line">    String param = <span class="string">"&#123;&#125;"</span>;</span><br><span class="line">    String result = <span class="string">""</span>;</span><br><span class="line">    String sid=<span class="string">""</span>;</span><br><span class="line">    <span class="keyword">if</span> (!TextUtils.isEmpty(jsonStr) &amp;&amp; jsonStr.startsWith(SCHEME)) &#123;</span><br><span class="line">        Uri uri = Uri.parse(jsonStr);</span><br><span class="line">        name = uri.getHost();</span><br><span class="line">        param = uri.getQuery();</span><br><span class="line">        sid = getPort(jsonStr);</span><br><span class="line">        String path = uri.getPath();</span><br><span class="line">        <span class="keyword">if</span> (!TextUtils.isEmpty(path)) &#123;</span><br><span class="line">            methodName = path.replace(<span class="string">"/"</span>, <span class="string">""</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!TextUtils.isEmpty(jsonStr)) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            ArrayMap&lt;String, Method&gt; methodMap = mInjectNameMethods.get(name);</span><br><span class="line"></span><br><span class="line">            Object[] values = <span class="keyword">new</span> Object[<span class="number">3</span>];</span><br><span class="line">            values[<span class="number">0</span>] = webView;</span><br><span class="line">            values[<span class="number">1</span>] = <span class="keyword">new</span> JSONObject(param);</span><br><span class="line">            values[<span class="number">2</span>]=<span class="keyword">new</span> JsCallback(webView,sid);</span><br><span class="line">            Method currMethod = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">null</span> != methodMap &amp;&amp; !TextUtils.isEmpty(methodName)) &#123;</span><br><span class="line">                currMethod = methodMap.get(methodName);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 方法匹配失败</span></span><br><span class="line">            <span class="keyword">if</span> (currMethod == <span class="keyword">null</span>) &#123;</span><br><span class="line">                result = getReturn(jsonStr, RESULT_FAIL, <span class="string">"not found method("</span> + methodName + <span class="string">") with valid parameters"</span>);</span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                result = getReturn(jsonStr, RESULT_SUCCESS, currMethod.invoke(<span class="keyword">null</span>, values));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        result = getReturn(jsonStr, RESULT_FAIL, <span class="string">"call data empty"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到其实就是通过js脚本传递过来的参数得到了方法名字，sid(前面说的那串数字)等等内容。下面看这段代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ArrayMap&lt;String, Method&gt; methodMap = mInjectNameMethods.get(name);</span><br></pre></td></tr></table></figure>
+<p>通过name去得到一个map，这里的name是我们刚刚解析得到了，对应实际情况就是JSBridge，那这个mInjectNameMethods又是什么呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> ArrayMap&lt;String, ArrayMap&lt;String, Method&gt;&gt; mInjectNameMethods = <span class="keyword">new</span> ArrayMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> JSBridge mJSBridge = JSBridge.getInstance();</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">JsCallJava</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        ArrayMap&lt;String, Class&lt;? extends IInject&gt;&gt; externals = mJSBridge.getInjectPair();</span><br><span class="line">        <span class="keyword">if</span> (externals.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            Iterator&lt;String&gt; iterator = externals.keySet().iterator();</span><br><span class="line">            <span class="keyword">while</span> (iterator.hasNext()) &#123;</span><br><span class="line">                String key = iterator.next();</span><br><span class="line">                Class clazz = externals.get(key);</span><br><span class="line">                <span class="keyword">if</span> (!mInjectNameMethods.containsKey(key)) &#123;</span><br><span class="line">                    mInjectNameMethods.put(key, getAllMethod(clazz));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        Log.e(TAG, <span class="string">"init js error:"</span> + e.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> ArrayMap&lt;String, Method&gt; <span class="title">getAllMethod</span><span class="params">(Class injectedCls)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    ArrayMap&lt;String, Method&gt; mMethodsMap = <span class="keyword">new</span> ArrayMap&lt;&gt;();</span><br><span class="line">    <span class="comment">//获取自身声明的所有方法（包括public private protected）， getMethods会获得所有继承与非继承的方法</span></span><br><span class="line">    Method[] methods = injectedCls.getDeclaredMethods();</span><br><span class="line">    <span class="keyword">for</span> (Method method : methods) &#123;</span><br><span class="line">        String name;</span><br><span class="line">        <span class="keyword">if</span> (method.getModifiers() != (Modifier.PUBLIC | Modifier.STATIC) || (name = method.getName()) == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">       Class[] parameters=method.getParameterTypes();</span><br><span class="line">       <span class="keyword">if</span>(<span class="keyword">null</span>!=parameters &amp;&amp; parameters.length==<span class="number">3</span>)&#123;</span><br><span class="line">           <span class="keyword">if</span>(parameters[<span class="number">0</span>]==WebView.class &amp;&amp; parameters[<span class="number">1</span>]==JSONObject.class &amp;&amp; parameters[<span class="number">2</span>]==JsCallback.class)&#123;</span><br><span class="line">               mMethodsMap.put(name, method);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> mMethodsMap;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到我们有一个JSBridge类，在JsCallJava的构造函数中，我们通过JSBridge这个类的getInjectPair()方法得到了一个String和class的映射关系，并且把class中符合标准的方法拿出来存放到mInjectNameMethods中，以便我们在call方法中调用。下面来看看JSBridge类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JSBridge</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String BRIDGE_NAME = <span class="string">"JSBridge"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> JSBridge INSTANCE = <span class="keyword">new</span> JSBridge();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">boolean</span> isEnable=<span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> ArrayMap&lt;String, Class&lt;? extends IInject&gt;&gt; mClassMap = <span class="keyword">new</span> ArrayMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">JSBridge</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        mClassMap.put(BRIDGE_NAME, JSLogical.class);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> JSBridge <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">addInjectPair</span><span class="params">(String name, Class&lt;? extends IInject&gt; clazz)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (!mClassMap.containsKey(name)) &#123;</span><br><span class="line">            mClassMap.put(name, clazz);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">removeInjectPair</span><span class="params">(String name,Class&lt;? extends IInject&gt; clazz)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (TextUtils.equals(name,BRIDGE_NAME)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        Class clazzValue=mClassMap.get(name);</span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">null</span>!=clazzValue &amp;&amp; (clazzValue == clazz))&#123;</span><br><span class="line">            mClassMap.remove(name);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> ArrayMap&lt;String, Class&lt;? extends IInject&gt;&gt; getInjectPair() &#123;</span><br><span class="line">        <span class="keyword">return</span> mClassMap;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它的getInjectPair方法其实就是得到了mClassMap，这个map在JSBridge类初始化的时候就有一个默认的值了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String BRIDGE_NAME = <span class="string">"JSBridge"</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">JSBridge</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    mClassMap.put(BRIDGE_NAME, JSLogical.class);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>key是”JSBridge”，value是我们的JSLogincal类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JSLogical</span> <span class="keyword">implements</span> <span class="title">IInject</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * toast</span><br><span class="line">     *</span><br><span class="line">     * <span class="doctag">@param</span> webView 浏览器</span><br><span class="line">     * <span class="doctag">@param</span> param   提示信息</span><br><span class="line">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">toast</span><span class="params">(WebView webView, JSONObject param, <span class="keyword">final</span> JsCallback callback)</span> </span>&#123;</span><br><span class="line">        String message = param.optString(<span class="string">"message"</span>);</span><br><span class="line">        <span class="keyword">int</span> isShowLong = param.optInt(<span class="string">"isShowLong"</span>);</span><br><span class="line">        Toast.makeText(webView.getContext(), message, isShowLong == <span class="number">0</span> ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> != callback) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                JSONObject object = <span class="keyword">new</span> JSONObject();</span><br><span class="line">                object.put(<span class="string">"result"</span>, <span class="keyword">true</span>);</span><br><span class="line">                invokeJSCallback(callback, object);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 加一</span><br><span class="line">     *</span><br><span class="line">     * <span class="doctag">@param</span> webView</span><br><span class="line">     * <span class="doctag">@param</span> param</span><br><span class="line">     * <span class="doctag">@param</span> callback</span><br><span class="line">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">plus</span><span class="params">(WebView webView, <span class="keyword">final</span> JSONObject param, <span class="keyword">final</span> JsCallback callback)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">                    <span class="keyword">int</span> original = param.optInt(<span class="string">"data"</span>);</span><br><span class="line">                    original = original + <span class="number">1</span>;</span><br><span class="line">                    <span class="keyword">if</span> (<span class="keyword">null</span> != callback) &#123;</span><br><span class="line">                        JSONObject object = <span class="keyword">new</span> JSONObject();</span><br><span class="line">                        object.put(<span class="string">"after plussing"</span>, original);</span><br><span class="line">                        invokeJSCallback(callback, object);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">invokeJSCallback</span><span class="params">(JsCallback callback, JSONObject objects)</span> </span>&#123;</span><br><span class="line">        invokeJSCallback(callback, <span class="keyword">true</span>, <span class="keyword">null</span>, objects);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">invokeJSCallback</span><span class="params">(JsCallback callback, <span class="keyword">boolean</span> isSuccess, String message, JSONObject objects)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            callback.apply(isSuccess, message, objects);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (JsCallback.JsCallbackException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>对这个类上面的两个方法有没有很眼熟？名字和js脚本中的那两个方法一样有木有。我们调用链最后就会走到相应的同名方法中！</p>
+<p>上面就是js调js的整个过程了，其实吧，不应该放这么多的代码的，搞得像是源码分析一样，不过我觉得这样还是有一定好处的，至少跟着代码走一遍能加深印象嘛。</p>
+<p>我们还是来捋一捋整个过程。</p>
+<h5 id="1-在js脚本中把对应的方法名，参数等写成一个符合协议的uri，并且通过window-prompt方法发送给java层。"><a href="#1-在js脚本中把对应的方法名，参数等写成一个符合协议的uri，并且通过window-prompt方法发送给java层。" class="headerlink" title="(1) 在js脚本中把对应的方法名，参数等写成一个符合协议的uri，并且通过window.prompt方法发送给java层。"></a>(1) 在js脚本中把对应的方法名，参数等写成一个符合协议的uri，并且通过window.prompt方法发送给java层。</h5><h5 id="2-在java层的onJsPrompt方法中接受到对应的message之后，通过JsCallJava类进行具体的解析。"><a href="#2-在java层的onJsPrompt方法中接受到对应的message之后，通过JsCallJava类进行具体的解析。" class="headerlink" title="(2) 在java层的onJsPrompt方法中接受到对应的message之后，通过JsCallJava类进行具体的解析。"></a>(2) 在java层的onJsPrompt方法中接受到对应的message之后，通过JsCallJava类进行具体的解析。</h5><h5 id="3-在JsCallJava类中，我们解析得到对应的方法名，参数等信息，并且在map中查找出对应的类的方法。"><a href="#3-在JsCallJava类中，我们解析得到对应的方法名，参数等信息，并且在map中查找出对应的类的方法。" class="headerlink" title="(3) 在JsCallJava类中，我们解析得到对应的方法名，参数等信息，并且在map中查找出对应的类的方法。"></a>(3) 在JsCallJava类中，我们解析得到对应的方法名，参数等信息，并且在map中查找出对应的类的方法。</h5><p>这里多说一句，还记得我们定义的协议中的host是什么吗？</p>
+<p>hybrid://JSBridge:875725/toast?{“message”:”我是气泡”,”isShowLong”:0}</p>
+<p>是JSBridge，而我们在JsCallJava类中是通过这个host去查找对应的类的，我们可以看到在JSBridge类中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String BRIDGE_NAME = <span class="string">"JSBridge"</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">JSBridge</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    mClassMap.put(BRIDGE_NAME, JSLogical.class);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这意味着，如果你可以更换你的host，叫aaa都没关系，只要你在对应的map中的key也是aaa就可以了。</p>
+<p>可能有的同学会说何必这么麻烦，直接在JsCallJava类中定义方法不就好了，这样还省的去写那么多的逻辑。可是大家有想过如果你把所有js脚本想要调用的方法都写在JsCallJava类中，这个类会有多难扩展和维护吗？而像我这样，如果你的js脚本处理的是登录相关逻辑，你可以写一个LoginLogical.class，如果是业务相关，你可以写一个BizLogical.class，这样不仅清晰，而且解耦。</p>
+<h5 id="4-在得到对应的方法之后，就去调用它，以我们的toast为例。"><a href="#4-在得到对应的方法之后，就去调用它，以我们的toast为例。" class="headerlink" title="(4) 在得到对应的方法之后，就去调用它，以我们的toast为例。"></a>(4) 在得到对应的方法之后，就去调用它，以我们的toast为例。</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * toast</span><br><span class="line"> *</span><br><span class="line"> * <span class="doctag">@param</span> webView 浏览器</span><br><span class="line"> * <span class="doctag">@param</span> param   提示信息</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">toast</span><span class="params">(WebView webView, JSONObject param, <span class="keyword">final</span> JsCallback callback)</span> </span>&#123;</span><br><span class="line">    String message = param.optString(<span class="string">"message"</span>);</span><br><span class="line">    <span class="keyword">int</span> isShowLong = param.optInt(<span class="string">"isShowLong"</span>);</span><br><span class="line">    Toast.makeText(webView.getContext(), message, isShowLong == <span class="number">0</span> ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != callback) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            JSONObject object = <span class="keyword">new</span> JSONObject();</span><br><span class="line">            object.put(<span class="string">"result"</span>, <span class="keyword">true</span>);</span><br><span class="line">            invokeJSCallback(callback, object);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>拿到对应的信息，直接makeToast就好了。</p>
+<p>以上就是全部js调用java的过程，那我们java执行完逻辑以后，怎么回调js呢？这里我们以另外一个按钮的例子来说。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;button onclick=<span class="string">"JsBridge.call('JSBridge','plus',&#123;'data':1&#125;,function(res)&#123;console.log(JSON.stringify(res))&#125;);"</span>&gt;plus&lt;<span class="regexp">/button&gt;</span></span><br></pre></td></tr></table></figure>
+<p>js脚本传递的一个json的参数，{“data”:1}，从名字可以看出是先要java执行一个加逻辑。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 加一</span><br><span class="line"> *</span><br><span class="line"> * <span class="doctag">@param</span> webView</span><br><span class="line"> * <span class="doctag">@param</span> param</span><br><span class="line"> * <span class="doctag">@param</span> callback</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">plus</span><span class="params">(WebView webView, <span class="keyword">final</span> JSONObject param, <span class="keyword">final</span> JsCallback callback)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">                <span class="keyword">int</span> original = param.optInt(<span class="string">"data"</span>);</span><br><span class="line">                original = original + <span class="number">1</span>;</span><br><span class="line">                <span class="keyword">if</span> (<span class="keyword">null</span> != callback) &#123;</span><br><span class="line">                    JSONObject object = <span class="keyword">new</span> JSONObject();</span><br><span class="line">                    object.put(<span class="string">"after plussing"</span>, original);</span><br><span class="line">                    invokeJSCallback(callback, object);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;).start();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里我们模拟一下耗时操作，可以帮助大家更好的理解JSBridge中的异步操作。对应java层的方法执行完＋1的操作之后，把结果封装成一个jsonObject，并且调用invokeJSCallback方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">invokeJSCallback</span><span class="params">(JsCallback callback, <span class="keyword">boolean</span> isSuccess, String message, JSONObject objects)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        callback.apply(isSuccess, message, objects);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (JsCallback.JsCallbackException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>invokeJSCallback方法中直接调用了callback的apply方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String CALLBACK_JS_FORMAT = <span class="string">"javascript:JsBridge.onComplete('%s', %s);"</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">apply</span><span class="params">(<span class="keyword">boolean</span> isSuccess, String message, JSONObject object)</span> <span class="keyword">throws</span> JsCallbackException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (mWebViewRef.get() == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> JsCallbackException(<span class="string">"the WebView related to the JsCallback has been recycled"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!mCouldGoOn) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> JsCallbackException(<span class="string">"the JsCallback isn't permanent,cannot be called more than once"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    JSONObject result = <span class="keyword">new</span> JSONObject();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        JSONObject code=<span class="keyword">new</span> JSONObject();</span><br><span class="line">        code.put(<span class="string">"code"</span>, isSuccess ? <span class="number">0</span> : <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span>(!isSuccess &amp;&amp; !TextUtils.isEmpty(message))&#123;</span><br><span class="line">            code.putOpt(<span class="string">"msg"</span>,message);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(isSuccess)&#123;</span><br><span class="line">            code.putOpt(<span class="string">"msg"</span>, TextUtils.isEmpty(message)?<span class="string">"SUCCESS"</span>:message);</span><br><span class="line">        &#125;</span><br><span class="line">        result.putOpt(<span class="string">"status"</span>, code);</span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">null</span>!=object)&#123;</span><br><span class="line">            result.putOpt(<span class="string">"data"</span>,object);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">final</span> String jsFunc = String.format(CALLBACK_JS_FORMAT, mSid, String.valueOf(result));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mWebViewRef != <span class="keyword">null</span> &amp;&amp; mWebViewRef.get() != <span class="keyword">null</span>) &#123;</span><br><span class="line">        mHandler.post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                mWebViewRef.get().loadUrl(jsFunc);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在apply方法中，我们直接拼装了一个jsonObject，里面包括了我们想要返回给js脚本的结果，并且直接调用了js的onComplete方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">onComplete: <span class="function"><span class="keyword">function</span> (<span class="params">sid, data</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> callObj = <span class="keyword">this</span>.unregisterCall(sid);</span><br><span class="line">    <span class="keyword">var</span> callback = callObj.callback;</span><br><span class="line"></span><br><span class="line">    data = <span class="keyword">this</span>.parseData(data);</span><br><span class="line"></span><br><span class="line">    callback &amp;&amp; callback(data);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到js的onComplete通过sid(那一串数字)拿到对应的callback并执行，而我们plus的callback里做了什么呢？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span>(<span class="params">res</span>)</span>&#123;<span class="built_in">console</span>.log(<span class="built_in">JSON</span>.stringify(res))&#125;</span><br></pre></td></tr></table></figure>
+<p>直接在控制台中输出结果。</p>
+<p>所以当我们点击plug按钮以后，过两秒我们就可以在logcat中看到如下输出</p>
+<p> <img src="/images/好好和h5沟通！几种常见的hybrid通信方式/output.png" alt="output"></p>
+<p>好了，至此所有和JSBridge相关的代码就分析完了。其实原理非常的简单，通过js的window.prompt方法将事先定义好的协议文本传输到java层，然后java层进行解析并调用相应的方法，最后通过callback将结果返回给js脚本。中间我们使用的那些类可以更好的解耦，如果你有心，甚至可以把所用逻辑相关代码抽离出来，把剩余的代码写成JSBridge.core作为库来使用。这样你想加什么功能直接写，不用改任何的源码。</p>
+<h1 id="UrlRouter"><a href="#UrlRouter" class="headerlink" title="UrlRouter"></a>UrlRouter</h1><p>其实严格的说，UrlRouter不算是js和java的通信，它只是一个通过url来让前端唤起native页面的框架。不过千万不要小看它的作用，如果协议定义的合理，它可以让前端，Android和iOS三端有一个高度的统一，十分方便。</p>
+<h3 id="思路-1"><a href="#思路-1" class="headerlink" title="思路"></a>思路</h3><p>其实吧，这个思路比JSBridge还要简单，就是我们通过自己实现的框架去拦截前端同学写的url，发现如果是符合我们UrlRouter的协议的话，就跳转到相应的页面。</p>
+<p>至于怎么拦截呢？当然是通过WebViewClient类的shouldOverrideUrlLoading方法咯。</p>
+<h3 id="代码-1"><a href="#代码-1" class="headerlink" title="代码"></a>代码</h3><p>首先我们还是先看一个html代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">title</span>&gt;</span>Login<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"button"</span> <span class="attr">value</span>=<span class="string">"login"</span> <span class="attr">onclick</span>=<span class="string">"javascript:location.href='http://login.h5.zjutkz.net/'"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>很简单，有一个按钮，通过点击这个按钮，会加载一个url，这个url是<a href="http://login.h5.zjutkz.net/。" target="_blank" rel="external">http://login.h5.zjutkz.net/。</a></p>
+<p>这里多说一句，如果你也想用UrlRouter这样的形式的话，协议的sheme最好是http这样开头的，不要自己去重新定义，因为这样可以保证前端同学逻辑的清晰。如果你想着自己定义一个sheme叫shemeA，公司做别的app的同学也定义一个sheme叫shemeB，加上本来就要的http，前端的同学可能脑子都昏了。。。</p>
+<p>下面来看看WebViewClient类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NavWebViewClient</span> <span class="keyword">extends</span> <span class="title">WebViewClient</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Context context;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NavWebViewClient</span><span class="params">(Context context)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.context = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">shouldOverrideUrlLoading</span><span class="params">(WebView view, String url)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>( Nav.from(context).toUri(url))&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        view.loadUrl(url);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很简单，在shouldOverrideUrlLoading方法中先拦截url交给Nav类处理，如果返回true则表示需要拦截，直接return true，否则交给WebView去loadUrl。</p>
+<p>接下去看看Nav。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">ublic <span class="class"><span class="keyword">class</span> <span class="title">Nav</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"Nav"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Nav <span class="title">from</span><span class="params">(<span class="keyword">final</span> Context context)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Nav(context);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">toUri</span><span class="params">(<span class="keyword">final</span> String uri)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(TextUtils.isEmpty(uri)) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">return</span> toUri(Uri.parse(uri));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">toUri</span><span class="params">(<span class="keyword">final</span> Uri uri)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        Log.d(TAG, uri.toString());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> Intent intent = to(uri);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (;;) <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">            intent.setPackage(mContext.getPackageName());</span><br><span class="line"></span><br><span class="line">            PackageManager pm = mContext.getPackageManager();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">final</span> ResolveInfo info = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);</span><br><span class="line">            <span class="keyword">if</span>(info == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> ActivityNotFoundException(<span class="string">"No Activity found to handle "</span> + intent);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                intent.setClassName(info.activityInfo.packageName, info.activityInfo.name);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            mContext.startActivity(intent);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (<span class="keyword">final</span> ActivityNotFoundException e) &#123;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@TargetApi</span>(Build.VERSION_CODES.HONEYCOMB)</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">startActivities</span><span class="params">(<span class="keyword">final</span> Intent[] intents)</span> </span>&#123;</span><br><span class="line">        mContext.startActivities(intents);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> Intent <span class="title">to</span><span class="params">(<span class="keyword">final</span> Uri uri)</span> </span>&#123;</span><br><span class="line">        mIntent.setData(uri);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> mIntent;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Nav</span><span class="params">(<span class="keyword">final</span> Context context)</span> </span>&#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">        mIntent = <span class="keyword">new</span> Intent(Intent.ACTION_VIEW);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Context mContext;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Intent mIntent;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们在NavWebViewClient类中是这样调用的</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Nav.from(context).toUri(url)</span><br></pre></td></tr></table></figure>
+<p>from方法创建了一个Nav类的实例，下面来看看toUri方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">toUri</span><span class="params">(<span class="keyword">final</span> String uri)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(TextUtils.isEmpty(uri)) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">return</span> toUri(Uri.parse(uri));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">toUri</span><span class="params">(<span class="keyword">final</span> Uri uri)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    Log.d(TAG, uri.toString());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> Intent intent = to(uri);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (;;) <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">        intent.setPackage(mContext.getPackageName());</span><br><span class="line"></span><br><span class="line">        PackageManager pm = mContext.getPackageManager();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> ResolveInfo info = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);</span><br><span class="line">        <span class="keyword">if</span>(info == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> ActivityNotFoundException(<span class="string">"No Activity found to handle "</span> + intent);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            intent.setClassName(info.activityInfo.packageName, info.activityInfo.name);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        mContext.startActivity(intent);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">    &#125; <span class="keyword">catch</span> (<span class="keyword">final</span> ActivityNotFoundException e) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> Intent <span class="title">to</span><span class="params">(<span class="keyword">final</span> Uri uri)</span> </span>&#123;</span><br><span class="line">    mIntent.setData(uri);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> mIntent;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在toUri方法中调用了to方法，to方法做的就是将uri以setData的方式注入到intent中。</p>
+<p>接着通过一系列PackageManager的方法去判断有没有符合uri的activity，如果有则直接startActivity。</p>
+<p>是不是很简单，下面我以文中最开头的场景2为例子。</p>
+<p>我们native端需要一个LoginActivity，并且根据上面的代码我们知道，这个LoginActivity必须要配置上对应的data才行。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">".activity.LoginActivity"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.VIEW"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.DEFAULT"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.BROWSABLE"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"$&#123;NAV_CATEGORY&#125;"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">data</span> <span class="attr">android:scheme</span>=<span class="string">"$&#123;NAV_SCHEMA&#125;"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">data</span> <span class="attr">android:host</span>=<span class="string">"$&#123;NAV_HOST&#125;"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">defaultConfig &#123;</span><br><span class="line">    applicationId <span class="string">"zjutkz.com.navigationdemo"</span></span><br><span class="line">    minSdkVersion <span class="number">15</span></span><br><span class="line">    targetSdkVersion <span class="number">23</span></span><br><span class="line">    versionCode <span class="number">1</span></span><br><span class="line">    versionName <span class="string">"1.0"</span></span><br><span class="line">    manifestPlaceholders = [<span class="string">"NAV_SCHEMA"</span>: <span class="string">"http"</span>, <span class="string">"NAV_HOST"</span>: <span class="string">"login.h5.zjutkz.net"</span>,<span class="string">"NAV_CATEGORY"</span>: <span class="string">"zjutkz.net"</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是我们的manifest文件，可以看到已经通过gradle配置了对应的data。</p>
+<p>这里我为什么要用grdle去配置呢？想象如果你有十几个页面，你难道要在manifest中都写一遍吗？用我这种方式，直接在build.gradle中写一遍就可以了。这里我是想给大家传递一个思想：</p>
+<h5 id="使用gradle我们可以做很多自动化的事，千万不要自己给自己找麻烦了。"><a href="#使用gradle我们可以做很多自动化的事，千万不要自己给自己找麻烦了。" class="headerlink" title="使用gradle我们可以做很多自动化的事，千万不要自己给自己找麻烦了。"></a>使用gradle我们可以做很多自动化的事，千万不要自己给自己找麻烦了。</h5><p>看到这儿大家肯定会觉得，就这么简单？是的，大体的框架就这么简单，但是如果你想真正的用好它，还需要做很多工作。</p>
+<p>比如在跳转到native页面，做完响应的逻辑之后，你怎么通知前端去更新呢？这里你可以使用startActivityForResult，也可以使用广播，甚至是eventBus。这需要你在你的框架内做好封装。</p>
+<p>再比如，上面的例子是最简单的，但是如果前端的同学想在跳到对应的native页面的时候加上一些参数呢？你的intent该怎么处理？</p>
+<p>还有，如果你想你的框架鲁棒性够强，是不是得提供一个hook工具呢？让调用者可以hook掉你内部的那个intent，从而添加自己想要添加的数据。</p>
+<p>这些都是要解决的问题，这里我就不给大家上具体的代码了。毕竟只有你自己去实现了以后才会有更深的理解。</p>
+<h1 id="下期预告"><a href="#下期预告" class="headerlink" title="下期预告"></a>下期预告</h1><p>依旧没想好些啥。。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/hybrid/" rel="tag">#hybrid</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/13/选择恐惧症的福音！教你认清MVC，MVP和MVVM/" rel="next" title="选择恐惧症的福音！教你认清MVC，MVP和MVVM">
+                <i class="fa fa-chevron-left"></i> 选择恐惧症的福音！教你认清MVC，MVP和MVVM
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/"
+           data-title="好好和h5沟通！几种常见的hybrid通信方式" data-url="http://yoursite.com/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#传统的JSInterface"><span class="nav-number">2.</span> <span class="nav-text">传统的JSInterface</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JSBridge"><span class="nav-number">3.</span> <span class="nav-text">JSBridge</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#思路"><span class="nav-number">3.0.1.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码"><span class="nav-number">3.0.2.</span> <span class="nav-text">代码</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-在js脚本中把对应的方法名，参数等写成一个符合协议的uri，并且通过window-prompt方法发送给java层。"><span class="nav-number">3.0.2.0.1.</span> <span class="nav-text">(1) 在js脚本中把对应的方法名，参数等写成一个符合协议的uri，并且通过window.prompt方法发送给java层。</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-在java层的onJsPrompt方法中接受到对应的message之后，通过JsCallJava类进行具体的解析。"><span class="nav-number">3.0.2.0.2.</span> <span class="nav-text">(2) 在java层的onJsPrompt方法中接受到对应的message之后，通过JsCallJava类进行具体的解析。</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-在JsCallJava类中，我们解析得到对应的方法名，参数等信息，并且在map中查找出对应的类的方法。"><span class="nav-number">3.0.2.0.3.</span> <span class="nav-text">(3) 在JsCallJava类中，我们解析得到对应的方法名，参数等信息，并且在map中查找出对应的类的方法。</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-在得到对应的方法之后，就去调用它，以我们的toast为例。"><span class="nav-number">3.0.2.0.4.</span> <span class="nav-text">(4) 在得到对应的方法之后，就去调用它，以我们的toast为例。</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#UrlRouter"><span class="nav-number">4.</span> <span class="nav-text">UrlRouter</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#思路-1"><span class="nav-number">4.0.1.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码-1"><span class="nav-number">4.0.2.</span> <span class="nav-text">代码</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#使用gradle我们可以做很多自动化的事，千万不要自己给自己找麻烦了。"><span class="nav-number">4.0.2.0.1.</span> <span class="nav-text">使用gradle我们可以做很多自动化的事，千万不要自己给自己找麻烦了。</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#下期预告"><span class="nav-number">5.</span> <span class="nav-text">下期预告</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
