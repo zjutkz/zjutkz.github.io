@@ -58,19 +58,19 @@
 
 
 <meta name="description" content="Google最近在Github上开源了一个响应式框架——agera，我个人对这样的技术是比较感兴趣的，在这之前也学习过RxJava，所以想着给大家带来有关于这两者分析的博文。
-在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解前面那两样东西，为之后打下基础。">
+在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解handler机制，为之后打下基础。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="为分析agera做准备！带你了解Android的handler机制">
 <meta property="og:url" content="http://yoursite.com/2016/04/22/为分析agera做准备！带你了解Android的handler机制/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="Google最近在Github上开源了一个响应式框架——agera，我个人对这样的技术是比较感兴趣的，在这之前也学习过RxJava，所以想着给大家带来有关于这两者分析的博文。
-在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解前面那两样东西，为之后打下基础。">
+在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解handler机制，为之后打下基础。">
 <meta property="og:image" content="http://yoursite.com/images/为分析agera做准备！带你了解Android的handler机制/handler_error.png">
-<meta property="og:updated_time" content="2016-04-22T05:23:47.000Z">
+<meta property="og:updated_time" content="2016-04-22T05:26:54.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="为分析agera做准备！带你了解Android的handler机制">
 <meta name="twitter:description" content="Google最近在Github上开源了一个响应式框架——agera，我个人对这样的技术是比较感兴趣的，在这之前也学习过RxJava，所以想着给大家带来有关于这两者分析的博文。
-在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解前面那两样东西，为之后打下基础。">
+在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解handler机制，为之后打下基础。">
 <meta name="twitter:image" content="http://yoursite.com/images/为分析agera做准备！带你了解Android的handler机制/handler_error.png">
 
 
@@ -255,7 +255,7 @@
 
       
         <p>Google最近在Github上开源了一个响应式框架——agera，我个人对这样的技术是比较感兴趣的，在这之前也学习过RxJava，所以想着给大家带来有关于这两者分析的博文。</p>
-<p>在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解前面那两样东西，为之后打下基础。</p>
+<p>在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解handler机制，为之后打下基础。</p>
 <a id="more"></a>
 <h1 id="Handler机制"><a href="#Handler机制" class="headerlink" title="Handler机制"></a>Handler机制</h1><p>对于handler大家一定不会陌生，在Android中，hanlder的作用一般就是用来通信，传递信息，相信大家如果写过异步通信的代码的话，除非使用第三方框架或者AsyncTask，一般大家都会使用handler去把子线程的消息传递到主线程。下面我们先来看看handler最简单的用法吧</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> TextView tv;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Handler handler = <span class="keyword">new</span> Handler()&#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handleMessage</span><span class="params">(Message msg)</span> </span>&#123;</span><br><span class="line">            tv.setText(<span class="string">"got msg!!"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line">        tv = (TextView)findViewById(R.id.show);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">post</span><span class="params">(View view)</span></span>&#123;</span><br><span class="line">        handler.sendEmptyMessage(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
