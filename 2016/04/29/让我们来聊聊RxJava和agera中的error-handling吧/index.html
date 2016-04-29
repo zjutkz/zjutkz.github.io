@@ -1,0 +1,854 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="error handling," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="前一篇博客讲了关于使用agera前你需要知道的一切，没看过的朋友可以点击这个链接。
+今天让我们来聊一些轻松的话题吧，毕竟前几篇博客的文章长度都有点长，大家看的可能都觉得很累，碰巧今天把这个星期的todo list基本上做完了，到公司也没什么要紧事，就给大家写一篇关于实践的文章吧。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="让我们来聊聊RxJava和agera中的error-handling吧">
+<meta property="og:url" content="http://yoursite.com/2016/04/29/让我们来聊聊RxJava和agera中的error-handling吧/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="前一篇博客讲了关于使用agera前你需要知道的一切，没看过的朋友可以点击这个链接。
+今天让我们来聊一些轻松的话题吧，毕竟前几篇博客的文章长度都有点长，大家看的可能都觉得很累，碰巧今天把这个星期的todo list基本上做完了，到公司也没什么要紧事，就给大家写一篇关于实践的文章吧。">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/RxExpectedError.png">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/RxUnexpectedError.png">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/myGod.jpg">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/ageraUnexpectedError.png">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/crying.jpg">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/mengbi.jpg">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/question1.png">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/question2.png">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/question3.png">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/question4.png">
+<meta property="og:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/fuck.png">
+<meta property="og:updated_time" content="2016-04-29T03:52:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="让我们来聊聊RxJava和agera中的error-handling吧">
+<meta name="twitter:description" content="前一篇博客讲了关于使用agera前你需要知道的一切，没看过的朋友可以点击这个链接。
+今天让我们来聊一些轻松的话题吧，毕竟前几篇博客的文章长度都有点长，大家看的可能都觉得很累，碰巧今天把这个星期的todo list基本上做完了，到公司也没什么要紧事，就给大家写一篇关于实践的文章吧。">
+<meta name="twitter:image" content="http://yoursite.com/images/让我们来聊聊RxJava和agera中的error-handling吧/RxExpectedError.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 让我们来聊聊RxJava和agera中的error-handling吧 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                让我们来聊聊RxJava和agera中的error-handling吧
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-29T11:46:52+08:00" content="2016-04-29">
+              2016-04-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/29/让我们来聊聊RxJava和agera中的error-handling吧/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/29/让我们来聊聊RxJava和agera中的error-handling吧/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/04/29/让我们来聊聊RxJava和agera中的error-handling吧/" class="leancloud_visitors" data-flag-title="让我们来聊聊RxJava和agera中的error-handling吧">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前一篇博客讲了关于使用agera前你需要知道的一切，没看过的朋友可以<a href="http://zjutkz.net/2016/04/23/要做一个有冒险精神的人！开启漫漫的agera之旅/" target="_blank" rel="external">点击这个链接</a>。</p>
+<p>今天让我们来聊一些轻松的话题吧，毕竟前几篇博客的文章长度都有点长，大家看的可能都觉得很累，碰巧今天把这个星期的todo list基本上做完了，到公司也没什么要紧事，就给大家写一篇关于实践的文章吧。</p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>大家都知道，一个成熟的框架，特别是RxJava和agera这样对［处理数据］要求很高的框架，没有一个错误处理是不行的，你不能让调用者天天去填那些由于错误引发的坑，这样他们还用你干什么呢？</p>
+<p>对于Java中的［错误］，我们可以大致分成两类——［Expected exception］和［Unexpected exception］。</p>
+<p>所谓Expected exception，就是那些你需要手动去添加try－catch块的，比如IOException等等。</p>
+<p>Unexpected exception呢，就是RunTimeException这样的，比如数组越界。</p>
+<p>具体的区别大家可以去看《Thinking in Java》这本书，或者自己去Google。</p>
+<p>那在error handling方面，RxJava和agera可以说做的都不错，下面让我们来看看他们具体是什么做的。</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="http://www.jianshu.com/p/916b72778145" target="_blank" rel="external">RxJava中的错误处理</a></p>
+<p>这里先把参考文章列出来也算是处于对作者的尊重吧。谢谢大神带我飞～</p>
+<h1 id="RxJava"><a href="#RxJava" class="headerlink" title="RxJava"></a>RxJava</h1><h3 id="Expected-exception"><a href="#Expected-exception" class="headerlink" title="Expected exception"></a>Expected exception</h3><p>对于expected exception，让我们从代码中来看：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">expected_error</span><span class="params">(View view)</span></span>&#123;</span><br><span class="line">    Observable.create(<span class="keyword">new</span> Observable.OnSubscribe&lt;Integer&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> Integer&gt; subscriber)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                errorMaker();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                Exceptions.propagate(e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">            .subscribe(<span class="keyword">new</span> Subscriber&lt;Integer&gt;() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCompleted</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    Log.d(<span class="string">"TAG"</span>, <span class="string">"onCompleted"</span>);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">(Throwable e)</span> </span>&#123;</span><br><span class="line">                    Log.d(<span class="string">"TAG"</span>, <span class="string">"onError: "</span> + e.getMessage());</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(Integer integer)</span> </span>&#123;</span><br><span class="line">                    Log.d(<span class="string">"TAG"</span>, <span class="string">"onNext: "</span> + integer);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">errorMaker</span><span class="params">()</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">"你抓我，如果你抓到我，我就让你嘿嘿嘿"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>expected_error(View view)方法是一个button的onClick方法，具体的xml不贴了，没啥意思。</p>
+<p>我们可以看到，在OnSubscribe的call方法中，我们调用一个我们自己的方法——errorMaker()。这个方法会抛出一个Exception，所以我们必须要手动在调用的地方增加try－catch块。这样，如果有错误发生，RxJava就会帮我们回调到到对应的onError方法中，下面是logcat的输出：</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/RxExpectedError.png" alt="RxExpectedError"></p>
+<p>可以看到我们已经捕捉到了产生的错误，所以对于这样的Expected exception，就可以这样处理。</p>
+<h3 id="Unexpected-exception"><a href="#Unexpected-exception" class="headerlink" title="Unexpected exception"></a>Unexpected exception</h3><p>下面让我们看看Unexpected exception：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">unexpected_error</span><span class="params">(View view)</span></span>&#123;</span><br><span class="line">    Observable.create(<span class="keyword">new</span> Observable.OnSubscribe&lt;Integer&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> Integer&gt; subscriber)</span> </span>&#123;</span><br><span class="line">            errorMaker();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">            .subscribe(<span class="keyword">new</span> Subscriber&lt;Integer&gt;() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCompleted</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    Log.d(<span class="string">"TAG"</span>, <span class="string">"onCompleted"</span>);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">(Throwable e)</span> </span>&#123;</span><br><span class="line">                    Log.d(<span class="string">"TAG"</span>, <span class="string">"onError: "</span> + e.getMessage());</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(Integer integer)</span> </span>&#123;</span><br><span class="line">                    Log.d(<span class="string">"TAG"</span>, <span class="string">"onNext: "</span> + integer);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">errorMaker</span><span class="params">()</span> <span class="keyword">throws</span> RuntimeException</span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"你抓我，如果你抓到我，我就让你嘿嘿嘿"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同样的一个方法的调用，不同的是我们这里抛出的是RunTimeException，也就是一个所谓的Unexpected exception，所以我们可以看到，在调用的地方，我们不需要现实的去try－catch。那当我们点击button以后会发生什么呢？</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/RxUnexpectedError.png" alt="RxUnexpectedError"></p>
+<p>还是捕捉到了！看到这里你可能会是下面这种表情</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/myGod.jpg" alt="myGod"></p>
+<p>不要惊讶，RxJava就是这么厉害！这也是它所“鼓吹”的优势之一，简单但是又强大的error handling。</p>
+<p>至于为什么能捕捉我这里就不分析对应的源码了，大家可以自行把玩。</p>
+<h1 id="agera"><a href="#agera" class="headerlink" title="agera"></a>agera</h1><p>说完了RxJava，那agera是怎么做的呢？</p>
+<h3 id="Expected-exception-1"><a href="#Expected-exception-1" class="headerlink" title="Expected exception"></a>Expected exception</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Supplier&lt;Result&lt;Integer&gt;&gt; safeStrSupplier = <span class="keyword">new</span> Supplier&lt;Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">        <span class="meta">@NonNull</span></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">try</span>&#123;</span><br><span class="line">                <span class="keyword">return</span> Result.present(errorMake());</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                <span class="keyword">return</span> Result.failure(e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> Integer <span class="title">errorMake</span><span class="params">()</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">"你抓我，如果你抓到我，我就让你嘿嘿嘿"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">safeRepository = Repositories.repositoryWithInitialValue(Result.&lt;Integer&gt;absent())</span><br><span class="line">                .observe()</span><br><span class="line">                .onUpdatesPerLoop()</span><br><span class="line">                .attemptGetFrom(safeStrSupplier).orEnd(<span class="keyword">new</span> Function&lt;Throwable, Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">                    <span class="meta">@NonNull</span></span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">apply</span><span class="params">(@NonNull Throwable input)</span> </span>&#123;</span><br><span class="line">                        Log.d(<span class="string">"TAG"</span>, input.getMessage());</span><br><span class="line">                        <span class="keyword">return</span> Result.present(<span class="number">1</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .....</span><br><span class="line">                .compile();</span><br></pre></td></tr></table></figure>
+<p>大家可以调用orEnd，这样对应的Updatable会收到update，具体的数据就是这个传的1，或者调用orSkip直接跳过。当然，还是可以在logcat中看到对应的error message，这里我就不截图了，截图好累。。</p>
+<h3 id="Unexpected-exception-1"><a href="#Unexpected-exception-1" class="headerlink" title="Unexpected exception"></a>Unexpected exception</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Supplier&lt;Result&lt;Integer&gt;&gt; safeStrSupplier = <span class="keyword">new</span> Supplier&lt;Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">    <span class="meta">@NonNull</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> Result.present(errorMake());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> Integer <span class="title">errorMake</span><span class="params">()</span> <span class="keyword">throws</span> RuntimeException</span>&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"你抓我，如果你抓到我，我就让你嘿嘿嘿"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">safeRepository = Repositories.repositoryWithInitialValue(Result.&lt;Integer&gt;absent())</span><br><span class="line">                .observe()</span><br><span class="line">                .onUpdatesPerLoop()</span><br><span class="line">                .attemptGetFrom(safeStrSupplier).orEnd(<span class="keyword">new</span> Function&lt;Throwable, Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">                    <span class="meta">@NonNull</span></span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">apply</span><span class="params">(@NonNull Throwable input)</span> </span>&#123;</span><br><span class="line">                        Log.d(<span class="string">"TAG"</span>, input.getMessage());</span><br><span class="line">                        <span class="keyword">return</span> Result.present(<span class="number">1</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .....</span><br><span class="line">                .compile();</span><br></pre></td></tr></table></figure>
+<p>当你满心期望的点击button之后，你就发现你的程序崩溃了，打开logcat会发现如下错误</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/ageraUnexpectedError.png" alt="ageraUnexpectedError"></p>
+<p>WTF？！？！？agera竟然接受不到Unexpected error！！！</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/crying.jpg" alt="crying"></p>
+<p>不过这里有聪明的同学可能会想到，你可以手动添加try－catch嘛！就像这样</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Supplier&lt;Result&lt;Integer&gt;&gt; safeStrSupplier = <span class="keyword">new</span> Supplier&lt;Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">    <span class="meta">@NonNull</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span>&#123;</span><br><span class="line">            <span class="keyword">return</span> Result.present(errorMake());</span><br><span class="line">        &#125;<span class="keyword">catch</span> (RuntimeException e)&#123;</span><br><span class="line">            <span class="keyword">return</span> Result.failure(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> Integer <span class="title">errorMake</span><span class="params">()</span> <span class="keyword">throws</span> RuntimeException</span>&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"你抓我，如果你抓到我，我就让你嘿嘿嘿"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">safeRepository = Repositories.repositoryWithInitialValue(Result.&lt;Integer&gt;absent())</span><br><span class="line">                .observe()</span><br><span class="line">                .onUpdatesPerLoop()</span><br><span class="line">                .attemptGetFrom(safeStrSupplier).orEnd(<span class="keyword">new</span> Function&lt;Throwable, Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">                    <span class="meta">@NonNull</span></span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">apply</span><span class="params">(@NonNull Throwable input)</span> </span>&#123;</span><br><span class="line">                        Log.d(<span class="string">"TAG"</span>, input.getMessage());</span><br><span class="line">                        <span class="keyword">return</span> Result.present(<span class="number">1</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .....</span><br><span class="line">                .compile();</span><br></pre></td></tr></table></figure>
+<p>唔。。这样确实可以，但是这是不符合人道主义的啊！看下面这种情景</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Supplier&lt;Result&lt;Integer&gt;&gt; safeStrSupplier = <span class="keyword">new</span> Supplier&lt;Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">    <span class="meta">@NonNull</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Integer[] errorArray = <span class="keyword">new</span> Integer[]&#123;<span class="number">1</span>&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> Result.present(errorArray[<span class="number">1</span>]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">safeRepository = Repositories.repositoryWithInitialValue(Result.&lt;Integer&gt;absent())</span><br><span class="line">                .observe()</span><br><span class="line">                .onUpdatesPerLoop()</span><br><span class="line">                .attemptGetFrom(safeStrSupplier).orEnd(<span class="keyword">new</span> Function&lt;Throwable, Result&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">                    <span class="meta">@NonNull</span></span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> Result&lt;Integer&gt; <span class="title">apply</span><span class="params">(@NonNull Throwable input)</span> </span>&#123;</span><br><span class="line">                        Log.d(<span class="string">"TAG"</span>, input.getMessage());</span><br><span class="line">                        <span class="keyword">return</span> Result.present(<span class="number">1</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .....</span><br><span class="line">                .compile();</span><br></pre></td></tr></table></figure>
+<p>很明显的，在supllier中出现了数组越界，这样的错误我们是没办法保证不发生的，难道要我们在每一次调用可能发生错误代码的地方都手动添加try－catch吗。。</p>
+<p>好了，那解决方案是什么呢？</p>
+<p>答案是没有。</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/mengbi.jpg" alt="mengbi"></p>
+<p>这真不是我水平不够。。而是agera就是这样操作的。</p>
+<p>为什么呢？在我看来，对于UnExpected exception，我们不应该去捕捉它们，因为它们可能引发更大的错误，一旦出现，最好的情况就是直接报错，让程序员知道这里有错误，进行修改。就比如前面说的数组越界，如果我们捕捉到了，这样在测试的时候就不会报错，我们也可能就忽略了这样的错误，这是不应该发生的，如果我们要把这个值传递到下一个页面呢？这就会引起连锁反应，后果不堪设想。</p>
+<p>下面还是贴出我在agera的github上提的issue，大家可以看一下，英语水平比较渣。。见谅～</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/question1.png" alt="question1"></p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/question2.png" alt="question2"></p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/question3.png" alt="question3"></p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/question4.png" alt="question4"></p>
+<p><a href="https://github.com/google/agera/issues/39" target="_blank" rel="external">这是issue的传送门</a>。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>这个后记我想了一下要不要写，最终还是决定写出来。上一篇文章写出来以后得到了大家的认可我很开心，但是有一些人的一些话却让我很不舒服。</p>
+<p> <img src="/images/让我们来聊聊RxJava和agera中的error-handling吧/fuck.png" alt="fuck"></p>
+<p>其实对于第一个人的话我是可以接受的，毕竟他还是在［正常提建议的范畴］，说实话我也承认，上一篇文章的［源码分析］部分我写的很烂。但是对于第二个人的话，我想用下面这句话回敬他</p>
+<h3 id="任何人都可以变得狠毒-只要你尝试过嫉妒。"><a href="#任何人都可以变得狠毒-只要你尝试过嫉妒。" class="headerlink" title="任何人都可以变得狠毒,只要你尝试过嫉妒。"></a>任何人都可以变得狠毒,只要你尝试过嫉妒。</h3><h1 id="下期预告"><a href="#下期预告" class="headerlink" title="下期预告"></a>下期预告</h1><p>下一期想和大家分享一下关于react－native的东西，可能包含环境搭建，基本的用法和源码分析（主要是核心的java－js通信部分），可能又会是一片比较长的文章了～哈哈</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/error-handling/" rel="tag">#error handling</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/23/要做一个有冒险精神的人！开启漫漫的agera之旅/" rel="next" title="要做一个有冒险精神的人！开启漫漫的agera之旅">
+                <i class="fa fa-chevron-left"></i> 要做一个有冒险精神的人！开启漫漫的agera之旅
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/04/29/让我们来聊聊RxJava和agera中的error-handling吧/"
+           data-title="让我们来聊聊RxJava和agera中的error-handling吧" data-url="http://yoursite.com/2016/04/29/让我们来聊聊RxJava和agera中的error-handling吧/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">7</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">2.</span> <span class="nav-text">参考文章</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RxJava"><span class="nav-number">3.</span> <span class="nav-text">RxJava</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Expected-exception"><span class="nav-number">3.0.1.</span> <span class="nav-text">Expected exception</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unexpected-exception"><span class="nav-number">3.0.2.</span> <span class="nav-text">Unexpected exception</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#agera"><span class="nav-number">4.</span> <span class="nav-text">agera</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Expected-exception-1"><span class="nav-number">4.0.1.</span> <span class="nav-text">Expected exception</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unexpected-exception-1"><span class="nav-number">4.0.2.</span> <span class="nav-text">Unexpected exception</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">5.</span> <span class="nav-text">后记</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#任何人都可以变得狠毒-只要你尝试过嫉妒。"><span class="nav-number">5.0.1.</span> <span class="nav-text">任何人都可以变得狠毒,只要你尝试过嫉妒。</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#下期预告"><span class="nav-number">6.</span> <span class="nav-text">下期预告</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
