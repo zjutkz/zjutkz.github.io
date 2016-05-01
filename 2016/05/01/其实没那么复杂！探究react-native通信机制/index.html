@@ -66,7 +66,7 @@
 <meta property="og:image" content="http://yoursite.com/images/其实没那么复杂！探究react-native通信机制/connection.png">
 <meta property="og:image" content="http://yoursite.com/images/其实没那么复杂！探究react-native通信机制/JavaCallJS.png">
 <meta property="og:image" content="http://yoursite.com/images/其实没那么复杂！探究react-native通信机制/JSCallJava.png">
-<meta property="og:updated_time" content="2016-05-01T15:25:08.000Z">
+<meta property="og:updated_time" content="2016-05-01T15:56:57.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="其实没那么复杂！探究react-native通信机制">
 <meta name="twitter:description" content="近段时间来Android上最火的框架非react native莫属了，这里我不去评价这个框架的好坏，毕竟只有用过的人才会有深刻的体会。但是我个人有一个习惯，在使用一个开源库之前，一定要看过它的源码，不说百分百搞懂吧，至少得弄清楚它的工作原理，所以在使用RN之前我就看了看它的源码。不看不知道，一看吓一跳，它其中最核心的那一部分——java和js的通信写的确实是非常的精妙，把整个流程搞懂以后让我受益无">
@@ -306,7 +306,15 @@
 <p>调用了bridge的setGlobalVariable方法，这是一个native的方法。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">setGlobalVariable</span><span class="params">(String propertyName, String jsonEncodedArgument)</span></span>;</span><br></pre></td></tr></table></figure>
 <p>这个方法的作用就是先把JavaRegistry格式化成json，并且调用C层的代码传输到js端。由于本人C层学艺不精，能看懂个大概，怕会有细节讲错，就不带大家进行分析了。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>到这里，真相就水落石出了，我们来总结一下吧。在程序启动的时候，也就是ReactActivity的onCreate函数中，我们会去创建一个ReactInstanceManagerImpl对象，并且通过ReactRootView的startReactApplication方法开启整个RN世界的大门。在这个方法中，我们会通过一个AsyncTask去创建ReactContext。在创建ReactContext过程中，我们把我们自己注入(MainReactPackage)的和系统生成(CoreModulesPackage)的package通过processPackage方法将其中的各个modules注入到了对应的Registry中，最后通过CatalystInstanceImpl中的ReactBridge将java的注册表通过jni传输到了js层。这样，js层就获取到了java层的所有接口和方法，相当于一个美国人身边有了以为中文翻译。而js层的注册表本来就是由java层生成的，所以就相当于一个中国人身边有了一个英文翻译，从此他们就可以愉快的交流了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>到这里，真相就水落石出了，我们来总结一下吧。</p>
+<p>(1) 在程序启动的时候，也就是ReactActivity的onCreate函数中，我们会去创建一个ReactInstanceManagerImpl对象</p>
+<p>(2) 通过ReactRootView的startReactApplication方法开启整个RN世界的大门</p>
+<p>(3) 在这个方法中，我们会通过一个AsyncTask去创建ReactContext</p>
+<p>(4) 在创建ReactContext过程中，我们把我们自己注入(MainReactPackage)的和系统生成(CoreModulesPackage)的package通过processPackage方法将其中的各个modules注入到了对应的Registry中</p>
+<p>(5) 最后通过CatalystInstanceImpl中的ReactBridge将java的注册表通过jni传输到了JS层。</p>
+<p>这样，js层就获取到了java层的所有接口和方法，相当于一个美国人身边有了以为中文翻译。而js层的注册表本来就是由java层生成的，所以就相当于一个中国人身边有了一个英文翻译，从此他们就可以愉快的交流了。</p>
+<p>涉及到的重要的类：</p>
+<p>ReactInstanceManagerImpl，ReactContext，CatalystInstanceImpl，ReactBridge。</p>
 <h1 id="Java－-gt-js"><a href="#Java－-gt-js" class="headerlink" title="Java－&gt;js"></a>Java－&gt;js</h1><p>前面我们讲了两端通信的方式和注册表是如何从Java端发送到js端的，下面让我们讲讲这样的准备工作完成以后，java是如何调用js的方法的。</p>
 <p>首先，经过上面的学习，其实这个问题已经有了一个初步的答案了，因为［将JavaRegistry从java端传输到js端］这个过程就是一个java向js通信的过程，具体的过程在上一节的总结中已经说了，让我们回想一下，之前所有的事情都是在ReactInstanceManagerImpl中ReactContextInitAsyncTask的doInBackground方法中完成的，那这个方法完成之后又做了什么呢？</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onPostExecute</span><span class="params">(Result&lt;ReactApplicationContext&gt; result)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    setupReactContext(result.get());</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    mDevSupportManager.handleException(e);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    mReactContextInitAsyncTask = <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Handle enqueued request to re-initialize react context.</span></span><br><span class="line">  <span class="keyword">if</span> (mPendingReactContextInitParams != <span class="keyword">null</span>) &#123;</span><br><span class="line">    recreateReactContextInBackground(</span><br><span class="line">        mPendingReactContextInitParams.getJsExecutorFactory(),</span><br><span class="line">        mPendingReactContextInitParams.getJsBundleLoader());</span><br><span class="line">    mPendingReactContextInitParams = <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -329,7 +337,14 @@
 <p>直接调用了ReactBridge的同名函数。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">callFunction</span><span class="params">(ExecutorToken executorToken, <span class="keyword">int</span> moduleId, <span class="keyword">int</span> methodId, NativeArray arguments, String tracingName)</span></span>;</span><br></pre></td></tr></table></figure>
 <p>可以看到又是一个native函数，具体作用就是将想用调用的方法对应的moduleId，methodId和arguments通过jni传递到js端进行调用。而我们这边调用的是AppRegistry的runApplication方法，这个方法在js端的作用就是开始运行整个js程序，从而将我们的RN程序真正的跑起来。</p>
-<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>首先，对于我们java端要调用的js端的类和方法，我们都必须要注册到js的注册表中，这个过程在上一部分的分析中已经带大家走过了。当真正要调用的时候，是通过CatalystInstanceImpl这个类的getJSModule方法去得到对应的JSModule，然后通过动态代理拿到方法的各种参数，通过ReactBridge传递到C层然后再传递到js层的。</p>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>首先，对于我们java端要调用的js端的类和方法，我们都必须要注册到js的注册表中，这个过程在上一部分的分析中已经带大家走过了。当真正要调用的时候，步骤是这样的：</p>
+<p>(1) 调用CatalystInstanceImpl这个类的getJSModule方法去得到对应的JSModule</p>
+<p>(2) CatalysInstanceImpl实际上是调用JavaScriptModuleRegistry的getJSModule方法去获取注册在其中的module</p>
+<p>(3) 然后通过动态代理拿到方法的各种参数，包括moduleId，methodId和params</p>
+<p>(4) 通过ReactBridge调用jni传递到C层</p>
+<p>(5) 通过C层再传递到js层。</p>
+<p>涉及到的重要的类：</p>
+<p>CatalystInstanceImpl，JavaScriptModuleRegistry，JavaScriptModuleInvocationHandler，ReactBridge。</p>
 <p> <img src="/images/其实没那么复杂！探究react-native通信机制/JavaCallJS.png" alt="JavaCallJS"></p>
 <p>通过这个图配合上代码应该能比较好的理解了。</p>
 <h1 id="js－-gt-Java"><a href="#js－-gt-Java" class="headerlink" title="js－&gt;Java"></a>js－&gt;Java</h1><p>RN的js调java的流程可以说是让我觉得最新颖的地方，具体就是js不是直接通过注册接口去调用java方法的，而是将对应的的参数（moduleId和methodId）push到一个messageQueue中，等待java层的事件来驱动它，当java层的事件传递过来以后，js层把messageQueue中所有的数据返回给java层，再通过注册表JavaRegistry去调用方法。</p>
@@ -351,7 +366,14 @@
 <p>最终执行的是BaseJavaModule的invoke方法。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">invoke</span><span class="params">(CatalystInstance catalystInstance, ExecutorToken executorToken, ReadableNativeArray parameters)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	.........</span><br><span class="line">	mMethod.invoke(BaseJavaModule.<span class="keyword">this</span>, mArguments);</span><br><span class="line">	.........</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>通过反射调用最终的方法。</p>
-<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><p>这里我们重点要了解的就是js向java的通信靠的是事件驱动模式，也就是说js将方法的对应参数push到MessageQueue中，等java端事件传递过来以后再将其中所有的数据通过C层传递给java层，然后通过JavaRegistry这个Java注册表拿到对应的module和method，通过反射执行方法。</p>
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><p>这里我们重点要了解的就是js向java的通信靠的是事件驱动模式。</p>
+<p>(1) JS将方法的对应参数push到MessageQueue中，等java端事件传递</p>
+<p>(2) Java端事件触发以后，JS层将MessageQueue中的数据通过C层传递给java层</p>
+<p>(3) C层调用一开始注册在其中的NativeModulesReactCallback</p>
+<p>(4  然后通过JavaRegistry这个Java注册表拿到对应的module和method</p>
+<p>(5) 通过反射执行方法。</p>
+<p>涉及到的重要的类：</p>
+<p>MessageQueue(JS层)，NativeModulesReactCallback，JavaRegistry。</p>
 <p> <img src="/images/其实没那么复杂！探究react-native通信机制/JSCallJava.png" alt="JSCallJava"></p>
 <p>老规矩，通过图配合代码来理解流程。</p>
 <h1 id="重要类的作用"><a href="#重要类的作用" class="headerlink" title="重要类的作用"></a>重要类的作用</h1><p>最后我们通过总结一下前面提到的几个重要的类的作用来加深印象。</p>
