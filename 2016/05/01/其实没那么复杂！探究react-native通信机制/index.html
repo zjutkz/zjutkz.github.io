@@ -1,0 +1,913 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="react native," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="近段时间来Android上最火的框架非react native莫属了，这里我不去评价这个框架的好坏，毕竟只有用过的人才会有深刻的体会。但是我个人有一个习惯，在使用一个开源库之前，一定要看过它的源码，不说百分百搞懂吧，至少得弄清楚它的工作原理，所以在使用RN之前我就看了看它的源码。不看不知道，一看吓一跳，它其中最核心的那一部分——java和js的通信写的确实是非常的精妙，把整个流程搞懂以后让我受益无">
+<meta property="og:type" content="article">
+<meta property="og:title" content="其实没那么复杂！探究react-native通信机制">
+<meta property="og:url" content="http://yoursite.com/2016/05/01/其实没那么复杂！探究react-native通信机制/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="近段时间来Android上最火的框架非react native莫属了，这里我不去评价这个框架的好坏，毕竟只有用过的人才会有深刻的体会。但是我个人有一个习惯，在使用一个开源库之前，一定要看过它的源码，不说百分百搞懂吧，至少得弄清楚它的工作原理，所以在使用RN之前我就看了看它的源码。不看不知道，一看吓一跳，它其中最核心的那一部分——java和js的通信写的确实是非常的精妙，把整个流程搞懂以后让我受益无">
+<meta property="og:image" content="http://yoursite.com/images/其实没那么复杂！探究react-native通信机制/connection.png">
+<meta property="og:image" content="http://yoursite.com/images/其实没那么复杂！探究react-native通信机制/JavaCallJS.png">
+<meta property="og:image" content="http://yoursite.com/images/其实没那么复杂！探究react-native通信机制/JSCallJava.png">
+<meta property="og:updated_time" content="2016-05-01T12:30:58.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="其实没那么复杂！探究react-native通信机制">
+<meta name="twitter:description" content="近段时间来Android上最火的框架非react native莫属了，这里我不去评价这个框架的好坏，毕竟只有用过的人才会有深刻的体会。但是我个人有一个习惯，在使用一个开源库之前，一定要看过它的源码，不说百分百搞懂吧，至少得弄清楚它的工作原理，所以在使用RN之前我就看了看它的源码。不看不知道，一看吓一跳，它其中最核心的那一部分——java和js的通信写的确实是非常的精妙，把整个流程搞懂以后让我受益无">
+<meta name="twitter:image" content="http://yoursite.com/images/其实没那么复杂！探究react-native通信机制/connection.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 其实没那么复杂！探究react-native通信机制 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                其实没那么复杂！探究react-native通信机制
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-01T20:30:33+08:00" content="2016-05-01">
+              2016-05-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/01/其实没那么复杂！探究react-native通信机制/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/01/其实没那么复杂！探究react-native通信机制/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/01/其实没那么复杂！探究react-native通信机制/" class="leancloud_visitors" data-flag-title="其实没那么复杂！探究react-native通信机制">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>近段时间来Android上最火的框架非react native莫属了，这里我不去评价这个框架的好坏，毕竟只有用过的人才会有深刻的体会。但是我个人有一个习惯，在使用一个开源库之前，一定要看过它的源码，不说百分百搞懂吧，至少得弄清楚它的工作原理，所以在使用RN之前我就看了看它的源码。不看不知道，一看吓一跳，它其中最核心的那一部分——java和js的通信写的确实是非常的精妙，把整个流程搞懂以后让我受益无穷。</p>
+<p>这里插一句题外话，阿里的weex也马上就要开源了，我身边的小伙伴也有已经拿到源码投身于其中的，等到它开源的时候我也会去看看它的源码，了解下它和RN的区别到底是什么。</p>
+<p>废话也不说了，让我们好好看看RN的通信机制吧。</p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在看这篇文章之前，你得确保你有一定的RN开发基础，如果是零基础的同学，建议大家先去看看<a href="http://www.lcode.org/react-native/" target="_blank" rel="external">这个系列的文章</a>，里面非常清楚的介绍了如何使用RN来进行开发。当然如果你不满足仅仅是［了解］的话，也可以去网上查阅关于RN的一些资料，其实里面一些东西是非常值得一看的，比如virtual DOM，diff机制等等。</p>
+<h1 id="通信方式"><a href="#通信方式" class="headerlink" title="通信方式"></a>通信方式</h1><p>我们所说的［通信］，指的是RN中Java和js的通信，也就是js部分中的那些jsx代码是如何转化成一个java层真实的view和事件的，java层又是如何调用js来找出它所需要的那些view和事件的。</p>
+<p>简单的说，RN的两端通信靠的是一张配置表，java端和js端持有同一张表，通信的时候就是靠这张表的各个条目的对应来进行的。</p>
+<p> <img src="/images/其实没那么复杂！探究react-native通信机制/connection.png" alt="connection"></p>
+<p>大致的就是和上面这张图一样，两端各持有一份相同的config，config中有一些已经注册的模块，两端的通信就是通过传输这样的“A”，“B”或者”C”来实现的。这个config对应到RN的代码是NativeModuleRegistry和JavaScriptModuleRegistry。如果大家想象不出来的话我可以给大家打个比喻，java端和js端的通信就好比一个中国人和一个美国人在对话，而这个config，也就是注册表就相当于两个翻译，有了翻译两个语言不通的人才能正常交流。那这两张表是如何生成的呢？还是让我们从代码中寻找答案吧。</p>
+<p>首先我们知道在使用RN的时候，我们对应的activity要继承自ReactActivity并且重写一个叫做getPackages的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> List&lt;ReactPackage&gt; <span class="title">getPackages</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> Arrays.&lt;ReactPackage&gt;asList(</span><br><span class="line">            <span class="keyword">new</span> MainReactPackage()</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到里面的这个MainReactPackage是RN帮我们生成好。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainReactPackage</span> <span class="keyword">implements</span> <span class="title">ReactPackage</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> List&lt;NativeModule&gt; <span class="title">createNativeModules</span><span class="params">(ReactApplicationContext reactContext)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> Arrays.&lt;NativeModule&gt;asList(</span><br><span class="line">      <span class="keyword">new</span> AppStateModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> AsyncStorageModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> CameraRollManager(reactContext),</span><br><span class="line">      <span class="keyword">new</span> ClipboardModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> DatePickerDialogModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> DialogModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> FrescoModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> ImageEditingManager(reactContext),</span><br><span class="line">      <span class="keyword">new</span> ImageStoreManager(reactContext),</span><br><span class="line">      <span class="keyword">new</span> IntentModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> LocationModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> NetworkingModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> NetInfoModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> StatusBarModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> TimePickerDialogModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> ToastModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> VibrationModule(reactContext),</span><br><span class="line">      <span class="keyword">new</span> WebSocketModule(reactContext)</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> List&lt;Class&lt;? extends JavaScriptModule&gt;&gt; createJSModules() &#123;</span><br><span class="line">    <span class="keyword">return</span> Collections.emptyList();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> List&lt;ViewManager&gt; <span class="title">createViewManagers</span><span class="params">(ReactApplicationContext reactContext)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> Arrays.&lt;ViewManager&gt;asList(</span><br><span class="line">      ARTRenderableViewManager.createARTGroupViewManager(),</span><br><span class="line">      ARTRenderableViewManager.createARTShapeViewManager(),</span><br><span class="line">      ARTRenderableViewManager.createARTTextViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ARTSurfaceViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactDialogPickerManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactDrawerLayoutManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactDropdownPickerManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactHorizontalScrollViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactImageManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactModalHostManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactProgressBarViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactRawTextManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactScrollViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactSliderManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactSwitchManager(),</span><br><span class="line">      <span class="keyword">new</span> FrescoBasedReactTextInlineImageViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactTextInputManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactTextViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactToolbarManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactViewPagerManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactVirtualTextViewManager(),</span><br><span class="line">      <span class="keyword">new</span> ReactWebViewManager(),</span><br><span class="line">      <span class="keyword">new</span> RecyclerViewBackedScrollViewManager(),</span><br><span class="line">      <span class="keyword">new</span> SwipeRefreshLayoutManager());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到的是其中定义了一些基础的组件和事件，具体就不说了，大家都看得懂。如果你想要自定义一些组件或者事件的话必须要自己去写一个package，至于怎么写大家看我前面提到的那一系列文章就知道了。而我们前面提到的那两个注册表——NativeModuleRegistry和JavaScriptModuleRegistry就是通过这样的package去生成的，具体方法我们看下去就知道了。</p>
+<p>既然我们的activity继承自了ReactActivity，那我们就去看看ReactActivity里面做了什么。第一个要看的当然是onCreate函数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (getUseDeveloperSupport() &amp;&amp; Build.VERSION.SDK_INT &gt;= <span class="number">23</span>) &#123;</span><br><span class="line">    <span class="comment">// Get permission to show redbox in dev builds.</span></span><br><span class="line">    <span class="keyword">if</span> (!Settings.canDrawOverlays(<span class="keyword">this</span>)) &#123;</span><br><span class="line">      Intent serviceIntent = <span class="keyword">new</span> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);</span><br><span class="line">      startActivity(serviceIntent);</span><br><span class="line">      FLog.w(ReactConstants.TAG, REDBOX_PERMISSION_MESSAGE);</span><br><span class="line">      Toast.makeText(<span class="keyword">this</span>, REDBOX_PERMISSION_MESSAGE, Toast.LENGTH_LONG).show();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  mReactInstanceManager = createReactInstanceManager();</span><br><span class="line">  ReactRootView mReactRootView = createRootView();</span><br><span class="line">  mReactRootView.startReactApplication(mReactInstanceManager, getMainComponentName(), getLaunchOptions());</span><br><span class="line">  setContentView(mReactRootView);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到我们创建了一个ReactInstanceManager，看看是怎么创建的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> ReactInstanceManager <span class="title">createReactInstanceManager</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  ReactInstanceManager.Builder builder = ReactInstanceManager.builder()</span><br><span class="line">      .setApplication(getApplication())</span><br><span class="line">      .setJSMainModuleName(getJSMainModuleName())</span><br><span class="line">      .setUseDeveloperSupport(getUseDeveloperSupport())</span><br><span class="line">      .setInitialLifecycleState(mLifecycleState);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (ReactPackage reactPackage : getPackages()) &#123;</span><br><span class="line">    builder.addPackage(reactPackage);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  String jsBundleFile = getJSBundleFile();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (jsBundleFile != <span class="keyword">null</span>) &#123;</span><br><span class="line">    builder.setJSBundleFile(jsBundleFile);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    builder.setBundleAssetName(getBundleAssetName());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> builder.build();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>中间有一段这样的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (ReactPackage reactPackage : getPackages()) &#123;</span><br><span class="line">  builder.addPackage(reactPackage);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过builder模式把我们的package注入到了builder中并且最后调用build方法创建出一个ReactInstanceManagerImpl实例。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> ReactInstanceManager <span class="title">build</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  .......无关代码</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> ReactInstanceManagerImpl(</span><br><span class="line">      Assertions.assertNotNull(</span><br><span class="line">          mApplication,</span><br><span class="line">          <span class="string">"Application property has not been set with this builder"</span>),</span><br><span class="line">      mJSBundleFile,</span><br><span class="line">      mJSMainModuleName,</span><br><span class="line">      mPackages,</span><br><span class="line">      mUseDeveloperSupport,</span><br><span class="line">      mBridgeIdleDebugListener,</span><br><span class="line">      Assertions.assertNotNull(mInitialLifecycleState, <span class="string">"Initial lifecycle state was not set"</span>),</span><br><span class="line">      mUIImplementationProvider,</span><br><span class="line">      mNativeModuleCallExceptionHandler,</span><br><span class="line">      mJSCConfig);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中我们的package作为构造函数的参数传递到了ReactInstanceManagerImpl中。</p>
+<p>回过头来看onCreate函数，在这之后我们创建一个ReactRootView作为我们的根视图，并且调用它的startReactApplication函数，从函数名字就可以看出来，这个函数的作用非常重要，从这儿开始，算是启动了我们的RN程序。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">startReactApplication</span><span class="params">(</span><br><span class="line">    ReactInstanceManager reactInstanceManager,</span><br><span class="line">    String moduleName,</span><br><span class="line">    @Nullable Bundle launchOptions)</span> </span>&#123;</span><br><span class="line">  UiThreadUtil.assertOnUiThread();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// TODO(6788889): Use POJO instead of bundle here, apparently we can't just use WritableMap</span></span><br><span class="line">  <span class="comment">// here as it may be deallocated in native after passing via JNI bridge, but we want to reuse</span></span><br><span class="line">  <span class="comment">// it in the case of re-creating the catalyst instance</span></span><br><span class="line">  Assertions.assertCondition(</span><br><span class="line">      mReactInstanceManager == <span class="keyword">null</span>,</span><br><span class="line">      <span class="string">"This root view has already "</span> +</span><br><span class="line">        <span class="string">"been attached to a catalyst instance manager"</span>);</span><br><span class="line"></span><br><span class="line">  mReactInstanceManager = reactInstanceManager;</span><br><span class="line">  mJSModuleName = moduleName;</span><br><span class="line">  mLaunchOptions = launchOptions;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!mReactInstanceManager.hasStartedCreatingInitialContext()) &#123;</span><br><span class="line">    mReactInstanceManager.createReactContextInBackground();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// We need to wait for the initial onMeasure, if this view has not yet been measured, we set</span></span><br><span class="line">  <span class="comment">// mAttachScheduled flag, which will make this view startReactApplication itself to instance</span></span><br><span class="line">  <span class="comment">// manager once onMeasure is called.</span></span><br><span class="line">  <span class="keyword">if</span> (mWasMeasured &amp;&amp; mIsAttachedToWindow) &#123;</span><br><span class="line">    mReactInstanceManager.attachMeasuredRootView(<span class="keyword">this</span>);</span><br><span class="line">    mIsAttachedToInstance = <span class="keyword">true</span>;</span><br><span class="line">    getViewTreeObserver().addOnGlobalLayoutListener(getKeyboardListener());</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    mAttachScheduled = <span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中我们调用了ReactInstanceManager的createReactContextInBackground()方法去构造属于RN程序的上下文。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">createReactContextInBackground</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  Assertions.assertCondition(</span><br><span class="line">      !mHasStartedCreatingInitialContext,</span><br><span class="line">      <span class="string">"createReactContextInBackground should only be called when creating the react "</span> +</span><br><span class="line">          <span class="string">"application for the first time. When reloading JS, e.g. from a new file, explicitly"</span> +</span><br><span class="line">          <span class="string">"use recreateReactContextInBackground"</span>);</span><br><span class="line"></span><br><span class="line">  mHasStartedCreatingInitialContext = <span class="keyword">true</span>;</span><br><span class="line">  recreateReactContextInBackgroundInner();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">recreateReactContextInBackgroundInner</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    UiThreadUtil.assertOnUiThread();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mUseDeveloperSupport &amp;&amp; mJSMainModuleName != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (mDevSupportManager.hasUpToDateJSBundleInCache()) &#123;</span><br><span class="line">        <span class="comment">// If there is a up-to-date bundle downloaded from server, always use that</span></span><br><span class="line">        onJSBundleLoadedFromServer();</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (mJSBundleFile == <span class="keyword">null</span>) &#123;</span><br><span class="line">        mDevSupportManager.handleReloadJS();</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        mDevSupportManager.isPackagerRunning(</span><br><span class="line">            <span class="keyword">new</span> DevServerHelper.PackagerStatusCallback() &#123;</span><br><span class="line">              <span class="meta">@Override</span></span><br><span class="line">              <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onPackagerStatusFetched</span><span class="params">(<span class="keyword">final</span> <span class="keyword">boolean</span> packagerIsRunning)</span> </span>&#123;</span><br><span class="line">                UiThreadUtil.runOnUiThread(</span><br><span class="line">                    <span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">                      <span class="meta">@Override</span></span><br><span class="line">                      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                        <span class="keyword">if</span> (packagerIsRunning) &#123;</span><br><span class="line">                          mDevSupportManager.handleReloadJS();</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                          recreateReactContextInBackgroundFromBundleFile();</span><br><span class="line">                        &#125;</span><br><span class="line">                      &#125;</span><br><span class="line">                    &#125;);</span><br><span class="line">              &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    recreateReactContextInBackgroundFromBundleFile();</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>其中的逻辑判断是如果你是开发模式的，就会调用onJSBundleLoadedFromServer()这个函数。否则直接走recreateReactContextInBackgroundFromBundleFile()。这里我们只关注前者，其实两者的差别不是很大，主要差别是jsBundle的获取方式。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">onJSBundleLoadedFromServer</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  recreateReactContextInBackground(</span><br><span class="line">      <span class="keyword">new</span> JSCJavaScriptExecutor.Factory(),</span><br><span class="line">      JSBundleLoader.createCachedBundleFromNetworkLoader(</span><br><span class="line">          mDevSupportManager.getSourceUrl(),</span><br><span class="line">          mDevSupportManager.getDownloadedJSBundleFile()));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">recreateReactContextInBackground</span><span class="params">(</span><br><span class="line">      JavaScriptExecutor.Factory jsExecutorFactory,</span><br><span class="line">      JSBundleLoader jsBundleLoader)</span> </span>&#123;</span><br><span class="line">    UiThreadUtil.assertOnUiThread();</span><br><span class="line"></span><br><span class="line">    ReactContextInitParams initParams =</span><br><span class="line">        <span class="keyword">new</span> ReactContextInitParams(jsExecutorFactory, jsBundleLoader);</span><br><span class="line">    <span class="keyword">if</span> (mReactContextInitAsyncTask == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="comment">// No background task to create react context is currently running, create and execute one.</span></span><br><span class="line">      mReactContextInitAsyncTask = <span class="keyword">new</span> ReactContextInitAsyncTask();</span><br><span class="line">      mReactContextInitAsyncTask.execute(initParams);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="comment">// Background task is currently running, queue up most recent init params to recreate context</span></span><br><span class="line">      <span class="comment">// once task completes.</span></span><br><span class="line">      mPendingReactContextInitParams = initParams;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>在onJSBundleLoadedFromServer方法中我们调用JSBundleLoader的createCachedBundleFromNetworkLoader方法去创建了一个jsBundleLoader。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> JSBundleLoader <span class="title">createCachedBundleFromNetworkLoader</span><span class="params">(</span><br><span class="line">    <span class="keyword">final</span> String sourceURL,</span><br><span class="line">    <span class="keyword">final</span> String cachedFileLocation)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> JSBundleLoader() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadScript</span><span class="params">(ReactBridge bridge)</span> </span>&#123;</span><br><span class="line">      bridge.loadScriptFromFile(cachedFileLocation, sourceURL);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getSourceUrl</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> sourceURL;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它的主要作用是去加载jsBundle。大家可以去看看JSBundleLoader这个类，其中还有两种创建loader的方式，如果我们要发release版了，调用的是createFileLoader，也就是说release的情况下我们需要用gradle生成了jsBundler之后将其放在assets目录上或者文件中。</p>
+<p>下面让我们看看之后的recreateReactContextInBackground方法。</p>
+<p>它会调用了一个叫做mReactContextInitAsyncTask的AsyncTask去执行异步任务。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Result&lt;ReactApplicationContext&gt; <span class="title">doInBackground</span><span class="params">(ReactContextInitParams... params)</span> </span>&#123;</span><br><span class="line">  Assertions.assertCondition(params != <span class="keyword">null</span> &amp;&amp; params.length &gt; <span class="number">0</span> &amp;&amp; params[<span class="number">0</span>] != <span class="keyword">null</span>);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    JavaScriptExecutor jsExecutor =</span><br><span class="line">        params[<span class="number">0</span>].getJsExecutorFactory().create(</span><br><span class="line">          mJSCConfig == <span class="keyword">null</span> ? <span class="keyword">new</span> WritableNativeMap() : mJSCConfig.getConfigMap());</span><br><span class="line">    <span class="keyword">return</span> Result.of(createReactContext(jsExecutor, params[<span class="number">0</span>].getJsBundleLoader()));</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    <span class="comment">// Pass exception to onPostExecute() so it can be handled on the main thread</span></span><br><span class="line">    <span class="keyword">return</span> Result.of(e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以看到它的doInBackground方法调用了createReactContext()方法去创建上下文。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> ReactApplicationContext <span class="title">createReactContext</span><span class="params">(</span><br><span class="line">    JavaScriptExecutor jsExecutor,</span><br><span class="line">    JSBundleLoader jsBundleLoader)</span> </span>&#123;</span><br><span class="line">  FLog.i(ReactConstants.TAG, <span class="string">"Creating react context."</span>);</span><br><span class="line">  ReactMarker.logMarker(CREATE_REACT_CONTEXT_START);</span><br><span class="line">  mSourceUrl = jsBundleLoader.getSourceUrl();</span><br><span class="line">  NativeModuleRegistry.Builder nativeRegistryBuilder = <span class="keyword">new</span> NativeModuleRegistry.Builder();</span><br><span class="line">  JavaScriptModulesConfig.Builder jsModulesBuilder = <span class="keyword">new</span> JavaScriptModulesConfig.Builder();</span><br><span class="line"></span><br><span class="line">  ReactApplicationContext reactContext = <span class="keyword">new</span> ReactApplicationContext(mApplicationContext);</span><br><span class="line">  <span class="keyword">if</span> (mUseDeveloperSupport) &#123;</span><br><span class="line">    reactContext.setNativeModuleCallExceptionHandler(mDevSupportManager);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ReactMarker.logMarker(PROCESS_PACKAGES_START);</span><br><span class="line">  Systrace.beginSection(</span><br><span class="line">      Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,</span><br><span class="line">      <span class="string">"createAndProcessCoreModulesPackage"</span>);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    CoreModulesPackage coreModulesPackage =</span><br><span class="line">        <span class="keyword">new</span> CoreModulesPackage(<span class="keyword">this</span>, mBackBtnHandler, mUIImplementationProvider);</span><br><span class="line">    processPackage(coreModulesPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// TODO(6818138): Solve use-case of native/js modules overriding</span></span><br><span class="line">  <span class="keyword">for</span> (ReactPackage reactPackage : mPackages) &#123;</span><br><span class="line">    Systrace.beginSection(</span><br><span class="line">        Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,</span><br><span class="line">        <span class="string">"createAndProcessCustomReactPackage"</span>);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      processPackage(reactPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  ReactMarker.logMarker(PROCESS_PACKAGES_END);</span><br><span class="line"></span><br><span class="line">  ReactMarker.logMarker(BUILD_NATIVE_MODULE_REGISTRY_START);</span><br><span class="line">  Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"buildNativeModuleRegistry"</span>);</span><br><span class="line">  NativeModuleRegistry nativeModuleRegistry;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">     nativeModuleRegistry = nativeRegistryBuilder.build();</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">    ReactMarker.logMarker(BUILD_NATIVE_MODULE_REGISTRY_END);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ReactMarker.logMarker(BUILD_JS_MODULE_CONFIG_START);</span><br><span class="line">  Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"buildJSModuleConfig"</span>);</span><br><span class="line">  JavaScriptModulesConfig javaScriptModulesConfig;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    javaScriptModulesConfig = jsModulesBuilder.build();</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">    ReactMarker.logMarker(BUILD_JS_MODULE_CONFIG_END);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  NativeModuleCallExceptionHandler exceptionHandler = mNativeModuleCallExceptionHandler != <span class="keyword">null</span></span><br><span class="line">      ? mNativeModuleCallExceptionHandler</span><br><span class="line">      : mDevSupportManager;</span><br><span class="line">  CatalystInstanceImpl.Builder catalystInstanceBuilder = <span class="keyword">new</span> CatalystInstanceImpl.Builder()</span><br><span class="line">      .setReactQueueConfigurationSpec(ReactQueueConfigurationSpec.createDefault())</span><br><span class="line">      .setJSExecutor(jsExecutor)</span><br><span class="line">      .setRegistry(nativeModuleRegistry)</span><br><span class="line">      .setJSModulesConfig(javaScriptModulesConfig)</span><br><span class="line">      .setJSBundleLoader(jsBundleLoader)</span><br><span class="line">      .setNativeModuleCallExceptionHandler(exceptionHandler);</span><br><span class="line"></span><br><span class="line">  ReactMarker.logMarker(CREATE_CATALYST_INSTANCE_START);</span><br><span class="line">  <span class="comment">// CREATE_CATALYST_INSTANCE_END is in JSCExecutor.cpp</span></span><br><span class="line">  Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"createCatalystInstance"</span>);</span><br><span class="line">  CatalystInstance catalystInstance;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    catalystInstance = catalystInstanceBuilder.build();</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">    ReactMarker.logMarker(CREATE_CATALYST_INSTANCE_END);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (mBridgeIdleDebugListener != <span class="keyword">null</span>) &#123;</span><br><span class="line">    catalystInstance.addBridgeIdleDebugListener(mBridgeIdleDebugListener);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  reactContext.initializeWithInstance(catalystInstance);</span><br><span class="line"></span><br><span class="line">  ReactMarker.logMarker(RUN_JS_BUNDLE_START);</span><br><span class="line">  Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"runJSBundle"</span>);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    catalystInstance.runJSBundle();</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">    ReactMarker.logMarker(RUN_JS_BUNDLE_END);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> reactContext;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法的代码就比较多了，但是我们现在只看我们所关注的。大家应该还记得我们的关注点吧？［两个注册表NativeModuleRegistry和JavaScriptModuleRegistry是如何生成的］。这里给出了答案。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NativeModuleRegistry.Builder nativeRegistryBuilder = <span class="keyword">new</span> NativeModuleRegistry.Builder();</span><br><span class="line">JavaScriptModulesConfig.Builder jsModulesBuilder = <span class="keyword">new</span> JavaScriptModulesConfig.Builder();</span><br></pre></td></tr></table></figure>
+<p>首先创建出两个builder。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  CoreModulesPackage coreModulesPackage =</span><br><span class="line">      <span class="keyword">new</span> CoreModulesPackage(<span class="keyword">this</span>, mBackBtnHandler, mUIImplementationProvider);</span><br><span class="line">  processPackage(coreModulesPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">  Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后回去new一个CoreModulesPackage并且使用了processPackage方法去处理它，这又是什么呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* package */</span> <span class="class"><span class="keyword">class</span> <span class="title">CoreModulesPackage</span> <span class="keyword">implements</span> <span class="title">ReactPackage</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> ReactInstanceManager mReactInstanceManager;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> DefaultHardwareBackBtnHandler mHardwareBackBtnHandler;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> UIImplementationProvider mUIImplementationProvider;</span><br><span class="line"></span><br><span class="line">  CoreModulesPackage(</span><br><span class="line">      ReactInstanceManager reactInstanceManager,</span><br><span class="line">      DefaultHardwareBackBtnHandler hardwareBackBtnHandler,</span><br><span class="line">      UIImplementationProvider uiImplementationProvider) &#123;</span><br><span class="line">    mReactInstanceManager = reactInstanceManager;</span><br><span class="line">    mHardwareBackBtnHandler = hardwareBackBtnHandler;</span><br><span class="line">    mUIImplementationProvider = uiImplementationProvider;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> List&lt;NativeModule&gt; <span class="title">createNativeModules</span><span class="params">(</span><br><span class="line">      ReactApplicationContext catalystApplicationContext)</span> </span>&#123;</span><br><span class="line">    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"createUIManagerModule"</span>);</span><br><span class="line">    UIManagerModule uiManagerModule;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      List&lt;ViewManager&gt; viewManagersList = mReactInstanceManager.createAllViewManagers(</span><br><span class="line">          catalystApplicationContext);</span><br><span class="line">      uiManagerModule = <span class="keyword">new</span> UIManagerModule(</span><br><span class="line">          catalystApplicationContext,</span><br><span class="line">          viewManagersList,</span><br><span class="line">          mUIImplementationProvider.createUIImplementation(</span><br><span class="line">              catalystApplicationContext,</span><br><span class="line">              viewManagersList));</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> Arrays.&lt;NativeModule&gt;asList(</span><br><span class="line">        <span class="keyword">new</span> AnimationsDebugModule(</span><br><span class="line">            catalystApplicationContext,</span><br><span class="line">            mReactInstanceManager.getDevSupportManager().getDevSettings()),</span><br><span class="line">        <span class="keyword">new</span> AndroidInfoModule(),</span><br><span class="line">        <span class="keyword">new</span> DeviceEventManagerModule(catalystApplicationContext, mHardwareBackBtnHandler),</span><br><span class="line">        <span class="keyword">new</span> ExceptionsManagerModule(mReactInstanceManager.getDevSupportManager()),</span><br><span class="line">        <span class="keyword">new</span> Timing(catalystApplicationContext),</span><br><span class="line">        <span class="keyword">new</span> SourceCodeModule(</span><br><span class="line">            mReactInstanceManager.getSourceUrl(),</span><br><span class="line">            mReactInstanceManager.getDevSupportManager().getSourceMapUrl()),</span><br><span class="line">        uiManagerModule,</span><br><span class="line">        <span class="keyword">new</span> DebugComponentOwnershipModule(catalystApplicationContext));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> List&lt;Class&lt;? extends JavaScriptModule&gt;&gt; createJSModules() &#123;</span><br><span class="line">    <span class="keyword">return</span> Arrays.asList(</span><br><span class="line">        DeviceEventManagerModule.RCTDeviceEventEmitter.class,</span><br><span class="line">        JSTimersExecution.class,</span><br><span class="line">        RCTEventEmitter.class,</span><br><span class="line">        RCTNativeAppEventEmitter.class,</span><br><span class="line">        AppRegistry.class,</span><br><span class="line">        com.facebook.react.bridge.Systrace.class,</span><br><span class="line">        HMRClient.class,</span><br><span class="line">        DebugComponentOwnershipModule.RCTDebugComponentOwnership.class);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> List&lt;ViewManager&gt; <span class="title">createViewManagers</span><span class="params">(ReactApplicationContext reactContext)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ArrayList&lt;&gt;(<span class="number">0</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，它里面有很多的JSModules和NativeModules，而这些modules是运行RN程序必备的，也是最核心的几个module。下面让我们看看processPackage方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">processPackage</span><span class="params">(</span><br><span class="line">    ReactPackage reactPackage,</span><br><span class="line">    ReactApplicationContext reactContext,</span><br><span class="line">    NativeModuleRegistry.Builder nativeRegistryBuilder,</span><br><span class="line">    JavaScriptModulesConfig.Builder jsModulesBuilder)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (NativeModule nativeModule : reactPackage.createNativeModules(reactContext)) &#123;</span><br><span class="line">    nativeRegistryBuilder.add(nativeModule);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> (Class&lt;? extends JavaScriptModule&gt; jsModuleClass : reactPackage.createJSModules()) &#123;</span><br><span class="line">    jsModulesBuilder.add(jsModuleClass);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很简单，拿到具体的native和js的module把它们添加到对应的builder中。</p>
+<p>再处理完了CoreModulesPackage之后，程序又会去处理我们在activity中注入的那些package。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (ReactPackage reactPackage : mPackages) &#123;</span><br><span class="line">  Systrace.beginSection(</span><br><span class="line">      Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,</span><br><span class="line">      <span class="string">"createAndProcessCustomReactPackage"</span>);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    processPackage(reactPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下去就是生成注册表了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">   nativeModuleRegistry = nativeRegistryBuilder.build();</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">   Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">   ReactMarker.logMarker(BUILD_NATIVE_MODULE_REGISTRY_END);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">   javaScriptModulesConfig = jsModulesBuilder.build();</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">   Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">   ReactMarker.logMarker(BUILD_JS_MODULE_CONFIG_END);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至此，我们就把所有的packages，包括RN核心的CoreModulesPackage和我们activity自己注入的package里面的各个modules全部写到了对应Registry的builder中。</p>
+<p>现在这两份注册表是存在于java端的，那要怎么传输到js端呢？我们继续看下去。</p>
+<p>再创建完了对应的注册表之后，ReactInstanceManagerImpl会通过builder模式去创建一个CatalystInstance的实例CatalystInstanceImpl。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CatalystInstance catalystInstance;</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  catalystInstance = catalystInstanceBuilder.build();</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">  Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">  ReactMarker.logMarker(CREATE_CATALYST_INSTANCE_END);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>让我们看看CatalystInstanceImpl的构造函数做了什么。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ReactBridge mBridge;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">CatalystInstanceImpl</span><span class="params">(</span><br><span class="line">    <span class="keyword">final</span> ReactQueueConfigurationSpec ReactQueueConfigurationSpec,</span><br><span class="line">    <span class="keyword">final</span> JavaScriptExecutor jsExecutor,</span><br><span class="line">    <span class="keyword">final</span> NativeModuleRegistry registry,</span><br><span class="line">    <span class="keyword">final</span> JavaScriptModulesConfig jsModulesConfig,</span><br><span class="line">    <span class="keyword">final</span> JSBundleLoader jsBundleLoader,</span><br><span class="line">    NativeModuleCallExceptionHandler nativeModuleCallExceptionHandler)</span> </span>&#123;</span><br><span class="line">  FLog.d(ReactConstants.TAG, <span class="string">"Initializing React Bridge."</span>);</span><br><span class="line">  mReactQueueConfiguration = ReactQueueConfigurationImpl.create(</span><br><span class="line">      ReactQueueConfigurationSpec,</span><br><span class="line">      <span class="keyword">new</span> NativeExceptionHandler());</span><br><span class="line">  mBridgeIdleListeners = <span class="keyword">new</span> CopyOnWriteArrayList&lt;&gt;();</span><br><span class="line">  mJavaRegistry = registry;</span><br><span class="line">  mJSModuleRegistry = <span class="keyword">new</span> JavaScriptModuleRegistry(CatalystInstanceImpl.<span class="keyword">this</span>, jsModulesConfig);</span><br><span class="line">  mJSBundleLoader = jsBundleLoader;</span><br><span class="line">  mNativeModuleCallExceptionHandler = nativeModuleCallExceptionHandler;</span><br><span class="line">  mTraceListener = <span class="keyword">new</span> JSProfilerTraceListener();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    mBridge = mReactQueueConfiguration.getJSQueueThread().callOnQueue(</span><br><span class="line">        <span class="keyword">new</span> Callable&lt;ReactBridge&gt;() &#123;</span><br><span class="line">          <span class="meta">@Override</span></span><br><span class="line">          <span class="function"><span class="keyword">public</span> ReactBridge <span class="title">call</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">            Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"initializeBridge"</span>);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              <span class="keyword">return</span> initializeBridge(jsExecutor, jsModulesConfig);</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">              Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;).get();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception t) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Failed to initialize bridge"</span>, t);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码很多，大家要知道的就是它会去创建一个ReactBridge。并且会调用initializeBridge(jsExecutor, jsModulesConfig);这个方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> ReactBridge <span class="title">initializeBridge</span><span class="params">(</span><br><span class="line">    JavaScriptExecutor jsExecutor,</span><br><span class="line">    JavaScriptModulesConfig jsModulesConfig)</span> </span>&#123;</span><br><span class="line">  mReactQueueConfiguration.getJSQueueThread().assertIsOnThread();</span><br><span class="line">  Assertions.assertCondition(mBridge == <span class="keyword">null</span>, <span class="string">"initializeBridge should be called once"</span>);</span><br><span class="line"></span><br><span class="line">  Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"ReactBridgeCtor"</span>);</span><br><span class="line">  ReactBridge bridge;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    bridge = <span class="keyword">new</span> ReactBridge(</span><br><span class="line">        jsExecutor,</span><br><span class="line">        <span class="keyword">new</span> NativeModulesReactCallback(),</span><br><span class="line">        mReactQueueConfiguration.getNativeModulesQueueThread());</span><br><span class="line">    mMainExecutorToken = bridge.getMainExecutorToken();</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, <span class="string">"setBatchedBridgeConfig"</span>);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    bridge.setGlobalVariable(</span><br><span class="line">        <span class="string">"__fbBatchedBridgeConfig"</span>,</span><br><span class="line">        buildModulesConfigJSONProperty(mJavaRegistry, jsModulesConfig));</span><br><span class="line">    bridge.setGlobalVariable(</span><br><span class="line">        <span class="string">"__RCTProfileIsProfiling"</span>,</span><br><span class="line">        Systrace.isTracing(Systrace.TRACE_TAG_REACT_APPS) ? <span class="string">"true"</span> : <span class="string">"false"</span>);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  mJavaRegistry.notifyReactBridgeInitialized(bridge);</span><br><span class="line">  <span class="keyword">return</span> bridge;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中有这么一段：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bridge.setGlobalVariable(</span><br><span class="line">    <span class="string">"__fbBatchedBridgeConfig"</span>,</span><br><span class="line">    buildModulesConfigJSONProperty(mJavaRegistry, jsModulesConfig));</span><br></pre></td></tr></table></figure>
+<p>调用了bridge的setGlobalVariable方法，这是一个native的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">setGlobalVariable</span><span class="params">(String propertyName, String jsonEncodedArgument)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>这个方法的作用就是先把JavaRegistry格式化成json，并且调用C层的代码传输到js端。由于本人C层学艺不精，能看懂个大概，怕会有细节讲错，就不带大家进行分析了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>到这里，真相就水落石出了，我们来总结一下吧。在程序启动的时候，也就是ReactActivity的onCreate函数中，我们会去创建一个ReactInstanceManagerImpl对象，并且通过ReactRootView的startReactApplication方法开启整个RN世界的大门。在这个方法中，我们会通过一个AsyncTask去创建ReactContext。在创建ReactContext过程中，我们把我们自己注入(MainReactPackage)的和系统生成(CoreModulesPackage)的package通过processPackage方法将其中的各个modules注入到了对应的Registry中，最后通过CatalystInstanceImpl中的ReactBridge将java的注册表通过jni传输到了js层。这样，js层就获取到了java层的所有接口和方法，相当于一个美国人身边有了以为中文翻译。而js层的注册表本来就是由java层生成的，所以就相当于一个中国人身边有了一个英文翻译，从此他们就可以愉快的交流了。</p>
+<h1 id="Java－-gt-js"><a href="#Java－-gt-js" class="headerlink" title="Java－&gt;js"></a>Java－&gt;js</h1><p>前面我们讲了两端通信的方式和注册表是如何从Java端发送到js端的，下面让我们讲讲这样的准备工作完成以后，java是如何调用js的方法的。</p>
+<p>首先，经过上面的学习，其实这个问题已经有了一个初步的答案了，因为［将JavaRegistry从java端传输到js端］这个过程就是一个java向js通信的过程，具体的过程在上一节的总结中已经说了，让我们回想一下，之前所有的事情都是在ReactInstanceManagerImpl中ReactContextInitAsyncTask的doInBackground方法中完成的，那这个方法完成之后又做了什么呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onPostExecute</span><span class="params">(Result&lt;ReactApplicationContext&gt; result)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    setupReactContext(result.get());</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    mDevSupportManager.handleException(e);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    mReactContextInitAsyncTask = <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Handle enqueued request to re-initialize react context.</span></span><br><span class="line">  <span class="keyword">if</span> (mPendingReactContextInitParams != <span class="keyword">null</span>) &#123;</span><br><span class="line">    recreateReactContextInBackground(</span><br><span class="line">        mPendingReactContextInitParams.getJsExecutorFactory(),</span><br><span class="line">        mPendingReactContextInitParams.getJsBundleLoader());</span><br><span class="line">    mPendingReactContextInitParams = <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，在onPstEcexute方法中调用了setupReactContext并且把我们创建出来的Context传了进去。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setupReactContext</span><span class="params">(ReactApplicationContext reactContext)</span> </span>&#123;</span><br><span class="line">  UiThreadUtil.assertOnUiThread();</span><br><span class="line">  Assertions.assertCondition(mCurrentReactContext == <span class="keyword">null</span>);</span><br><span class="line">  mCurrentReactContext = Assertions.assertNotNull(reactContext);</span><br><span class="line">  CatalystInstance catalystInstance =</span><br><span class="line">      Assertions.assertNotNull(reactContext.getCatalystInstance());</span><br><span class="line"></span><br><span class="line">  catalystInstance.initialize();</span><br><span class="line">  mDevSupportManager.onNewReactContextCreated(reactContext);</span><br><span class="line">  mMemoryPressureRouter.addMemoryPressureListener(catalystInstance);</span><br><span class="line">  moveReactContextToCurrentLifecycleState();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (ReactRootView rootView : mAttachedRootViews) &#123;</span><br><span class="line">    attachMeasuredRootViewToInstance(rootView, catalystInstance);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ReactInstanceEventListener[] listeners =</span><br><span class="line">    <span class="keyword">new</span> ReactInstanceEventListener[mReactInstanceEventListeners.size()];</span><br><span class="line">  listeners = mReactInstanceEventListeners.toArray(listeners);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (ReactInstanceEventListener listener : listeners) &#123;</span><br><span class="line">    listener.onReactContextInitialized(reactContext);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个方法中，有一个很重要的语句：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">attachMeasuredRootViewToInstance(rootView, catalystInstance);</span><br></pre></td></tr></table></figure>
+<p>看看它又做了什么</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">attachMeasuredRootViewToInstance</span><span class="params">(</span><br><span class="line">    ReactRootView rootView,</span><br><span class="line">    CatalystInstance catalystInstance)</span> </span>&#123;</span><br><span class="line">  UiThreadUtil.assertOnUiThread();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Reset view content as it's going to be populated by the application content from JS</span></span><br><span class="line">  rootView.removeAllViews();</span><br><span class="line">  rootView.setId(View.NO_ID);</span><br><span class="line"></span><br><span class="line">  UIManagerModule uiManagerModule = catalystInstance.getNativeModule(UIManagerModule.class);</span><br><span class="line">  <span class="keyword">int</span> rootTag = uiManagerModule.addMeasuredRootView(rootView);</span><br><span class="line">  <span class="meta">@Nullable</span> Bundle launchOptions = rootView.getLaunchOptions();</span><br><span class="line">  WritableMap initialProps = launchOptions != <span class="keyword">null</span></span><br><span class="line">      ? Arguments.fromBundle(launchOptions)</span><br><span class="line">      : Arguments.createMap();</span><br><span class="line">  String jsAppModuleName = rootView.getJSModuleName();</span><br><span class="line"></span><br><span class="line">  WritableNativeMap appParams = <span class="keyword">new</span> WritableNativeMap();</span><br><span class="line">  appParams.putDouble(<span class="string">"rootTag"</span>, rootTag);</span><br><span class="line">  appParams.putMap(<span class="string">"initialProps"</span>, initialProps);</span><br><span class="line">  catalystInstance.getJSModule(AppRegistry.class).runApplication(jsAppModuleName, appParams);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法的最后用了我们的CatalystInstanceImpl的getJSModule方法去获得具体的JSModule并且调用它的方法。让我们看看getJSModule做了什么。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> &lt;T extends JavaScriptModule&gt; <span class="function">T <span class="title">getJSModule</span><span class="params">(Class&lt;T&gt; jsInterface)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> getJSModule(Assertions.assertNotNull(mMainExecutorToken), jsInterface);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> &lt;T extends JavaScriptModule&gt; <span class="function">T <span class="title">getJSModule</span><span class="params">(ExecutorToken executorToken, Class&lt;T&gt; jsInterface)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> Assertions.assertNotNull(mJSModuleRegistry).getJavaScriptModule(executorToken, jsInterface);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它会去JavaScriptModuleRegistry中获取对应的JavaScriptModule，也就是从注册表中获取对应的模块。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">synchronized</span>  &lt;T extends JavaScriptModule&gt; <span class="function">T <span class="title">getJavaScriptModule</span><span class="params">(ExecutorToken executorToken, Class&lt;T&gt; moduleInterface)</span> </span>&#123;</span><br><span class="line">  HashMap&lt;Class&lt;? extends JavaScriptModule&gt;, JavaScriptModule&gt; instancesForContext =</span><br><span class="line">      mModuleInstances.get(executorToken);</span><br><span class="line">  <span class="keyword">if</span> (instancesForContext == <span class="keyword">null</span>) &#123;</span><br><span class="line">    instancesForContext = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">    mModuleInstances.put(executorToken, instancesForContext);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  JavaScriptModule module = instancesForContext.get(moduleInterface);</span><br><span class="line">  <span class="keyword">if</span> (module != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> (T) module;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  JavaScriptModuleRegistration registration =</span><br><span class="line">      Assertions.assertNotNull(</span><br><span class="line">          mModuleRegistrations.get(moduleInterface),</span><br><span class="line">          <span class="string">"JS module "</span> + moduleInterface.getSimpleName() + <span class="string">" hasn't been registered!"</span>);</span><br><span class="line">  JavaScriptModule interfaceProxy = (JavaScriptModule) Proxy.newProxyInstance(</span><br><span class="line">      moduleInterface.getClassLoader(),</span><br><span class="line">      <span class="keyword">new</span> Class[]&#123;moduleInterface&#125;,</span><br><span class="line">      <span class="keyword">new</span> JavaScriptModuleInvocationHandler(executorToken, mCatalystInstance, registration));</span><br><span class="line">  instancesForContext.put(moduleInterface, interfaceProxy);</span><br><span class="line">  <span class="keyword">return</span> (T) interfaceProxy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法就比较神奇了，首先去缓存中找，如果找到就返回，没找到就去创建，怎么创建的呢，用的是动态代理！</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">JavaScriptModule interfaceProxy = (JavaScriptModule) Proxy.newProxyInstance(</span><br><span class="line">    moduleInterface.getClassLoader(),</span><br><span class="line">    <span class="keyword">new</span> Class[]&#123;moduleInterface&#125;,</span><br><span class="line">    <span class="keyword">new</span> JavaScriptModuleInvocationHandler(executorToken, mCatalystInstance, registration));</span><br></pre></td></tr></table></figure>
+<p>这里大家必须要对动态代理有所了解，可以自己去找相关的知识。让我们看看JavaScriptModuleInvocationHandler。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@Nullable</span> <span class="function">Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">  ExecutorToken executorToken = mExecutorToken.get();</span><br><span class="line">  <span class="keyword">if</span> (executorToken == <span class="keyword">null</span>) &#123;</span><br><span class="line">    FLog.w(ReactConstants.TAG, <span class="string">"Dropping JS call, ExecutorToken went away..."</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  String tracingName = mModuleRegistration.getTracingName(method);</span><br><span class="line">  mCatalystInstance.callFunction(</span><br><span class="line">    executorToken,</span><br><span class="line">      mModuleRegistration.getModuleId(),</span><br><span class="line">      mModuleRegistration.getMethodId(method),</span><br><span class="line">      Arguments.fromJavaArgs(args),</span><br><span class="line">      tracingName);</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们看它最核心的invoke方法。里面获取了调用方法的moduleId，methodId和参数，然后调用了CatalystInstanceImpl的callFunction去执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">callFunction</span><span class="params">(</span><br><span class="line">    ExecutorToken executorToken,</span><br><span class="line">    <span class="keyword">int</span> moduleId,</span><br><span class="line">    <span class="keyword">int</span> methodId,</span><br><span class="line">    NativeArray arguments,</span><br><span class="line">    String tracingName)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">synchronized</span> (mJavaToJSCallsTeardownLock) &#123;</span><br><span class="line">    <span class="keyword">if</span> (mDestroyed) &#123;</span><br><span class="line">      FLog.w(ReactConstants.TAG, <span class="string">"Calling JS function after bridge has been destroyed."</span>);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    incrementPendingJSCalls();</span><br><span class="line"></span><br><span class="line">    Assertions.assertNotNull(mBridge).callFunction(executorToken, moduleId, methodId, arguments, tracingName);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>直接调用了ReactBridge的同名函数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">callFunction</span><span class="params">(ExecutorToken executorToken, <span class="keyword">int</span> moduleId, <span class="keyword">int</span> methodId, NativeArray arguments, String tracingName)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>可以看到又是一个native函数，具体作用就是将想用调用的方法对应的moduleId，methodId和arguments通过jni传递到js端进行调用。而我们这边调用的是AppRegistry的runApplication方法，这个方法在js端的作用就是开始运行整个js程序，从而将我们的RN程序真正的跑起来。</p>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>首先，对于我们java端要调用的js端的类和方法，我们都必须要注册到js的注册表中，这个过程在上一部分的分析中已经带大家走过了。当真正要调用的时候，是通过CatalystInstanceImpl这个类的getJSModule方法去得到对应的JSModule，然后通过动态代理拿到方法的各种参数，通过ReactBridge传递到C层然后再传递到js层的。</p>
+<p> <img src="/images/其实没那么复杂！探究react-native通信机制/JavaCallJS.png" alt="JavaCallJS"></p>
+<p>通过这个图配合上代码应该能比较好的理解了。</p>
+<h1 id="js－-gt-Java"><a href="#js－-gt-Java" class="headerlink" title="js－&gt;Java"></a>js－&gt;Java</h1><p>RN的js调java的流程可以说是让我觉得最新颖的地方，具体就是js不是直接通过注册接口去调用java方法的，而是将对应的的参数（moduleId和methodId）push到一个messageQueue中，等待java层的事件来驱动它，当java层的事件传递过来以后，js层把messageQueue中所有的数据返回给java层，再通过注册表JavaRegistry去调用方法。</p>
+<p>首先，我们说了js层是把对应的参数push到messageQueue中，具体的方法是MessageQueue.js的__nativeCall方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">__nativeCall(<span class="built_in">module</span>, method, params, onFail, onSucc) &#123;</span><br><span class="line"><span class="keyword">if</span> (onFail || onSucc) &#123;</span><br><span class="line">  <span class="comment">// eventually delete old debug info</span></span><br><span class="line">  (<span class="keyword">this</span>._callbackID &gt; (<span class="number">1</span> &lt;&lt; <span class="number">5</span>)) &amp;&amp;</span><br><span class="line">    (<span class="keyword">this</span>._debugInfo[<span class="keyword">this</span>._callbackID &gt;&gt; <span class="number">5</span>] = <span class="literal">null</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">this</span>._debugInfo[<span class="keyword">this</span>._callbackID &gt;&gt; <span class="number">1</span>] = [<span class="built_in">module</span>, method];</span><br><span class="line">  onFail &amp;&amp; params.push(<span class="keyword">this</span>._callbackID);</span><br><span class="line">  <span class="keyword">this</span>._callbacks[<span class="keyword">this</span>._callbackID++] = onFail;</span><br><span class="line">  onSucc &amp;&amp; params.push(<span class="keyword">this</span>._callbackID);</span><br><span class="line">  <span class="keyword">this</span>._callbacks[<span class="keyword">this</span>._callbackID++] = onSucc;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">global.nativeTraceBeginAsyncFlow &amp;&amp;</span><br><span class="line">  global.nativeTraceBeginAsyncFlow(TRACE_TAG_REACT_APPS, <span class="string">'native'</span>, <span class="keyword">this</span>._callID);</span><br><span class="line"><span class="keyword">this</span>._callID++;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>._queue[MODULE_IDS].push(<span class="built_in">module</span>);</span><br><span class="line"><span class="keyword">this</span>._queue[METHOD_IDS].push(method);</span><br><span class="line"><span class="keyword">this</span>._queue[PARAMS].push(params);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> now = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime();</span><br><span class="line"><span class="keyword">if</span> (global.nativeFlushQueueImmediate &amp;&amp;</span><br><span class="line">    now - <span class="keyword">this</span>._lastFlush &gt;= MIN_TIME_BETWEEN_FLUSHES_MS) &#123;</span><br><span class="line">  global.nativeFlushQueueImmediate(<span class="keyword">this</span>._queue);</span><br><span class="line">  <span class="keyword">this</span>._queue = [[], [], [], <span class="keyword">this</span>._callID];</span><br><span class="line">  <span class="keyword">this</span>._lastFlush = now;</span><br><span class="line">&#125;</span><br><span class="line">Systrace.counterEvent(<span class="string">'pending_js_to_native_queue'</span>, <span class="keyword">this</span>._queue[<span class="number">0</span>].length);</span><br><span class="line"><span class="keyword">if</span> (__DEV__ &amp;&amp; SPY_MODE &amp;&amp; <span class="built_in">isFinite</span>(<span class="built_in">module</span>)) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'JS-&gt;N : '</span> + <span class="keyword">this</span>._remoteModuleTable[<span class="built_in">module</span>] + <span class="string">'.'</span> +</span><br><span class="line">    <span class="keyword">this</span>._remoteMethodTable[<span class="built_in">module</span>][method] + <span class="string">'('</span> + <span class="built_in">JSON</span>.stringify(params) + <span class="string">')'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>._queue[MODULE_IDS].push(<span class="built_in">module</span>);</span><br><span class="line"><span class="keyword">this</span>._queue[METHOD_IDS].push(method);</span><br><span class="line"><span class="keyword">this</span>._queue[PARAMS].push(params);</span><br></pre></td></tr></table></figure>
+<p>把对应的module，method和params push到了队列里面，然后就是等待java层的事件驱动。</p>
+<p>java层的事件驱动其实也可以看成java层向js层的通信，最终会走到MessageQueue.js的callFunctionReturnFlushedQueue方法和invokeCallbackAndReturnFlushedQueue方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">callFunctionReturnFlushedQueue(<span class="built_in">module</span>, method, args) &#123;</span><br><span class="line">guard(() =&gt; &#123;</span><br><span class="line">  <span class="keyword">this</span>.__callFunction(<span class="built_in">module</span>, method, args);</span><br><span class="line">  <span class="keyword">this</span>.__callImmediates();</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> <span class="keyword">this</span>.flushedQueue();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用了flushedQueue将MessageQueue中的所有数据通过C层发往java层。</p>
+<p>到了java层以后，会回调到NativeModulesReactCallback类执行call方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">NativeModulesReactCallback</span> <span class="keyword">implements</span> <span class="title">ReactCallback</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(ExecutorToken executorToken, <span class="keyword">int</span> moduleId, <span class="keyword">int</span> methodId, ReadableNativeArray parameters)</span> </span>&#123;</span><br><span class="line">    mReactQueueConfiguration.getNativeModulesQueueThread().assertIsOnThread();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">synchronized</span> (mJSToJavaCallsTeardownLock) &#123;</span><br><span class="line">      <span class="comment">// Suppress any callbacks if destroyed - will only lead to sadness.</span></span><br><span class="line">      <span class="keyword">if</span> (mDestroyed) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      mJavaRegistry.call(CatalystInstanceImpl.<span class="keyword">this</span>, executorToken, moduleId, methodId, parameters);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  .....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到里面通过JavaRegistry调用了它的call方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* package */</span> <span class="function"><span class="keyword">void</span> <span class="title">call</span><span class="params">(</span><br><span class="line">    CatalystInstance catalystInstance,</span><br><span class="line">    ExecutorToken executorToken,</span><br><span class="line">    <span class="keyword">int</span> moduleId,</span><br><span class="line">    <span class="keyword">int</span> methodId,</span><br><span class="line">    ReadableNativeArray parameters)</span> </span>&#123;</span><br><span class="line">  ModuleDefinition definition = mModuleTable.get(moduleId);</span><br><span class="line">  <span class="keyword">if</span> (definition == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Call to unknown module: "</span> + moduleId);</span><br><span class="line">  &#125;</span><br><span class="line">  definition.call(catalystInstance, executorToken, methodId, parameters);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>拿到对应的module，调用call方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(</span><br><span class="line">      CatalystInstance catalystInstance,</span><br><span class="line">      ExecutorToken executorToken,</span><br><span class="line">      <span class="keyword">int</span> methodId,</span><br><span class="line">      ReadableNativeArray parameters)</span> </span>&#123;</span><br><span class="line">    MethodRegistration method = <span class="keyword">this</span>.methods.get(methodId);</span><br><span class="line">    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, method.tracingName);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">this</span>.methods.get(methodId).method.invoke(catalystInstance, executorToken, parameters);</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中根据methodId拿到对应module的方法，执行invoke。</p>
+<p>最终执行的是BaseJavaModule的invoke方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">invoke</span><span class="params">(CatalystInstance catalystInstance, ExecutorToken executorToken, ReadableNativeArray parameters)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	.........</span><br><span class="line">	mMethod.invoke(BaseJavaModule.<span class="keyword">this</span>, mArguments);</span><br><span class="line">	.........</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过反射调用最终的方法。</p>
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><p>这里我们重点要了解的就是js向java的通信靠的是事件驱动模式，也就是说js将方法的对应参数push到MessageQueue中，等java端事件传递过来以后再将其中所有的数据通过C层传递给java层，然后通过JavaRegistry这个Java注册表拿到对应的module和method，通过反射执行方法。</p>
+<p> <img src="/images/其实没那么复杂！探究react-native通信机制/JSCallJava.png" alt="JSCallJava"></p>
+<p>老规矩，通过图配合代码来理解流程。</p>
+<h1 id="重要类的作用"><a href="#重要类的作用" class="headerlink" title="重要类的作用"></a>重要类的作用</h1><p>最后我们通过总结一下前面提到的几个重要的类的作用来加深印象。</p>
+<p>ReactInstanceManager：它的作用是创建出ReactContext，CatalystInstance等类，解析package生成注册表，并且配合ReactRootView管理View的创建，生命周期等功能。</p>
+<p>ReactRootView：RN程序的根视图，startReactApplication方法开启RN世界的大门。</p>
+<p>CatalystInstance：Java端通信的管理类，提供通信的环境，方法和回调方法，内部通过ReactBridge进行通信。</p>
+<p>ReactBridge：通信的核心类，通过jni的方式进行通信。</p>
+<p>NativeModuleRegistry：Java接口的注册表。</p>
+<p>JavascriptModuleRegistry：js接口的注册表。</p>
+<p>CoreModulePackage：RN核心框架的package，包括Java接口和js接口，前文提到的AppResgitry就是在这里面注册的。</p>
+<p>MainReactPackage：RN帮我们封装的一些通用的Java组件和事件。</p>
+<p>JsBundleLoader：用于加载JSBundle的类，其中会根据应用的情况创建不同的loader。</p>
+<p>JSBundle：存有js核心逻辑，在release环境下要通过gradle任务去创建并且放在对应的目录下。</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/a/1190000004586390" target="_blank" rel="external">深入源码探索 ReactNative 通信机制</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/react-native/" rel="tag">#react native</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/23/要做一个有冒险精神的人！开启漫漫的agera之旅/" rel="next" title="要做一个有冒险精神的人！开启漫漫的agera之旅">
+                <i class="fa fa-chevron-left"></i> 要做一个有冒险精神的人！开启漫漫的agera之旅
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/01/其实没那么复杂！探究react-native通信机制/"
+           data-title="其实没那么复杂！探究react-native通信机制" data-url="http://yoursite.com/2016/05/01/其实没那么复杂！探究react-native通信机制/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">7</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#通信方式"><span class="nav-number">2.</span> <span class="nav-text">通信方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">2.0.1.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Java－-gt-js"><span class="nav-number">3.</span> <span class="nav-text">Java－>js</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#总结-1"><span class="nav-number">3.0.1.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#js－-gt-Java"><span class="nav-number">4.</span> <span class="nav-text">js－>Java</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#总结-2"><span class="nav-number">4.0.1.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#重要类的作用"><span class="nav-number">5.</span> <span class="nav-text">重要类的作用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">6.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
