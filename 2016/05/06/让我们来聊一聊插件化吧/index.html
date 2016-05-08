@@ -65,7 +65,7 @@
 <meta property="og:url" content="http://yoursite.com/2016/05/06/让我们来聊一聊插件化吧/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="现如今插件化的思想和应用在Android上越来越多了，各式各样的方案也是层出不穷，这篇文章旨在告诉大家插件化的核心思想是什么，又有什么样的实现方式。">
-<meta property="og:updated_time" content="2016-05-06T07:56:15.000Z">
+<meta property="og:updated_time" content="2016-05-08T10:52:45.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="让我们来聊一聊插件化吧">
 <meta name="twitter:description" content="现如今插件化的思想和应用在Android上越来越多了，各式各样的方案也是层出不穷，这篇文章旨在告诉大家插件化的核心思想是什么，又有什么样的实现方式。">
@@ -245,7 +245,7 @@
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
                </span>
-               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="post-meta-item-text">阅读 </span>
                <span class="leancloud-visitors-count"></span>
               </span>
           
@@ -278,7 +278,7 @@
 <p>这个方法最关键的一点就是调用了ActivityManagerNative.getDefault()去获取一个ActivityManagerNative对象并且调用了它的startActivity方法。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">ActivityManagerNative</span> <span class="keyword">extends</span> <span class="title">Binder</span> <span class="keyword">implements</span> <span class="title">IActivityManager</span></span></span><br></pre></td></tr></table></figure>
 <p>从它的定义就可以看出它是和aidl相关的，对于aidl这里我不细讲，大家可以自行查阅相关资料，概括来说就是Android中一种跨进程的通信方式。</p>
-<p>那既然是跨进程的，通过ActivityManagerNative跨到了哪个进程呢？答案是ActivityManagerService，简称AMS，是Android framework层最最最重要的几个类之一，是运行在Android内核进程的。下面让我们看看AMS的startActivity方法。</p>
+<p>那既然是跨进程的，通过ActivityManagerNative跨到了哪个进程呢？答案是ActivityManagerService，简称AMS，它是ActivityManagerNative的实现类。是Android framework层最最最重要的几个类之一，是运行在Android内核进程的。下面让我们看看AMS的startActivity方法。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">startActivity</span><span class="params">(IApplicationThread caller, String callingPackage,</span><br><span class="line">        Intent intent, String resolvedType, IBinder resultTo,</span><br><span class="line">        String resultWho, <span class="keyword">int</span> requestCode, <span class="keyword">int</span> startFlags,</span><br><span class="line">        String profileFile, ParcelFileDescriptor profileFd, Bundle options)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> startActivityAsUser(caller, callingPackage, intent, resolvedType, resultTo,</span><br><span class="line">            resultWho, requestCode,</span><br><span class="line">            startFlags, profileFile, profileFd, options, UserHandle.getCallingUserId());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>可以看到调用了startActivityAsUser。而在startActivityAsUser方法中调用了ActivityStackSupervisor的startActivityMayWait方法。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">int</span> <span class="title">startActivityMayWait</span><span class="params">(IApplicationThread caller, <span class="keyword">int</span> callingUid,String callingPackage, Intent intent, String resolvedType, IBinder resultTo,String resultWho, <span class="keyword">int</span> requestCode, <span class="keyword">int</span> startFlags, String profileFile,</span><br><span class="line">ParcelFileDescriptor profileFd, WaitResult outResult, Configuration config,Bundle options, <span class="keyword">int</span> userId)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">     ..........</span><br><span class="line"></span><br><span class="line">     <span class="keyword">int</span> res = startActivityLocked(caller, intent, resolvedType,aInfo, resultTo, resultWho, requestCode, callingPid, callingUid,callingPackage, startFlags, options, componentSpecified, <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">    .........</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
