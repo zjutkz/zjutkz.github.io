@@ -1,0 +1,913 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="InstantRun HotPatch," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="AndroidStudio从2.0开始，加入了一个功能叫做InstantRun，顾名思义，这个功能的作用就是让开发者能够立即运行自己的程序。具体点说，就是我们不用再像以前那样每次修改完代码都要重新构建整个app，而是可以直接点击运行，修改的代码就可以作用于我们的app。
+对于InstantRun不了解的同学可以去查看它的官方文档。
+另外，这个和HotPatch有什么关系呢？可以这么说，Instan">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从Instant-Run出发，谈谈Android上的热修复">
+<meta property="og:url" content="http://yoursite.com/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="AndroidStudio从2.0开始，加入了一个功能叫做InstantRun，顾名思义，这个功能的作用就是让开发者能够立即运行自己的程序。具体点说，就是我们不用再像以前那样每次修改完代码都要重新构建整个app，而是可以直接点击运行，修改的代码就可以作用于我们的app。
+对于InstantRun不了解的同学可以去查看它的官方文档。
+另外，这个和HotPatch有什么关系呢？可以这么说，Instan">
+<meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/preference.png">
+<meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/run&debug-before.png">
+<meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/run&debug-after.png">
+<meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/firstBuild.png">
+<meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/transform.png">
+<meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/secondBuild.png">
+<meta property="og:updated_time" content="2016-05-10T08:48:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="从Instant-Run出发，谈谈Android上的热修复">
+<meta name="twitter:description" content="AndroidStudio从2.0开始，加入了一个功能叫做InstantRun，顾名思义，这个功能的作用就是让开发者能够立即运行自己的程序。具体点说，就是我们不用再像以前那样每次修改完代码都要重新构建整个app，而是可以直接点击运行，修改的代码就可以作用于我们的app。
+对于InstantRun不了解的同学可以去查看它的官方文档。
+另外，这个和HotPatch有什么关系呢？可以这么说，Instan">
+<meta name="twitter:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/preference.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 从Instant-Run出发，谈谈Android上的热修复 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                从Instant-Run出发，谈谈Android上的热修复
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-10T16:43:31+08:00" content="2016-05-10">
+              2016-05-10
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" class="leancloud_visitors" data-flag-title="从Instant-Run出发，谈谈Android上的热修复">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>AndroidStudio从2.0开始，加入了一个功能叫做InstantRun，顾名思义，这个功能的作用就是让开发者能够立即运行自己的程序。具体点说，就是我们不用再像以前那样每次修改完代码都要重新构建整个app，而是可以直接点击运行，修改的代码就可以作用于我们的app。</p>
+<p>对于InstantRun不了解的同学可以去查看<a href="http://tools.android.com/tech-docs/instant-run" target="_blank" rel="external">它的官方文档</a>。</p>
+<p>另外，这个和HotPatch有什么关系呢？可以这么说，InstantRun就是Android上HotPatch的一种形式，了解了InstantRun的工作原理之后，我们可以更好的理解，甚至改进现有的HotPatch框架。</p>
+<a id="more"></a>
+<h1 id="感谢"><a href="#感谢" class="headerlink" title="感谢"></a>感谢</h1><p>首先先感谢以下几篇文章的作者和区长大神，没有你们就没有这篇文章～</p>
+<h5 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h5><p><a href="http://www.jianshu.com/p/0400fb58d086" target="_blank" rel="external">Instant Run原理解析</a></p>
+<p><a href="http://weishu.me/2016/04/05/understand-plugin-framework-classloader/" target="_blank" rel="external">Android 插件化原理解析——插件加载机制</a> </p>
+<h5 id="个人"><a href="#个人" class="headerlink" title="个人"></a>个人</h5><p>感谢<a href="http://blog.csdn.net/sbsujjbcy" target="_blank" rel="external">区长</a>带我了解Gradle插件的机制和源码。</p>
+<h1 id="了解InstantRun"><a href="#了解InstantRun" class="headerlink" title="了解InstantRun"></a>了解InstantRun</h1><p>首先，先带没有用过InstantRun的同学了解一下如何使用这个功能。</p>
+<p>在使用InstantRun之前，你必须要保证你的AS是2.0以上的版本，并且gradle的版本也要是2.0.0以上。</p>
+<p>在你的Preference中点击Instant Run并且勾选对应的选项。</p>
+<p> <img src="/images/从Instant-Run出发，谈谈Android上的热修复/preference.png" alt="preference"></p>
+<p>在你运行你的程序之前，你可以看到你的run和debug图标是这样的：</p>
+<p><img src="/images/从Instant-Run出发，谈谈Android上的热修复/run&amp;debug-before.png" alt="run&amp;debug-before"></p>
+<p>当你点击运行之后，它变成了这样：</p>
+<p> <img src="/images/从Instant-Run出发，谈谈Android上的热修复/run&amp;debug-after.png" alt="run&amp;debug-after"></p>
+<p>这意味着如果你修改完代码之后，直接点击对应的run按钮，你的程序不用构建，就直接可以运行。</p>
+<p>举个例子，你现在界面有一个Button，点击之后改变TextView的文字。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> TextView tv;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String changeStr;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line"></span><br><span class="line">        tv = (TextView)findViewById(R.id.tv);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">change</span><span class="params">(View view)</span></span>&#123;</span><br><span class="line">        changeStr = <span class="string">"some errors!!"</span>;</span><br><span class="line"></span><br><span class="line">        tv.setText(changeStr);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当你运行程序，点击Button之后TextView显示的是some errors，这个时候你发现了错误，修改了代码变成下面这样：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> TextView tv;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String changeStr;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line"></span><br><span class="line">        tv = (TextView)findViewById(R.id.tv);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">change</span><span class="params">(View view)</span></span>&#123;</span><br><span class="line">        changeStr = <span class="string">"fix it!!"</span>;</span><br><span class="line"></span><br><span class="line">        tv.setText(changeStr);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果是原来，你点击了run之后，你的程序会重新构建并且重新部署到手机上，而如果你开启了InstantRun，在你点击run之后，程序不会重新构造，而当你点下Button的时候，你会惊讶的发现功能已经修复了，TextView的文字改成了fix it。</p>
+<p>当然，并不是所有的修复都可以这样［无缝修改］的，有一些需要重启对应的Activity，有一些则要重启整个app。所以InstantRun的修复分为三类：hot swap，warm swap和cold swap。</p>
+<p>hot swap是三种类型中最快生效的，它的可以作用在一般代码的修改上，比如上面的例子。</p>
+<p>warm swap是针对资源的修改，需要你重启对应的Activity。</p>
+<p>cold swap是最慢的一种，它需要你重启整个app，并且需要你的Android API在21或者以上，对于API20以下的，则会和原来一样，重新构建并部署应用。</p>
+<p>这样的功能为我们开发者节省了构建程序和安装程序的过程，可谓造福人类啊！</p>
+<p>看到这里，有些同学可能会说，这不就是HotPatch吗！是的，InstantRun就是一个HotPatch。并且它和现在一些主流的HotPatch框架的实现原理是有所不同的，所以希望大家在看完这篇文章之后会有所收获。</p>
+<h1 id="深入源码"><a href="#深入源码" class="headerlink" title="深入源码"></a>深入源码</h1><p>首先，为什么使用InstantRun要把gradle的版本升级到2.0.0以上呢，因为在1.5的时候，gradle增加了<a href="http://tools.android.com/tech-docs/new-build-system/transform-api" target="_blank" rel="external">transform api</a>。并且谷歌在2.0.0的时候利用这个api做了一些事，实现了InstantRun。</p>
+<p>首先我们看一下当我们在第一次构建应用的时候对应的message输出。</p>
+<p> <img src="/images/从Instant-Run出发，谈谈Android上的热修复/firstBuild.png" alt="firstBuild"></p>
+<p>在一大堆的输出中，最后有几个transform开头的task，其中有几个带有InstantRun的标示：</p>
+<p> <img src="/images/从Instant-Run出发，谈谈Android上的热修复/transform.png" alt="transform"></p>
+<p>下面再来看看经过修改之后，再次点击run按钮以后的输出。</p>
+<p> <img src="/images/从Instant-Run出发，谈谈Android上的热修复/secondBuild.png" alt="secondBuild"></p>
+<p>可以看到还是有几个同样带有transform和InstantRun标示的task，这里对于gradle task和transform api我不做具体的讲解，大家可以自行查阅相关资料。上这么多图给大家看的原因就是想要告诉大家，InstantRun确实是通过transform这样的一个api去实现的。</p>
+<p>大致了解了一下InstantRun之后，我们就应该从源码角度去分析了。在分析之前，我先告诉大家它的一个大概工作流程，这里分析的是hot swap，也就是一般代码的修复：</p>
+<p>(1) 在第一次构建app的时候，它利用了transform去在每一个类注入了一个字段，它实现了接口，并且在每一个方法中插入了一个逻辑，如果change，它实现了IncrementalChange接口，并且在每一个方法中插入了一个逻辑，如果change不为空，就执行的change的ccessdispatch方法，否则执行原方法的原来逻辑。对应的类在app/build/intermediates/transforms/instantRun/debug/folders/1/5目录下。</p>
+<p>这里多说一句，InstantRun操作字节码用的是ams。</p>
+<p>(2) 当你修改完对应的代码点击run按钮之后，InstantRun会去生成对应的patch文件，在app/build/intermediates/transforms/instantRun/debug/folders/4000/5目录下。而对应patch文件中的补丁类的名字是你修改的那个类的名字后面加$override，并且实现了IncrementalChange接口。</p>
+<p>(3) 生成一个纪录类AppPatchesLoaderImpl，用来记录哪些类被修改过。</p>
+<p>(4) 通过AppPatchesLoaderImpl类将修改过的类中的赋值成中生成的change赋值成(2)中生成的xxxxoverride。</p>
+<p>以我们上面的例子看来。</p>
+<p>(1)中通过ams修改字节码后的MainActivity：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> TextView tv;</span><br><span class="line">    <span class="keyword">private</span> String changeStr;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MainActivity</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        IncrementalChange var1 = $change;</span><br><span class="line">        <span class="keyword">if</span>(var1 != <span class="keyword">null</span>) &#123;</span><br><span class="line">            Object[] var2;</span><br><span class="line">            Object[] var10003 = var2 = <span class="keyword">new</span> Object[<span class="number">1</span>];</span><br><span class="line">            var10003[<span class="number">0</span>] = var2;</span><br><span class="line">            Object[] var3 = (Object[])var1.access$dispatch(<span class="string">"init$args.([Ljava/lang/Object;)Ljava/lang/Object;"</span>, var10003);</span><br><span class="line">            <span class="keyword">this</span>(var3, (InstantReloadException)<span class="keyword">null</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">super</span>();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(var1 != <span class="keyword">null</span>) &#123;</span><br><span class="line">            var1.access$dispatch(<span class="string">"init$body.(Lzjutkz/com/instantrundemo/MainActivity;)V"</span>, <span class="keyword">new</span> Object[]&#123;<span class="keyword">this</span>&#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        IncrementalChange var2 = $change;</span><br><span class="line">        <span class="keyword">if</span>(var2 != <span class="keyword">null</span>) &#123;</span><br><span class="line">            var2.access$dispatch(<span class="string">"onCreate.(Landroid/os/Bundle;)V"</span>, <span class="keyword">new</span> Object[]&#123;<span class="keyword">this</span>, savedInstanceState&#125;);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">            <span class="keyword">this</span>.setContentView(<span class="number">2130968601</span>);</span><br><span class="line">            <span class="keyword">this</span>.tv = (TextView)<span class="keyword">this</span>.findViewById(<span class="number">2131492944</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">change</span><span class="params">(View view)</span> </span>&#123;</span><br><span class="line">        IncrementalChange var2 = $change;</span><br><span class="line">        <span class="keyword">if</span>(var2 != <span class="keyword">null</span>) &#123;</span><br><span class="line">            var2.access$dispatch(<span class="string">"change.(Landroid/view/View;)V"</span>, <span class="keyword">new</span> Object[]&#123;<span class="keyword">this</span>, view&#125;);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.changeStr = <span class="string">"error!!"</span>;</span><br><span class="line">            <span class="keyword">this</span>.tv.setText(<span class="keyword">this</span>.changeStr);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    MainActivity(Object[] var1, InstantReloadException var2) &#123;</span><br><span class="line">        String var3 = (String)var1[<span class="number">0</span>];</span><br><span class="line">        <span class="keyword">switch</span>(var3.hashCode()) &#123;</span><br><span class="line">        <span class="keyword">case</span> -<span class="number">2089128195</span>:</span><br><span class="line">            <span class="keyword">super</span>();</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">584748498</span>:</span><br><span class="line">            <span class="keyword">this</span>();</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> InstantReloadException(String.format(<span class="string">"String switch could not find \'%s\' with hashcode %s in %s"</span>, <span class="keyword">new</span> Object[]&#123;var3, Integer.valueOf(var3.hashCode()), <span class="string">"zjutkz/com/instantrundemo/MainActivity"</span>&#125;));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>(2)中patch文件中的补丁类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span>$<span class="title">override</span> <span class="keyword">implements</span> <span class="title">IncrementalChange</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> MainActivity$override() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Object init$args(Object[] var0) &#123;</span><br><span class="line">        Object[] var1 = <span class="keyword">new</span> Object[]&#123;<span class="string">"android/support/v7/app/AppCompatActivity.()V"</span>&#125;;</span><br><span class="line">        <span class="keyword">return</span> var1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> init$body(MainActivity $<span class="keyword">this</span>) &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(MainActivity $<span class="keyword">this</span>, Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        Object[] var2 = <span class="keyword">new</span> Object[]&#123;savedInstanceState&#125;;</span><br><span class="line">        MainActivity.access$<span class="keyword">super</span>($<span class="keyword">this</span>, <span class="string">"onCreate.(Landroid/os/Bundle;)V"</span>, var2);</span><br><span class="line">        $<span class="keyword">this</span>.setContentView(<span class="number">2130968601</span>);</span><br><span class="line">        AndroidInstantRuntime.setPrivateField($<span class="keyword">this</span>, (TextView)$<span class="keyword">this</span>.findViewById(<span class="number">2131492944</span>), MainActivity.class, <span class="string">"tv"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">change</span><span class="params">(MainActivity $<span class="keyword">this</span>, View view)</span> </span>&#123;</span><br><span class="line">        AndroidInstantRuntime.setPrivateField($<span class="keyword">this</span>, <span class="string">"fix it!!"</span>, MainActivity.class, <span class="string">"changeStr"</span>);</span><br><span class="line">        ((TextView)AndroidInstantRuntime.getPrivateField($<span class="keyword">this</span>, MainActivity.class, <span class="string">"tv"</span>)).setText((String)AndroidInstantRuntime.getPrivateField($<span class="keyword">this</span>, MainActivity.class, <span class="string">"changeStr"</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> Object access$dispatch(String var1, Object... var2) &#123;</span><br><span class="line">        <span class="keyword">switch</span>(var1.hashCode()) &#123;</span><br><span class="line">        <span class="keyword">case</span> -<span class="number">1630101479</span>:</span><br><span class="line">            <span class="keyword">return</span> init$args((Object[])var2[<span class="number">0</span>]);</span><br><span class="line">        <span class="keyword">case</span> -<span class="number">641568046</span>:</span><br><span class="line">            onCreate((MainActivity)var2[<span class="number">0</span>], (Bundle)var2[<span class="number">1</span>]);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">106989371</span>:</span><br><span class="line">            change((MainActivity)var2[<span class="number">0</span>], (View)var2[<span class="number">1</span>]);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">1753553473</span>:</span><br><span class="line">            init$body((MainActivity)var2[<span class="number">0</span>]);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> InstantReloadException(String.format(<span class="string">"String switch could not find \'%s\' with hashcode %s in %s"</span>, <span class="keyword">new</span> Object[]&#123;var1, Integer.valueOf(var1.hashCode()), <span class="string">"zjutkz/com/instantrundemo/MainActivity"</span>&#125;));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>(3)中生成的记录类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AppPatchesLoaderImpl</span> <span class="keyword">extends</span> <span class="title">AbstractPatchesLoaderImpl</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">AppPatchesLoaderImpl</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> String[] getPatchedClasses() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> String[]&#123;<span class="string">"zjutkz.com.instantrundemo.MainActivity"</span>&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>大致关于hot swap的流程就是这样，下面让我们从最开始的地方出发，走一遍InstantRun的流程，并且了解下warm swap和cold swap的机制。</p>
+<h5 id="1-替换application"><a href="#1-替换application" class="headerlink" title="1.替换application"></a>1.替换application</h5><p>首先，大家看一下app/build/intermediates/bundles/debug/instant-run目录下的AndroidMenifest文件。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span><br><span class="line">    <span class="attr">package</span>=<span class="string">"zjutkz.com.instantrundemo"</span></span><br><span class="line">    <span class="attr">android:versionCode</span>=<span class="string">"1"</span></span><br><span class="line">    <span class="attr">android:versionName</span>=<span class="string">"1.0"</span> &gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-sdk</span></span><br><span class="line">        <span class="attr">android:minSdkVersion</span>=<span class="string">"14"</span></span><br><span class="line">        <span class="attr">android:targetSdkVersion</span>=<span class="string">"23"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span></span><br><span class="line">        <span class="attr">android:name</span>=<span class="string">"com.android.tools.fd.runtime.BootstrapApplication"</span></span><br><span class="line">        <span class="attr">android:allowBackup</span>=<span class="string">"true"</span></span><br><span class="line">        <span class="attr">android:icon</span>=<span class="string">"@mipmap/ic_launcher"</span></span><br><span class="line">        <span class="attr">android:label</span>=<span class="string">"@string/app_name"</span></span><br><span class="line">        <span class="attr">android:supportsRtl</span>=<span class="string">"true"</span></span><br><span class="line">        <span class="attr">android:theme</span>=<span class="string">"@style/AppTheme"</span> &gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">"zjutkz.com.instantrundemo.MainActivity"</span> &gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.MAIN"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">                <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.LAUNCHER"</span> /&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>可以看到对应的Application被替换了，变成了BootstrapApplication。这个Application在哪里呢，在app/build/intermediates/incremental-runtime-classes/debug目录下的instant-run.jar中，这个jar包大家可以通过JD-GUI去打开。</p>
+<p>下面让我们看看BootstrapApplication，首先看的肯定是attchBaseContext方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">attachBaseContext</span><span class="params">(Context context)</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!AppInfo.usingApkSplits) &#123;</span><br><span class="line">        String apkFile = context.getApplicationInfo().sourceDir;</span><br><span class="line">        <span class="keyword">long</span> apkModified = apkFile != <span class="keyword">null</span> ? <span class="keyword">new</span> File(apkFile).lastModified() : <span class="number">0L</span>;</span><br><span class="line">        createResources(apkModified);</span><br><span class="line">        setupClassLoaders(context, context.getCacheDir().getPath(), apkModified);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    createRealApplication();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">super</span>.attachBaseContext(context);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.realApplication != <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Method attachBaseContext = ContextWrapper.class.getDeclaredMethod(<span class="string">"attachBaseContext"</span>, <span class="keyword">new</span> Class[] &#123; Context.class &#125;);</span><br><span class="line"></span><br><span class="line">            attachBaseContext.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">            attachBaseContext.invoke(<span class="keyword">this</span>.realApplication, <span class="keyword">new</span> Object[] &#123; context &#125;);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(e);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到最前面有一个setupClassLoaders方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">setupClassLoaders</span><span class="params">(Context context, String codeCacheDir, <span class="keyword">long</span> apkModified)</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    List dexList = FileManager.getDexList(context, apkModified);</span><br><span class="line"></span><br><span class="line">    Class server = Server.class;</span><br><span class="line">    Class patcher = MonkeyPatcher.class;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!dexList.isEmpty()) &#123;</span><br><span class="line">        <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">            Log.v(<span class="string">"InstantRun"</span>, <span class="keyword">new</span> StringBuilder().append(<span class="string">"Bootstrapping class loader with dex list "</span>).append(join(<span class="string">'\n'</span>, dexList)).toString());</span><br><span class="line">        &#125;</span><br><span class="line">        ClassLoader classLoader = BootstrapApplication.class.getClassLoader();</span><br><span class="line">        String nativeLibraryPath;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            nativeLibraryPath = (String)classLoader.getClass().getMethod(<span class="string">"getLdLibraryPath"</span>, <span class="keyword">new</span> Class[<span class="number">0</span>]).invoke(classLoader, <span class="keyword">new</span> Object[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>))</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="keyword">new</span> StringBuilder().append(<span class="string">"Native library path: "</span>).append(nativeLibraryPath).toString());</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            Log.e(<span class="string">"InstantRun"</span>, <span class="keyword">new</span> StringBuilder().append(<span class="string">"Failed to determine native library path "</span>).append(t.getMessage()).toString());</span><br><span class="line">            nativeLibraryPath = FileManager.getNativeLibraryFolder().getPath();</span><br><span class="line">        &#125;</span><br><span class="line">        IncrementalClassLoader.inject(classLoader, nativeLibraryPath, codeCacheDir, dexList);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到它IncrementalClassLoader使用了IncrementalClassLoader.inject方法，而在这个方法里面做的工作是把IncrementalClassLoader作为当前classLoader的父loader，我们都知道java的类加载模型是［双亲委托］的，所以之后加载类都会从IncrementalClassLoader中加载。</p>
+<p>回到attachBaseContext方法，之后调用了createRealApplication方法去创建真正的Application，也就是我们应用的Application，比如你自定义的MyApplication并且反射调用它的attachBaseContext。</p>
+<p>下面让我们看看onCreate方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!AppInfo.usingApkSplits) &#123;</span><br><span class="line">        MonkeyPatcher.monkeyPatchApplication(<span class="keyword">this</span>, <span class="keyword">this</span>, <span class="keyword">this</span>.realApplication, <span class="keyword">this</span>.externalResourcePath);</span><br><span class="line"></span><br><span class="line">        MonkeyPatcher.monkeyPatchExistingResources(<span class="keyword">this</span>, <span class="keyword">this</span>.externalResourcePath, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        MonkeyPatcher.monkeyPatchApplication(<span class="keyword">this</span>, <span class="keyword">this</span>, <span class="keyword">this</span>.realApplication, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">super</span>.onCreate();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (AppInfo.applicationId != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">boolean</span> foundPackage = <span class="keyword">false</span>;</span><br><span class="line">            <span class="keyword">int</span> pid = Process.myPid();</span><br><span class="line">            ActivityManager manager = (ActivityManager)getSystemService(<span class="string">"activity"</span>);</span><br><span class="line"></span><br><span class="line">            List processes = manager.getRunningAppProcesses();</span><br><span class="line">            <span class="keyword">boolean</span> startServer;</span><br><span class="line">            <span class="keyword">if</span> ((processes != <span class="keyword">null</span>) &amp;&amp; (processes.size() &gt; <span class="number">1</span>))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">boolean</span> startServer = <span class="keyword">false</span>;</span><br><span class="line">                <span class="keyword">for</span> (ActivityManager.RunningAppProcessInfo processInfo : processes) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (AppInfo.applicationId.equals(processInfo.processName)) &#123;</span><br><span class="line">                        foundPackage = <span class="keyword">true</span>;</span><br><span class="line">                        <span class="keyword">if</span> (processInfo.pid == pid) &#123;</span><br><span class="line">                            startServer = <span class="keyword">true</span>;</span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span> ((!startServer) &amp;&amp; (!foundPackage))</span><br><span class="line">                &#123;</span><br><span class="line">                    startServer = <span class="keyword">true</span>;</span><br><span class="line">                    <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                        Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Multiprocess but didn't find process with package: starting server anyway"</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                startServer = <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (startServer)</span><br><span class="line">                Server.create(AppInfo.applicationId, <span class="keyword">this</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Failed during multi process check"</span>, t);</span><br><span class="line">            &#125;</span><br><span class="line">            Server.create(AppInfo.applicationId, <span class="keyword">this</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.realApplication != <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">this</span>.realApplication.onCreate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先调用了MonkeyPatcher.monkeyPatchApplication方法，这个方法我们就不跟进去看了，具体作用是：1.把对应的application替换成我们真正的applictaion。2.把真正application的LoadedApk替换成BootstrapApplication的，为什么要这么做呢，因为LoadedApk中持有了ClassLoader，这样替换以后，我们程序中加载类都会使用BootstrapApplication的LoadedApk，从而使用它的ClassLoader，而在之前我们已经把ClassLoader的父loader设置成了IncrementalClassLoader，绕了这么一大圈，其实就是为了［使用IncrementalClassLoader去加载类］。那为什么要使用IncrementalClassLoader去加载类呢，因为我们生成的patch文件是不能直接通过程序的ClassLoader去加载的，而IncrementalClassLoader把patch的路径传了进去，这样就可以加载了～</p>
+<p>到此替换Application的前半部分就讲完了，它的重要作用是为了创建一个IncrementalClassLoader用来加载patch文件中的补丁类。</p>
+<p>通过前面的分析我们知道了为什么应用可以去加载patch文件中的补丁类，下面让我们继续。</p>
+<p>首先还是看BootstrapApplication类的onCreate函数。在后面调用了Server.create方法。而在Server的构造函数中，调用了startServer方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">startServer</span><span class="params">()</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Thread socketServerThread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> SocketServerThread(<span class="keyword">null</span>));</span><br><span class="line">        socketServerThread.start();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable e)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">6</span>))</span><br><span class="line">            Log.e(<span class="string">"InstantRun"</span>, <span class="string">"Fatal error starting Instant Run server"</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们看看SocketServerThread的run方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>)</span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            LocalServerSocket serverSocket = Server.<span class="keyword">this</span>.mServerSocket;</span><br><span class="line">            <span class="keyword">if</span> (serverSocket == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            LocalSocket socket = serverSocket.accept();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Received connection from IDE: spawning connection thread"</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            Server.SocketServerReplyThread socketServerReplyThread = <span class="keyword">new</span> Server.SocketServerReplyThread(Server.<span class="keyword">this</span>, socket);</span><br><span class="line"></span><br><span class="line">            socketServerReplyThread.run();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (Server.sWrongTokenCount &gt; <span class="number">50</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                    Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Stopping server: too many wrong token connections"</span>);</span><br><span class="line">                &#125;</span><br><span class="line">                Server.<span class="keyword">this</span>.mServerSocket.close();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>))</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Fatal error accepting connection on local socket"</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中使用了Socket，这下我们就明白了，原来InstantRun内部使用了Socket来进行通信。也就是说当我们修改完程序点击run之后，AndroidStudio会通过socket将数据传递给我们，最终调用的是handlePatches方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">handlePatches</span><span class="params">(List&lt;ApplicationPatch&gt; changes, <span class="keyword">boolean</span> hasResources, <span class="keyword">int</span> updateMode)</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (hasResources) &#123;</span><br><span class="line">        FileManager.startUpdate();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (ApplicationPatch change : changes) &#123;</span><br><span class="line">        String path = change.getPath();</span><br><span class="line">        <span class="keyword">if</span> (path.endsWith(<span class="string">".dex"</span>)) &#123;</span><br><span class="line">            handleColdSwapPatch(change);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">boolean</span> canHotSwap = <span class="keyword">false</span>;</span><br><span class="line">            <span class="keyword">for</span> (ApplicationPatch c : changes) &#123;</span><br><span class="line">                <span class="keyword">if</span> (c.getPath().equals(<span class="string">"classes.dex.3"</span>)) &#123;</span><br><span class="line">                    canHotSwap = <span class="keyword">true</span>;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (!canHotSwap) &#123;</span><br><span class="line">                updateMode = <span class="number">3</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (path.equals(<span class="string">"classes.dex.3"</span>)) &#123;</span><br><span class="line">            updateMode = handleHotSwapPatch(updateMode, change);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isResourcePath(path)) &#123;</span><br><span class="line">            updateMode = handleResourcePatch(updateMode, change, path);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (hasResources) &#123;</span><br><span class="line">        FileManager.finishUpdate(<span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> updateMode;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看到这里大家有没有眼前一亮，这个方法会根据文件的后缀名去执行对应的方法，而对应的方法正是</p>
+<p>handleHotSwapPatch(对应 hot swap)，handleResourcePatch(对应 warm swap)和handleColdSwapPatch(对应 cold swap)。</p>
+<h5 id="2-hot-swap"><a href="#2-hot-swap" class="headerlink" title="2.hot swap"></a>2.hot swap</h5><p>让我们先看比较熟悉的hot swap。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">handleHotSwapPatch</span><span class="params">(<span class="keyword">int</span> updateMode, ApplicationPatch patch)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>))</span><br><span class="line">        Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Received incremental code patch"</span>);</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        String dexFile = FileManager.writeTempDexFile(patch.getBytes());</span><br><span class="line">        <span class="keyword">if</span> (dexFile == <span class="keyword">null</span>) &#123;</span><br><span class="line">            Log.e(<span class="string">"InstantRun"</span>, <span class="string">"No file to write the code to"</span>);</span><br><span class="line">            <span class="keyword">return</span> updateMode;</span><br><span class="line">        &#125;<span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">        Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Reading live code from "</span> + dexFile);</span><br><span class="line">    &#125;</span><br><span class="line">        String nativeLibraryPath = FileManager.getNativeLibraryFolder().getPath();</span><br><span class="line">        DexClassLoader dexClassLoader = <span class="keyword">new</span> DexClassLoader(dexFile, <span class="keyword">this</span>.mApplication.getCacheDir().getPath(), nativeLibraryPath, getClass().getClassLoader());</span><br><span class="line"></span><br><span class="line">        Class aClass = Class.forName(<span class="string">"com.android.tools.fd.runtime.AppPatchesLoaderImpl"</span>, <span class="keyword">true</span>, dexClassLoader);</span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Got the patcher class "</span> + aClass);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            PatchesLoader loader = (PatchesLoader)aClass.newInstance();</span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Got the patcher instance "</span> + loader);</span><br><span class="line">            &#125;</span><br><span class="line">            String[] getPatchedClasses = (String[])aClass.getDeclaredMethod(<span class="string">"getPatchedClasses"</span>, <span class="keyword">new</span> Class[<span class="number">0</span>]).invoke(loader, <span class="keyword">new</span> Object[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Got the list of classes "</span>);</span><br><span class="line">                <span class="keyword">for</span> (String getPatchedClass : getPatchedClasses) &#123;</span><br><span class="line">                    Log.v(<span class="string">"InstantRun"</span>, <span class="string">"class "</span> + getPatchedClass);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (!loader.load())</span><br><span class="line">                updateMode = <span class="number">3</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            Log.e(<span class="string">"InstantRun"</span>, <span class="string">"Couldn't apply code changes"</span>, e);</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            updateMode = <span class="number">3</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">        Log.e(<span class="string">"InstantRun"</span>, <span class="string">"Couldn't apply code changes"</span>, e);</span><br><span class="line">        updateMode = <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> updateMode;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>逻辑比较多，其中最核心的就是通过dexPath创建一个ClassLoader，并且通过它去创建一个AppPatchesLoaderImpl，然后执行AppPatchesLoaderImpl的load方法。AppPatchesLoaderImpl这个类大家还记得吧，就是之前的那个［记录类］。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AppPatchesLoaderImpl</span> <span class="keyword">extends</span> <span class="title">AbstractPatchesLoaderImpl</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">AppPatchesLoaderImpl</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> String[] getPatchedClasses() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> String[]&#123;<span class="string">"zjutkz.com.instantrundemo.MainActivity"</span>&#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它继承自AbstractPatchesLoaderImpl，也就是说load的逻辑在AbstractPatchesLoaderImpl中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">load</span><span class="params">()</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span> (String className : getPatchedClasses()) &#123;</span><br><span class="line">            ClassLoader cl = getClass().getClassLoader();</span><br><span class="line">            Class aClass = cl.loadClass(className + <span class="string">"$override"</span>);</span><br><span class="line">            Object o = aClass.newInstance();</span><br><span class="line">            Class originalClass = cl.loadClass(className);</span><br><span class="line">            Field changeField = originalClass.getDeclaredField(<span class="string">"$change"</span>);</span><br><span class="line"></span><br><span class="line">            changeField.setAccessible(<span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">            Object previous = changeField.get(<span class="keyword">null</span>);</span><br><span class="line">            <span class="keyword">if</span> (previous != <span class="keyword">null</span>) &#123;</span><br><span class="line">                Field isObsolete = previous.getClass().getDeclaredField(<span class="string">"$obsolete"</span>);</span><br><span class="line">                <span class="keyword">if</span> (isObsolete != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    isObsolete.set(<span class="keyword">null</span>, Boolean.valueOf(<span class="keyword">true</span>));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            changeField.set(<span class="keyword">null</span>, o);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> ((Log.logging != <span class="keyword">null</span>) &amp;&amp; (Log.logging.isLoggable(Level.FINE)))</span><br><span class="line">                Log.logging.log(Level.FINE, String.format(<span class="string">"patched %s"</span>, <span class="keyword">new</span> Object[] &#123; className &#125;));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        <span class="keyword">if</span> (Log.logging != <span class="keyword">null</span>) &#123;</span><br><span class="line">            Log.logging.log(Level.SEVERE, String.format(<span class="string">"Exception while patching %s"</span>, <span class="keyword">new</span> Object[] &#123; <span class="string">"foo.bar"</span> &#125;), e);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它通过getPatchedClasses方法拿到对应修改过的类，这里就是我们的MainActivity。</p>
+<p>后面逻辑已经很清晰了，大家对应之前我讲的(1)(2)(3)(4)去看就行了。</p>
+<p>这样，我们就完成了hot swap，不用重新构建app，不用重启进程，甚至不用重启Activity！</p>
+<h5 id="3-warm-swap"><a href="#3-warm-swap" class="headerlink" title="3.warm swap"></a>3.warm swap</h5><p>接下来让我们看资源替换。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">handleResourcePatch</span><span class="params">(<span class="keyword">int</span> updateMode, ApplicationPatch patch, String path)</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">        Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Received resource changes ("</span> + path + <span class="string">")"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    FileManager.writeAaptResources(path, patch.getBytes());</span><br><span class="line"></span><br><span class="line">    updateMode = Math.max(updateMode, <span class="number">2</span>);</span><br><span class="line">    <span class="keyword">return</span> updateMode;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用了FileManager.writeAaptResources方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">writeAaptResources</span><span class="params">(String relativePath, <span class="keyword">byte</span>[] bytes)</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    File resourceFile = getResourceFile(getWriteFolder(<span class="keyword">false</span>));</span><br><span class="line">    File file = resourceFile;</span><br><span class="line"></span><br><span class="line">    File folder = file.getParentFile();</span><br><span class="line">    <span class="keyword">if</span> (!folder.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">boolean</span> created = folder.mkdirs();</span><br><span class="line">        <span class="keyword">if</span> (!created) &#123;</span><br><span class="line">            <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>)) &#123;</span><br><span class="line">                Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Cannot create local resource file directory "</span> + folder);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (relativePath.equals(<span class="string">"resources.ap_"</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        writeRawBytes(file, bytes);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        writeRawBytes(file, bytes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到一个非常的重要的文件：resources.ap_，它是Android在生成resources.arsc这个资源表之前生成的，InstantRun直接对它进行了字节码操作，把通过Socket传过来的修改过的资源传递了进去。对Android上的资源打包不了解的同学可以去看老罗的[<a href="http://blog.csdn.net/luoshengyang/article/details/8744683" target="_blank" rel="external">Android应用程序资源的编译和打包过程分析</a>这篇文章。很可惜，writeRawBytes这个方法在反编译的情况下看不到，具体的源码我还在寻找当中。。</p>
+<h5 id="4-cold-swap"><a href="#4-cold-swap" class="headerlink" title="4.cold swap"></a>4.cold swap</h5><p>对于cold swap，其实就是把数据写进对应的dex中，所以在art的情况下需要重启app，而对于API20以下的只能重新构建和部署了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">handleColdSwapPatch</span><span class="params">(ApplicationPatch patch)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (patch.path.startsWith(<span class="string">"slice-"</span>)) &#123;</span><br><span class="line">        File file = FileManager.writeDexShard(patch.getBytes(), patch.path);</span><br><span class="line">        <span class="keyword">if</span> (Log.isLoggable(<span class="string">"InstantRun"</span>, <span class="number">2</span>))</span><br><span class="line">            Log.v(<span class="string">"InstantRun"</span>, <span class="string">"Received dex shard "</span> + file);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> File <span class="title">writeDexShard</span><span class="params">(<span class="keyword">byte</span>[] bytes, String name)</span></span>&#123;</span><br><span class="line">    File dexFolder = getDexFileFolder(getDataFolder(), <span class="keyword">true</span>);</span><br><span class="line">    <span class="keyword">if</span> (dexFolder == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    File file = <span class="keyword">new</span> File(dexFolder, name);</span><br><span class="line">    writeRawBytes(file, bytes);</span><br><span class="line">    <span class="keyword">return</span> file;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="对比热修复"><a href="#对比热修复" class="headerlink" title="对比热修复"></a>对比热修复</h1><p>讲完了InstantRun的原理，不知道大家是不是看的眼睛痛了呢，其实我想说，下面这个才是重头戏！因为在我看来，了解源码的目的是为了去利用它，只是单单去知道一个库的工作原理有什么？又不是你写的，大家说是吧。</p>
+<p>大家也知道现在有很多优秀的HotPatch开源库，代表的就是<a href="https://github.com/jasonross/Nuwa" target="_blank" rel="external">Nuwa</a>。</p>
+<p>看过Nuwa源码的同学都知道，它的原理是将patch的dexPahList中的Element数组插入到宿主的Element数组之前。这种方案呢，是基于单ClassLoader的，也就是说整个应用中只有一个ClassLoader，这样一来，如果一个类被加载了那么在程序运行的时间呢，它是不会再去通过ClassLoader加载一遍的，所以就导致了这样的HotPatch框架［每次打patch以后要重启应用才会生效］，但是对于InstantRun的hot swap是不存在这样的限制的，为什么呢？因为它是基于多ClassLoader的，前面源码中也有提到，它的每一个patch都有一个ClassLoader，这就意味着如果你想更新patch，它都会创建一个ClassLoader，而在java中不同ClassLoader创建的类被认为是不同的，所以会重新加载新的patch中的补丁类。</p>
+<p>另外，现在的HotPatch框架对资源替换的支持做的都比较一般，但是看了上面的源码，大家会发现InstantRun对资源的支持是比较好的，核心逻辑就是去操作resources.ap_文件，通过这种方式就能达到warm swap的目的，如果我能看到writeRawBytes的源码我一定要好好研究一番。</p>
+<p>还有一点，如果大家使用过Nuwa，你会发现Application类是无法打patch的，具体原因可以去看区长写的<a href="http://blog.csdn.net/sbsujjbcy/article/details/51028027" target="_blank" rel="external">聊聊Android 热修复Nuwa有哪些坑</a>。但是通过替换Application这样的方式，我们把我们真正的Application变成DelegateApplication而使用PorxyApplication去执行patch框架的初始化并且加载DelegateApplication，有可能可以解决这一问题。具体可不可以还是要实践了才知道。如果不可以的话。。。当我瞎说的吧～</p>
+<p>最后，说了InstantRun的优点，那么它对于现在的HotPatch框架有什么缺点呢？这里我说一点吧，InstantRun利用了transform api去生成字节码，这样的方式不是说不好，只能说不灵活，因为所有的transform操作是由TransformManager管理的，也就是说它执行的时机是固定的，如果涉及到混淆，dex等操作，这些task的顺序都是不可变的，这样的就会踩出很多坑来，我们可以换一种方式，像Nuwa一样，自己去写一个task，并且通过依赖的方式插入到你想要插入的task链的位置，非常灵活。</p>
+<p>如果能结合现有的HotPatch框架和InstantRun，我们就可以打造一个功能完善的官方版的热修复，想想还有些小激动呢～</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/InstantRun-HotPatch/" rel="tag">#InstantRun HotPatch</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/06/让我们来聊一聊插件化吧/" rel="next" title="让我们来聊一聊插件化吧">
+                <i class="fa fa-chevron-left"></i> 让我们来聊一聊插件化吧
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/10/从Instant-Run出发，谈谈Android上的热修复/"
+           data-title="从Instant-Run出发，谈谈Android上的热修复" data-url="http://yoursite.com/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">9</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#感谢"><span class="nav-number">1.</span> <span class="nav-text">感谢</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#参考文章"><span class="nav-number">1.0.0.0.1.</span> <span class="nav-text">参考文章</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#个人"><span class="nav-number">1.0.0.0.2.</span> <span class="nav-text">个人</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#了解InstantRun"><span class="nav-number">2.</span> <span class="nav-text">了解InstantRun</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#深入源码"><span class="nav-number">3.</span> <span class="nav-text">深入源码</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-替换application"><span class="nav-number">3.0.0.0.1.</span> <span class="nav-text">1.替换application</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-hot-swap"><span class="nav-number">3.0.0.0.2.</span> <span class="nav-text">2.hot swap</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-warm-swap"><span class="nav-number">3.0.0.0.3.</span> <span class="nav-text">3.warm swap</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-cold-swap"><span class="nav-number">3.0.0.0.4.</span> <span class="nav-text">4.cold swap</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#对比热修复"><span class="nav-number">4.</span> <span class="nav-text">对比热修复</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
