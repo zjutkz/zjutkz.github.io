@@ -75,7 +75,7 @@
 <meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/firstBuild.png">
 <meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/transform.png">
 <meta property="og:image" content="http://yoursite.com/images/从Instant-Run出发，谈谈Android上的热修复/secondBuild.png">
-<meta property="og:updated_time" content="2016-05-10T12:11:26.000Z">
+<meta property="og:updated_time" content="2016-05-10T12:55:07.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="从Instant-Run出发，谈谈Android上的热修复">
 <meta name="twitter:description" content="AndroidStudio从2.0开始，加入了一个功能叫做InstantRun，顾名思义，这个功能的作用就是让开发者能够立即运行自己的程序。具体点说，就是我们不用再像以前那样每次修改完代码都要重新构建整个app，而是可以直接点击运行，修改的代码就可以作用于我们的app。
@@ -312,7 +312,7 @@
 <p> <img src="/images/从Instant-Run出发，谈谈Android上的热修复/secondBuild.png" alt="secondBuild"></p>
 <p>可以看到还是有几个同样带有transform和InstantRun标示的task，这里对于gradle task和transform api我不做具体的讲解，大家可以自行查阅相关资料。上这么多图给大家看的原因就是想要告诉大家，InstantRun确实是通过transform这样的一个api去实现的。</p>
 <p>大致了解了一下InstantRun之后，我们就应该从源码角度去分析了。在分析之前，我先告诉大家它的一个大概工作流程，这里分析的是hot swap，也就是一般代码的修复：</p>
-<p>(1) 在第一次构建app的时候，它利用了transform去在每一个类注入了一个字段，它实现了接口，并且在每一个方法中插入了一个逻辑，如果change，它实现了IncrementalChange接口，并且在每一个方法中插入了一个逻辑，如果change不为空，就执行的change的accessdispatch方法，否则执行原方法的原来逻辑。对应的类在app/build/intermediates/transforms/instantRun/debug/folders/1/5目录下。这里多说一句，InstantRun操作字节码用的是ams。</p>
+<p>(1) 在第一次构建app的时候，它利用了transform去在每一个类注入了一个字段，它实现了接口，并且在每一个方法中插入了一个逻辑，如果change，它实现了IncrementalChange接口，并且在每一个方法中插入了一个逻辑，如果change不为空，就执行的change的accessdispatch方法，否则执行原方法的原来逻辑。对应的类在app/build/intermediates/transforms/instantRun/debug/folders/1/5目录下。这里多说一句，InstantRun操作字节码用的是asm。</p>
 <p>(2) 当你修改完对应的代码点击run按钮之后，InstantRun会去生成对应的patch文件，在app/build/intermediates/transforms/instantRun/debug/folders/4000/5目录下。而对应patch文件中的补丁类的名字是你修改的那个类的名字后面加$override，并且实现了IncrementalChange接口。</p>
 <p>(3) 生成一个纪录类AppPatchesLoaderImpl，用来记录哪些类被修改过。</p>
 <p>(4) 通过AppPatchesLoaderImpl类将修改过的类中的赋值成中生成的change赋值成(2)中生成的xxxxoverride。</p>
