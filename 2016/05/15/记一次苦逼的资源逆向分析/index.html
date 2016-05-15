@@ -1,0 +1,928 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="aapt 资源逆向," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="上一篇文章和大家讨论了Instant Run的机制，并且总结了它和现有的hot patch框架的优缺点，现在回过头去看那篇文章结尾处的“结合二者的优点，打造一个官方版的hot patch”这句话，脑子里只有一个念头，还是太年轻了啊！！
+为什么这么说呢？其实现有的hot patch框架对代码patch这一块做的已经是非常不错了，重点要改进的就是资源patch，但是在后来的研究中发现，Instant">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次苦逼的资源逆向分析">
+<meta property="og:url" content="http://yoursite.com/2016/05/15/记一次苦逼的资源逆向分析/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="上一篇文章和大家讨论了Instant Run的机制，并且总结了它和现有的hot patch框架的优缺点，现在回过头去看那篇文章结尾处的“结合二者的优点，打造一个官方版的hot patch”这句话，脑子里只有一个念头，还是太年轻了啊！！
+为什么这么说呢？其实现有的hot patch框架对代码patch这一块做的已经是非常不错了，重点要改进的就是资源patch，但是在后来的研究中发现，Instant">
+<meta property="og:image" content="http://yoursite.com/images/记一次苦逼的资源逆向分析/flow.png">
+<meta property="og:updated_time" content="2016-05-15T08:56:45.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="记一次苦逼的资源逆向分析">
+<meta name="twitter:description" content="上一篇文章和大家讨论了Instant Run的机制，并且总结了它和现有的hot patch框架的优缺点，现在回过头去看那篇文章结尾处的“结合二者的优点，打造一个官方版的hot patch”这句话，脑子里只有一个念头，还是太年轻了啊！！
+为什么这么说呢？其实现有的hot patch框架对代码patch这一块做的已经是非常不错了，重点要改进的就是资源patch，但是在后来的研究中发现，Instant">
+<meta name="twitter:image" content="http://yoursite.com/images/记一次苦逼的资源逆向分析/flow.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 记一次苦逼的资源逆向分析 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                记一次苦逼的资源逆向分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-15T16:45:54+08:00" content="2016-05-15">
+              2016-05-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/15/记一次苦逼的资源逆向分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/15/记一次苦逼的资源逆向分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/15/记一次苦逼的资源逆向分析/" class="leancloud_visitors" data-flag-title="记一次苦逼的资源逆向分析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上一篇文章和大家讨论了Instant Run的机制，并且总结了它和现有的hot patch框架的优缺点，现在回过头去看那篇文章结尾处的“结合二者的优点，打造一个官方版的hot patch”这句话，脑子里只有一个念头，还是太年轻了啊！！</p>
+<p>为什么这么说呢？其实现有的hot patch框架对代码patch这一块做的已经是非常不错了，重点要改进的就是资源patch，但是在后来的研究中发现，Instant Run的资源patch是全量下发的，也就是说每次patch的时候，整个app的资源都会被打进补丁中，这对于Instant Run来说是无所谓的，但是对于我们的hot patch来说就没办法接受了，因为这样会使我们的patch包变得异常的大，从kb级别变成了mb级别。</p>
+<p>那怎么办呢，海口已经夸下了，总不能就这么放弃吧，于是我开始了苦逼的资源逆向，阅读并改造aapt源码的过程。</p>
+<p>友情提示，本篇文章可能会引起大家的胃部不适，因为所有的代码都是C++的。</p>
+<a id="more"></a>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="http://blog.csdn.net/luoshengyang/article/details/8744683" target="_blank" rel="external">Android应用程序资源的编译和打包过程分析</a></p>
+<p><a href="http://blog.csdn.net/jiangwei0910410003/article/details/50628894" target="_blank" rel="external">Android逆向之旅—解析编译之后的Resource.arsc文件格式</a></p>
+<p><a href="http://google.github.io/android-gradle-dsl/1.4/com.android.build.gradle.internal.dsl.AaptOptions.html" target="_blank" rel="external">Gradle AaptOptions</a></p>
+<h1 id="何为aapt，ap-和arsc"><a href="#何为aapt，ap-和arsc" class="headerlink" title="何为aapt，ap_ 和arsc"></a>何为aapt，ap_ 和arsc</h1><p>在开始了解我的这次苦逼之旅之前，大家需要对一些基础知识有一定的了解。</p>
+<p>大家都知道我们写的代码不是凭空就变成一个Android应用的，当你点击了Android Studio的run之后，会经过一些列的gradle task，才会生成一个可以在手机上安装并且运行的apk文件。aapt的作用就是在特定的task中，处理我们Android工程中的资源文件并且打包进apk文件的这么一个工具，它位于我们Android sdk文件夹下的build-tools目录。</p>
+<p>而在经过aapt处理之后，我们的资源文件，当然也包括manifest文件都会被打包成一个压缩包，名字叫做resources.ap_，你可以在对应的Android工程的build/intermediates/res路径下找到它。如果你去对它进行解压缩，你会看到它里面包含了一个manifest文件，一个res文件夹和一个arsc文件，当然如果你有assets文件的也会被包含在里面。</p>
+<p>arsc文件又是什么呢？大家可以把它看作一张资源索引表，它和我们的R文件是相关联的，也就是说我们在代码中调用了R.xxx.xxx的时候，都会去这个arsc文件中通过对应的id去索引资源。它会被我们Java层的AssetManager加载，如果有过插件化开发经验的同学应该知道，是通过addAssetPath这个方法去加载的。</p>
+<p>说完了三个概念，我们这里要讨论的是，怎样才能完成资源的增量下发，比如我们在drawable目录下添加了一张图片patch.png，在main.layout中应用了这张图片，我们所要做的就是得到这两个改变的文件，通过aapt去生成［只包含这两个资源的ap_文件］并且打到patch包中下发。</p>
+<p>那么这里的难点是什么？显然找出改变的资源不是难点，因为可以通过md5文件的差异去做，和代码的patch是一样的。真正的难点在于［如何通过aapt的生成正确的arsc文件］。如果你不去改造aapt的话，就算你的ap_压缩包中的res文件夹下只有改变过的资源，但是arsc索引表中还是会包含所有的资源。这里我举个例子：</p>
+<p>原来的app中的资源为a.png，main.layou和second.layout。这个时候你新增了一个patch.png并且修改了main.layout。通过分析md5文件将patch.png和main.layout加入到了ap_的res中，但是你的arsc文件中包含的是a.png，patch.png，main.layou和second.layout四个文件。那么当你的程序去通过arsc找a.png或者second.layout的时候，就会报出resource not found的错误。</p>
+<p>所以我们的重点应该放在［如何改造aapt］上。</p>
+<p>不过这篇文章的主要精力会放在分析上，因为［改造的部分］我和小伙伴们还在编码当中，争取早日完成吧～</p>
+<h1 id="ResourceTable及其他"><a href="#ResourceTable及其他" class="headerlink" title="ResourceTable及其他"></a>ResourceTable及其他</h1><p>在整个资源打包过程中，有一个重要的类不得不提，那就是ResouceTable类。这个类的作用是用来保存我们解析得到的资源索引，并且将其最终转换成对应的arsc文件。</p>
+<p>对应的代码在ResouceTable.cpp中。我们来看看它头文件内部的几个重要的成员变量：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">String16 mAssetsPackage;</span><br><span class="line">PackageType mPackageType;</span><br><span class="line">sp&lt;AaptAssets&gt; mAssets;</span><br><span class="line">DefaultKeyedVector&lt;String16, sp&lt;Package&gt; &gt; mPackages;</span><br><span class="line">Vector&lt;sp&lt;Package&gt; &gt; mOrderedPackages;</span><br></pre></td></tr></table></figure>
+<p>mAssetsPackage：表示资源的包名，一般来说就是app的包名。</p>
+<p>mPackageType：资源的类型，用来定义R文件中资源id的高位。类型有APP，AppFeature，对应高位是0x7f；System，对应高位是0x01；SharedLibrary，对应高位是0x00。也就是说我们在不改造aapt的app的R文件中，只会存在这三种类型的id，大家可以自行去自己应用的R文件中求证。</p>
+<p>mAssets：一个AaptAssets对象，用来表示当前资源目录。</p>
+<p>mPackages：表示资源包，用Package来定义。存储在一个以PackageName为key的Vector中。</p>
+<p>mOrderedPackages：和mPackages一样，只不过这个是有序的，存储在Vector中。</p>
+<p>而在Package中，有一个类叫Type，用来表示资源的类型，比如drawable，layout或者color等等。</p>
+<p>在Type中，存在一个ConfigList对象，用来描述同一类型资源的同名资源。比如在drawable-xhdpi和drawable-xxhdpi中都有一张drawable.png图片，那么只会存在一个名为drawable.png的ConfigList。</p>
+<p>在ConfigList中存在一个Entry对象，用来表示一个具体的资源。还是说上面这个例子，在drawable.png这个ConfigList中会存在两个Entry，分别叫做res/drawable-xhdpi/drawable.png和res/drawable-xxhdpi/drawable.png。</p>
+<p>至此，我们已经知道了ResourceTable中到底含有什么，通过Type－&gt;ConfigList－&gt;Entry的形式储存了资源。</p>
+<p>而前面提到了AaptAssets的作用就是用来收集资源，并且将其添加到ResourceTable中。所以资源索引的转换大体上是raw resource－&gt;AaptAssets－&gt;ResourceTable－&gt;arsc file。</p>
+<h1 id="arsc文件结构"><a href="#arsc文件结构" class="headerlink" title="arsc文件结构"></a>arsc文件结构</h1><p>最后的准备工作就让我们来了解一下arsc的文件结构吧。具体对应的代码在ResourceType.h中。注意这个类是不在aapt对应的源码中的，而在android /platform / frameworks / base / master / include / androidfw目录下。</p>
+<p>首先，arsc文件是由chunk组成的，每一部分对应一个chunk。而每一个chunk中都有一个固定的结构叫做ResChunk_header。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> ResChunk_header</span><br><span class="line">&#123;</span><br><span class="line">        <span class="comment">// Type identifier for this chunk.  The meaning of this value depends</span></span><br><span class="line">        <span class="comment">// on the containing chunk.</span></span><br><span class="line">        <span class="keyword">uint16_t</span> type;</span><br><span class="line">        <span class="comment">// Size of the chunk header (in bytes).  Adding this value to</span></span><br><span class="line">        <span class="comment">// the address of the chunk allows you to find its associated data</span></span><br><span class="line">        <span class="comment">// (if any).</span></span><br><span class="line">        <span class="keyword">uint16_t</span> headerSize;</span><br><span class="line">        <span class="comment">// Total size of this chunk (in bytes).  This is the chunkSize plus</span></span><br><span class="line">        <span class="comment">// the size of any data associated with the chunk.  Adding this value</span></span><br><span class="line">        <span class="comment">// to the chunk allows you to completely skip its contents (including</span></span><br><span class="line">        <span class="comment">// any child chunks).  If this value is the same as chunkSize, there is</span></span><br><span class="line">        <span class="comment">// no data associated with the chunk.</span></span><br><span class="line">        <span class="keyword">uint32_t</span> size;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>type表示当前chunk的类型。</p>
+<p>headerSize表示当前chunk头部的大小。</p>
+<p>size表示当前chunk的大小。</p>
+<p>在这儿之后，就是每一个chunk不同的部分。</p>
+<p>首先第一个是ResTable_package，表示资源项元信息数据块头部。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> ResTable_package</span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">struct</span> ResChunk_header header;</span><br><span class="line">        <span class="comment">// If this is a base package, its ID.  Package IDs start</span></span><br><span class="line">        <span class="comment">// at 1 (corresponding to the value of the package bits in a</span></span><br><span class="line">        <span class="comment">// resource identifier).  0 means this is not a base package.</span></span><br><span class="line">        <span class="keyword">uint32_t</span> id;</span><br><span class="line">        <span class="comment">// Actual name of this package, \0-terminated.</span></span><br><span class="line">        <span class="keyword">uint16_t</span> name[<span class="number">128</span>];</span><br><span class="line">        <span class="comment">// Offset to a ResStringPool_header defining the resource</span></span><br><span class="line">        <span class="comment">// type symbol table.  If zero, this package is inheriting from</span></span><br><span class="line">        <span class="comment">// another base package (overriding specific values in it).</span></span><br><span class="line">        <span class="keyword">uint32_t</span> typeStrings;</span><br><span class="line">        <span class="comment">// Last index into typeStrings that is for public use by others.</span></span><br><span class="line">        <span class="keyword">uint32_t</span> lastPublicType;</span><br><span class="line">        <span class="comment">// Offset to a ResStringPool_header defining the resource</span></span><br><span class="line">        <span class="comment">// key symbol table.  If zero, this package is inheriting from</span></span><br><span class="line">        <span class="comment">// another base package (overriding specific values in it).</span></span><br><span class="line">        <span class="keyword">uint32_t</span> keyStrings;</span><br><span class="line">        <span class="comment">// Last index into keyStrings that is for public use by others.</span></span><br><span class="line">        <span class="keyword">uint32_t</span> lastPublicKey;</span><br><span class="line">        <span class="keyword">uint32_t</span> typeIdOffset;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>id表示package id。</p>
+<p>name表示包名。</p>
+<p>typeStrings表示类型字符串资源池相对头部的偏移。</p>
+<p>lastPublicType表示最后一个导出的Public类型字符串在类型字符串资源池中的索引，目前这个值设置为类型字符串资源池的大小。</p>
+<p>keyStrings表示资源项名称字符串相对头部的偏移。</p>
+<p>lastPublicKey表示最后一个导出的Public资源项名称字符串在资源项名称字符串资源池中的索引，目前这个值设置为资源项名称字符串资源池的大小。</p>
+<p>typeIdOffset表示类型id的偏移。</p>
+<p>接着是ResTable_typeSpec，表示类型规范数据块。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> ResTable_typeSpec</span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">struct</span> ResChunk_header header;</span><br><span class="line">        <span class="comment">// The type identifier this chunk is holding.  Type IDs start</span></span><br><span class="line">        <span class="comment">// at 1 (corresponding to the value of the type bits in a</span></span><br><span class="line">        <span class="comment">// resource identifier).  0 is invalid.</span></span><br><span class="line">        <span class="keyword">uint8_t</span> id;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Must be 0.</span></span><br><span class="line">        <span class="keyword">uint8_t</span> res0;</span><br><span class="line">        <span class="comment">// Must be 0.</span></span><br><span class="line">        <span class="keyword">uint16_t</span> res1;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Number of uint32_t entry configuration masks that follow.</span></span><br><span class="line">        <span class="keyword">uint32_t</span> entryCount;</span><br><span class="line">        <span class="keyword">enum</span> &#123;</span><br><span class="line">        <span class="comment">// Additional flag indicating an entry is public.</span></span><br><span class="line">            SPEC_PUBLIC = <span class="number">0x40000000</span></span><br><span class="line">        &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>id表示资源类型，比如drawable，layout等等。</p>
+<p>res0和res1都为0，保留以后使用。</p>
+<p>entryCount表示Entry的个数。</p>
+<p>接着是ResTable_type，表示类型资源项数据块。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> ResTable_type</span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">struct</span> ResChunk_header header;</span><br><span class="line">        <span class="keyword">enum</span> &#123;</span><br><span class="line">            NO_ENTRY = <span class="number">0xFFFFFFFF</span></span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// The type identifier this chunk is holding.  Type IDs start</span></span><br><span class="line">        <span class="comment">// at 1 (corresponding to the value of the type bits in a</span></span><br><span class="line">        <span class="comment">// resource identifier).  0 is invalid.</span></span><br><span class="line">        <span class="keyword">uint8_t</span> id;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Must be 0.</span></span><br><span class="line">        <span class="keyword">uint8_t</span> res0;</span><br><span class="line">        <span class="comment">// Must be 0.</span></span><br><span class="line">        <span class="keyword">uint16_t</span> res1;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Number of uint32_t entry indices that follow.</span></span><br><span class="line">        <span class="keyword">uint32_t</span> entryCount;</span><br><span class="line">        <span class="comment">// Offset from header where ResTable_entry data starts.</span></span><br><span class="line">        <span class="keyword">uint32_t</span> entriesStart;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Configuration this collection of entries is designed for.</span></span><br><span class="line">        ResTable_config config;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>id表示资源TypeId。</p>
+<p>res0和res1都为0，保留以后使用。</p>
+<p>entryCount表示Entry的个数。</p>
+<p>entriesStart表示资源项数据块相对头部的偏移值。</p>
+<p>config表示一个Configuration，比如xxhdpi等，对应前面说的ConfigList。</p>
+<p>对于这一小节，我只分析了上面三个部分，因为这三个部分在后面的代码中是最显而易见的。其实整个arsc文件结构远远不止这些，大家可以去上面我给出的参考文章，写的非常清楚。</p>
+<h1 id="资源打包过程源码分析"><a href="#资源打包过程源码分析" class="headerlink" title="资源打包过程源码分析"></a>资源打包过程源码分析</h1><p>这里就是这篇文章的重点了，资源的打包过程。</p>
+<p>首先，aapt的打包命令是p，所以让我们看看main.cpp中对应的命令：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (argv[<span class="number">1</span>][<span class="number">0</span>] == <span class="string">'p'</span>)</span><br><span class="line">        bundle.setCommand(kCommandPackage);</span><br></pre></td></tr></table></figure>
+<p>可以看到setConmmand是kCommandPackage，那么对应的执行函数是什么呢？</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">handleCommand</span><span class="params">(Bundle* bundle)</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (bundle-&gt;getCommand()) &#123;</span><br><span class="line">        <span class="keyword">case</span> kCommandVersion:      <span class="keyword">return</span> doVersion(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandList:         <span class="keyword">return</span> doList(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandDump:         <span class="keyword">return</span> doDump(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandAdd:          <span class="keyword">return</span> doAdd(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandRemove:       <span class="keyword">return</span> doRemove(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandPackage:      <span class="keyword">return</span> doPackage(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandCrunch:       <span class="keyword">return</span> doCrunch(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandSingleCrunch: <span class="keyword">return</span> doSingleCrunch(bundle);</span><br><span class="line">        <span class="keyword">case</span> kCommandDaemon:       <span class="keyword">return</span> runInDaemonMode(bundle);</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"%s: requested command not yet supported\n"</span>, gProgName);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>是doPackage方法，这个方法在Command.cpp中。</p>
+<p>而在doPackage中，会调用Resouce.cpp的buildResources方法，这个方法就是我们要重点看的了。由于代码比较长，我们就挑重点地看。</p>
+<p>(1) 解析AndroidManifest文件</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;AaptGroup&gt; androidManifestFile =</span><br><span class="line">            assets-&gt;getFiles().valueFor(String8("AndroidManifest.xml"));</span><br><span class="line">if (androidManifestFile == NULL) &#123;</span><br><span class="line">        fprintf(stderr, "ERROR: No AndroidManifest.xml file found.\n");</span><br><span class="line">        return UNKNOWN_ERROR;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">status_t err = parsePackage(bundle, assets, androidManifestFile);</span><br><span class="line">if (err != NO_ERROR) &#123;</span><br><span class="line">        return err;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">ResourceTable::PackageType packageType = ResourceTable::App;</span><br><span class="line">    if (bundle-&gt;getBuildSharedLibrary()) &#123;</span><br><span class="line">        packageType = ResourceTable::SharedLibrary;</span><br><span class="line">    &#125; else if (bundle-&gt;getExtending()) &#123;</span><br><span class="line">        packageType = ResourceTable::System;</span><br><span class="line">    &#125; else if (!bundle-&gt;getFeatureOfPackage().isEmpty()) &#123;</span><br><span class="line">        packageType = ResourceTable::AppFeature;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">ResourceTable table(bundle, String16(assets-&gt;getPackage()), packageType);</span><br></pre></td></tr></table></figure>
+<p>为什么要先解析manifest呢？因为我们前面说过，ResouceTable是通过包名来区分的，所以这里我们要先解析manfest去获取包名并且创建一个ResouceTable，并且通过parsePackage去解析一些配置，比如minSdkVersion。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (code == ResXMLTree::START_TAG) &#123;</span><br><span class="line">        <span class="keyword">if</span> (strcmp16(block.getElementName(&amp;len), uses_sdk16.<span class="built_in">string</span>()) == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">ssize_t</span> minSdkIndex = block.indexOfAttribute(RESOURCES_ANDROID_NAMESPACE,</span><br><span class="line">        <span class="string">"minSdkVersion"</span>);</span><br><span class="line">        <span class="keyword">if</span> (minSdkIndex &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char16_t</span>* minSdk16 = block.getAttributeStringValue(minSdkIndex,&amp;len);</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span>* minSdk8 = strdup(String8(minSdk16).<span class="built_in">string</span>());</span><br><span class="line">        bundle-&gt;setManifestMinSdkVersion(minSdk8);</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>(2) 添加系统的资源包。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">err = table.addIncludedResources(bundle, assets);</span><br><span class="line"><span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这又是为什么呢？因为我们的app中肯定会用到系统的资源，比如Framelayout，LinearLayout，orientation.Vertical这样的，所以我们要先将其加入到ResouceTable中。</p>
+<p>(3) 收集资源文件并且添加到AaptAssets中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">eyedVector&lt;String8, sp&lt;ResourceTypeSet&gt;&gt; *resources = <span class="keyword">new</span> KeyedVector&lt;String8, sp&lt;ResourceTypeSet&gt;&gt;;</span><br><span class="line">collect_files(assets, resources);</span><br></pre></td></tr></table></figure>
+<p>可以看到是通过collect_files这个函数去完成的。</p>
+<p>我们可以看一下AaptAssets.h这个头文件：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> AaptAssets : <span class="keyword">public</span> AaptDir</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">public</span>:</span><br><span class="line">		AaptAssets();</span><br><span class="line">		<span class="keyword">virtual</span> ~AaptAssets() &#123; <span class="keyword">delete</span> mRes; &#125;</span><br><span class="line"></span><br><span class="line">    ........</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">    	KeyedVector&lt;String8, sp&lt;ResourceTypeSet&gt;&gt;* mRes;</span><br></pre></td></tr></table></figure>
+<p>可以看到它有一个成员变量mRes，key是资源类型，value是ResourceTypeSet，里面包含一系列的资源名称，比如上面提到的drawable.png。</p>
+<p>综上所述，AaptAssets就是一个用来存储资源的类。</p>
+<p>(4) 处理overlay资源。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!applyFileOverlay(bundle, assets, &amp;drawables, <span class="string">"drawable"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;layouts, <span class="string">"layout"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;anims, <span class="string">"anim"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;animators, <span class="string">"animator"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;interpolators, <span class="string">"interpolator"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;transitions, <span class="string">"transition"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;xmls, <span class="string">"xml"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;raws, <span class="string">"raw"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;colors, <span class="string">"color"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;menus, <span class="string">"menu"</span>) ||</span><br><span class="line">        !applyFileOverlay(bundle, assets, &amp;mipmaps, <span class="string">"mipmap"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>overlay的意思是重叠，也就是说如果两个包中有相同的资源，那么后者将会覆盖前者。这里我引用了老罗文章中的一段话：</p>
+<p>［假设我们正在编译的是Package-1，这时候我们可以设置另外一个Package-2，用来告诉aapt，如果Package-2定义有和Package-1一样的资源，那么就用定义在Package-2的资源来替换掉定义在Package-1的资源。通过这种Overlay机制，我们就可以对资源进行定制，而又不失一般性。］</p>
+<p>(5) 将资源添加到ResourceTable。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;ResourceTypeSet&gt; drawables;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; layouts;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; anims;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; animators;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; interpolators;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; transitions;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; xmls;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; raws;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; colors;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; menus;</span><br><span class="line">sp&lt;ResourceTypeSet&gt; mipmaps;</span><br><span class="line"></span><br><span class="line">........</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (layouts != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        err = makeFileResources(bundle, assets, &amp;table, layouts, <span class="string">"layout"</span>);</span><br><span class="line">        <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">            hasErrors = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">.........</span><br></pre></td></tr></table></figure>
+<p>可以看到通过makeFileResources方法将assets(AaptAssets类型)中的资源添加到了table(ResourceTable类型)中。这里我列举了layout的处理，其他几种的处理方式都是一样的。makeFileResource的代码我们这里就不看了，大致过程就是前面提到的创建Package添加到mPackages和mOrderedPackages中，并且按照Type－&gt;ConfigList－&gt;Entry这样添加资源。</p>
+<p>这里要注意的是处理的资源是是不包含values类型的，也就是说values目录的下资源在这里是不会进行处理的。</p>
+<p>(6) 处理values资源。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">current = assets;</span><br><span class="line">while(current.get()) &#123;</span><br><span class="line">        KeyedVector&lt;String8, sp&lt;ResourceTypeSet&gt; &gt; *resources = current-&gt;getResources();</span><br><span class="line">        ssize_t index = resources-&gt;indexOfKey(String8("values"));</span><br><span class="line">        if (index &gt;= 0) &#123;</span><br><span class="line">            ResourceDirIterator it(resources-&gt;valueAt(index), String8("values"));</span><br><span class="line">            ssize_t res;</span><br><span class="line">            while ((res=it.next()) == NO_ERROR) &#123;</span><br><span class="line">                sp&lt;AaptFile&gt; file = it.getFile();</span><br><span class="line">                res = compileResourceFile(bundle, assets, file, it.getParams(),(current!=assets), &amp;table);</span><br><span class="line">                if (res != NO_ERROR) &#123;</span><br><span class="line">                    hasErrors = true;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        current = current-&gt;getOverlay();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为什么要后处理values资源呢？因为这类型的资源比较特殊，要编译之后才能处理，具体的编译函数是compileResourceFile。</p>
+<p>(7) 给bag资源分配id。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// --------------------------------------------------------------------</span></span><br><span class="line"><span class="comment">// Assignment of resource IDs and initial generation of resource table.</span></span><br><span class="line"><span class="comment">// --------------------------------------------------------------------</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (table.hasResources()) &#123;</span><br><span class="line">        err = table.assignResourceIds();</span><br><span class="line">        <span class="keyword">if</span> (err &lt; NO_ERROR) &#123;</span><br><span class="line">            <span class="keyword">return</span> err;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过注释就可以看出它的作用。</p>
+<p>至于什么是bag资源，我还是应用老罗博客中的话。</p>
+<p>[类型为values的资源除了是string之外，还有其它很多类型的资源，其中有一些比较特殊，如bag、style、plurals和array类的资源。这些资源会给自己定义一些专用的值，这些带有专用值的资源就统称为Bag资源。例如，Android系统提供的android:orientation属性的取值范围｛“vertical”、“horizontal”｝，就相当于是定义了vertical和horizontal两个Bag]。</p>
+<p>(8) 编译xml资源。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">if (layouts != NULL) &#123;</span><br><span class="line">        ResourceDirIterator it(layouts, String8("layout"));</span><br><span class="line">        while ((err=it.next()) == NO_ERROR) &#123;</span><br><span class="line">            String8 src = it.getFile()-&gt;getPrintableSource();</span><br><span class="line">            err = compileXmlFile(bundle, assets, String16(it.getBaseName()),</span><br><span class="line">            it.getFile(), &amp;table, xmlFlags);</span><br><span class="line">            if (err == NO_ERROR) &#123;</span><br><span class="line">                ResXMLTree block;</span><br><span class="line">                block.setTo(it.getFile()-&gt;getData(), it.getFile()-&gt;getSize(), true);</span><br><span class="line">                checkForIds(src, block);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                hasErrors = true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if (err &lt; NO_ERROR) &#123;</span><br><span class="line">            hasErrors = true;</span><br><span class="line">        &#125;</span><br><span class="line">        err = NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里我列举layout资源，类似的还有anim这样的也是一样，通过compileXmlFile方法去完成。</p>
+<p>为什么要在最后处理xml呢？因为在xml中可能会引用了我们前面处理的资源，所以必须要保证它们已经处理过了，才能继续处理xml。</p>
+<p>(9) 生成符号表。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;AaptSymbols&gt; symbols = assets-&gt;getSymbolsFor(String8(<span class="string">"R"</span>));</span><br><span class="line">err = table.addSymbols(symbols, bundle&gt;getSkipSymbolsWithoutDefaultLocalization());</span><br><span class="line"><span class="keyword">if</span> (err &lt; NO_ERROR) &#123;</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的符号表就是那些0x01，0x7f，最终要写到R文件中。</p>
+<p>(10) 生成arsc文件。</p>
+<p>准备好了一切，最后就是生成arsc文件了，具体的逻辑在ResourceTable.cpp的flatten方法中。这个方法非常长，有差不多450行，这里我就不一一讲了，具体过程大家可以通过查看源码并且配合上我说的arsc文件结构，还是比较清晰的。</p>
+<h1 id="资源打包过程总结"><a href="#资源打包过程总结" class="headerlink" title="资源打包过程总结"></a>资源打包过程总结</h1><p>好了，最后让我们来总结一下整个资源打包过程吧。</p>
+<p> <img src="/images/记一次苦逼的资源逆向分析/flow.png" alt="flow"></p>
+<h1 id="可能的改造点"><a href="#可能的改造点" class="headerlink" title="可能的改造点"></a>可能的改造点</h1><p>最后，让我们来讨论一下可能的改造点。大家应该没有忘记我们想要达到什么效果吧？［如何通过aapt的生成正确的arsc文件］。这里我列举几个我觉得可能的改造点：</p>
+<p>(1) 我们可以在步骤9［生成符号表］和步骤10［生成arsc文件］之间做手脚，动态的去踢掉那些没有进行改变的资源。我们可以通过传一个文件，里面保存着改变过的资源，然后在步骤9和步骤10之间对照这份文件把ResouceTable中没有改变过的资源踢掉，这样一来由于符号表已经生成，所以R文件中的id不会改变，但是arsc文件中由于ResourceTable中已经被我们踢掉了一部分资源，所以剩下的索引都是改变过的了。</p>
+<p>(2) 在aapt中存在–split这样一个命令。在gradle中这样配置：</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">android &#123;</span><br><span class="line">    ......</span><br><span class="line">    aaptOptions &#123;</span><br><span class="line">        additionalParameters <span class="string">"--split"</span>,<span class="string">"xhdpi"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样在对应的build/intermediates/res路径下就会存在两份ap_文件，一份为主ap，另外一份ap文件中只会存在xhdpi目录下的资源。</p>
+<p>我们可以改造aapt，去实现这样的命令：</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">android &#123;</span><br><span class="line">    ......</span><br><span class="line">    aaptOptions &#123;</span><br><span class="line">        additionalParameters <span class="string">"--split"</span>,<span class="string">"patch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后把对应的文件放入patch文件夹中，比如drawable-patch。</p>
+<p>(3) 我们都知道Android的系统资源是不会被加到arsc文件中的，具体的aapt命令为-I，那我们是不是也可以通过再造aapt，去把我们没有修改过的资源也像系统资源一样不添加到arsc中呢？</p>
+<p>(4) 我们甚至可以绕开aapt，不用它转而自己去生成arsc文件，主要的逻辑都是ResourceTable.cpp的flatten方法中，可以照葫芦画瓢嘛。</p>
+<p>以上四种方案还只是设想，其中(1)方案是公司前辈和我讨论出来的，(2)(3)方案是区长想出来的，(4)是腾讯超级补丁的方案。由于下个星期我要回学校完成毕业论文和答辩的相关事宜，希望等我回去的时候公司里的大牛前辈已经把设想变成了现实～</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/aapt-资源逆向/" rel="tag">#aapt 资源逆向</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" rel="next" title="从Instant-Run出发，谈谈Android上的热修复">
+                <i class="fa fa-chevron-left"></i> 从Instant-Run出发，谈谈Android上的热修复
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/15/记一次苦逼的资源逆向分析/"
+           data-title="记一次苦逼的资源逆向分析" data-url="http://yoursite.com/2016/05/15/记一次苦逼的资源逆向分析/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">10</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">1.</span> <span class="nav-text">参考文章</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#何为aapt，ap-和arsc"><span class="nav-number">2.</span> <span class="nav-text">何为aapt，ap_ 和arsc</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ResourceTable及其他"><span class="nav-number">3.</span> <span class="nav-text">ResourceTable及其他</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#arsc文件结构"><span class="nav-number">4.</span> <span class="nav-text">arsc文件结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#资源打包过程源码分析"><span class="nav-number">5.</span> <span class="nav-text">资源打包过程源码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#资源打包过程总结"><span class="nav-number">6.</span> <span class="nav-text">资源打包过程总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#可能的改造点"><span class="nav-number">7.</span> <span class="nav-text">可能的改造点</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
