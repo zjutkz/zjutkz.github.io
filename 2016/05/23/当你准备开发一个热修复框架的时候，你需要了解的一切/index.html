@@ -65,7 +65,7 @@
 <meta property="og:url" content="http://yoursite.com/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="最近的几篇文章都是关于hotpatch或者插件化的，原因是这两个星期公司里在搞相关的东西，当时得知有这样的开发意向的时候还是挺激动的，因为感觉不是在重复造轮子，而是在做一些创造价值的事情。所以一边忙论文和答辩的事，一边调研相关的代码，中间和小伙伴也讨论过很多次，到昨天为止也算是有了一个大概的框架。所以这里写这样一篇文章，一方面是对这段时间的总结，另一方面也算是给对这方面感兴趣的同学一个大纲吧。">
-<meta property="og:updated_time" content="2016-05-23T12:09:13.000Z">
+<meta property="og:updated_time" content="2016-05-23T12:19:16.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="当你准备开发一个热修复框架的时候，你需要了解的一切">
 <meta name="twitter:description" content="最近的几篇文章都是关于hotpatch或者插件化的，原因是这两个星期公司里在搞相关的东西，当时得知有这样的开发意向的时候还是挺激动的，因为感觉不是在重复造轮子，而是在做一些创造价值的事情。所以一边忙论文和答辩的事，一边调研相关的代码，中间和小伙伴也讨论过很多次，到昨天为止也算是有了一个大概的框架。所以这里写这样一篇文章，一方面是对这段时间的总结，另一方面也算是给对这方面感兴趣的同学一个大纲吧。">
@@ -329,7 +329,7 @@
 <p>对于第一种方式，我们需要定义一个承自Transform的子类，并且重写它的几个方法，其中最主要的就是transform这个方法了，你可以在其中做操作。然后自定义一个类继承自Plugin，重写其apply方法，在其中注册对应的Transform子类，最后在对应的build.gradle中使用这个插件就可以了。</p>
 <p>而对于第二种方式呢，不需要定义Transform的子类，只需要定义一个Plugin类，所有的逻辑在apply中重写就可以。这种方式之于使用Transform的好处是比较的灵活，想插在哪两个task之间就插在哪两个task之间，而Transform是由TtransformManager管理的，应用的时机是确定的。不过对于两种方式孰优孰劣，之前<a href="https://github.com/jasonross/Nuwa" target="_blank" rel="external">jasonross</a>，也就是nuwa的作者也提醒过我说［混淆等task的顺序官方之前说后面考虑可以更改的］，所以使用哪一种方式大家自己斟酌吧。</p>
 <p>说完了实现的方式，那具体逻辑是什么呢？这里我就说个大概吧，代码就不上了。其实也很简单，就是生成两份所有，class，资源和so文件的hash值的文件，对比一下，如果哪个文件的hash值变了就把它加入patch中就可以了。</p>
-<p>最后，如果你想把你的hotpatch框架应用到实际项目中，还需要考虑的东西有很多，比如混淆，比如multiDex操作等等。这里还是有实现方案的，groovy提供了必包的概念，大家可以通过在一个给定task前后添加必包的方式，也就是doFirst和doLast操作去面向切面的编程，也就可以去hook对应的task了（比如你可以在混淆的task之后添加一个必包，拿到对应的mapping文件，这样就有了混淆前后class的对应关系了）。置于具体怎么做就交给大家自己去实现了～</p>
+<p>最后，如果你想把你的hotpatch框架应用到实际项目中，还需要考虑的东西有很多，比如混淆，比如multiDex操作等等。这里还是有实现方案的，groovy提供了必包的概念，大家可以通过在一个给定task前后添加必包的方式，也就是doFirst和doLast操作去面向切面的编程，也就可以去hook对应的task了（比如你可以在混淆的task之后添加一个必包，拿到对应的mapping文件，这样就有了混淆前后class的对应关系了）。置于具体怎么做就交给大家自己去实现了～具体大家想要深入了解gradle插件开发的话可以看这两篇文章：<a href="http://blog.csdn.net/sbsujjbcy/article/details/50812674" target="_blank" rel="external">看这里～</a> <a href="http://blog.csdn.net/sbsujjbcy/article/details/50839263" target="_blank" rel="external">看那里～</a></p>
 <p>重要程度：✨✨✨✨✨</p>
 <p>实现难度：✨✨✨✨✨（这里给这么高的难度的主要原因是个人对groovy并不怎么精通，甚至说才刚入门，写起来确实比较困难）</p>
 <p>应用频率：✨✨✨✨✨</p>
