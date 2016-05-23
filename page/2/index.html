@@ -62,7 +62,7 @@
 <meta name="description" content="写下结果因为人们爱追溯，省略过程因为时间爱催促。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="zjutkz's blog">
-<meta property="og:url" content="http://yoursite.com/archives/index.html">
+<meta property="og:url" content="http://yoursite.com/page/2/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="写下结果因为人们爱追溯，省略过程因为时间爱催促。">
 <meta name="twitter:card" content="summary">
@@ -85,7 +85,7 @@
   };
 </script>
 
-  <title> 归档 | zjutkz's blog </title>
+  <title> zjutkz's blog </title>
 </head>
   
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -106,7 +106,9 @@
     
   
 
-  <div class="container one-collumn sidebar-position-left  page-archive  ">
+  <div class="container one-collumn sidebar-position-left 
+   page-home 
+ ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -183,403 +185,123 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
+  <section id="posts" class="posts-expand">
+    
+      
 
-  <section id="posts" class="posts-collapse">
-    <span class="archive-move-on"></span>
+  
+  
 
-    <span class="archive-page-counter">
-      
-      
-      
-        
-      
-      嗯..! 目前共计 11 篇日志。 继续努力。
-    </span>
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
 
     
+      <header class="post-header">
 
-      
-      
-      
-
-      
         
-        <div class="collection-title">
-          <h2 class="archive-year motion-element" id="archive-year-2016">2016</h2>
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" itemprop="url">
+                  重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-29T16:34:02+08:00" content="2016-03-29">
+              2016-03-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" class="leancloud_visitors" data-flag-title="重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
         </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
       
       
 
       
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
         
-            <a class="post-title-link" href="/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/" itemprop="url">
-              
-                <span itemprop="name">当你准备开发一个热修复框架的时候，你需要了解的一切</span>
-              
+          <p>说起RecyclerView，大家肯定都不陌生，它被创造出来的使命就是用来代替ListView，GridView等滑动组件的。从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比如谷歌并没有封装点击事件给我们调用，也没有像ListView那样有API可以直接生成header和footer。</p>
+<p>如果你要求比较低，直接拿RecyclerView来用是没问题的，大不了点击事件什么的自己写嘛，不过作为一个有追求的程序员，这样显然是满足不了我的，所以我选择了对其进行封装。</p>
+<p>看到这里可能有人会说，github上不是有一个封装的很好的库叫做<a href="https://github.com/cymcsg/UltimateRecyclerView">UltimateRecyclerView</a>了吗，为什么你还要花时间去重复造轮子呢？这里我想说，这样的第三方库直接拿来用确实很方便，但是我觉得你更应该去花时间自己封装一下，因为这期间你能学到的东西是很多的。比如说，你了解android的嵌套滑动机制吗？你知道recyclerView的工作原理吗？你明白adapter和view之间的观察者模式吗？这些如果你不了解没关系，你可以选择和我一样自己去封装一遍recyclerView，相信你会了解的，不过在这儿我会给大家带来我的分析，希望大家看完以后会有收获～</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/#more" rel="contents">
+              阅读全文 &raquo;
             </a>
+          </div>
         
-      </h1>
+      
+    </div>
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-05-23T19:42:32+08:00"
-              content="2016-05-23" >
-          05-23
-        </time>
-      </div>
+    <div>
+      
+    </div>
 
-    </header>
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
   </article>
 
 
-
     
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/05/15/记一次苦逼的资源逆向分析/" itemprop="url">
-              
-                <span itemprop="name">记一次苦逼的资源逆向分析</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-05-15T16:45:54+08:00"
-              content="2016-05-15" >
-          05-15
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" itemprop="url">
-              
-                <span itemprop="name">从Instant-Run出发，谈谈Android上的热修复</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-05-10T16:43:31+08:00"
-              content="2016-05-10" >
-          05-10
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/05/06/让我们来聊一聊插件化吧/" itemprop="url">
-              
-                <span itemprop="name">让我们来聊一聊插件化吧</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-05-06T15:28:32+08:00"
-              content="2016-05-06" >
-          05-06
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/05/03/其实没那么复杂！探究react-native通信机制/" itemprop="url">
-              
-                <span itemprop="name">其实没那么复杂！探究react-native通信机制</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-05-03T18:02:46+08:00"
-              content="2016-05-03" >
-          05-03
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/04/23/要做一个有冒险精神的人！开启漫漫的agera之旅/" itemprop="url">
-              
-                <span itemprop="name">要做一个有冒险精神的人！开启漫漫的agera之旅</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-04-23T22:31:07+08:00"
-              content="2016-04-23" >
-          04-23
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/04/23/为分析agera做准备！带你了解Android的handler机制/" itemprop="url">
-              
-                <span itemprop="name">为分析agera做准备！带你了解Android的handler机制</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-04-23T16:46:57+08:00"
-              content="2016-04-23" >
-          04-23
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/" itemprop="url">
-              
-                <span itemprop="name">好好和h5沟通！几种常见的hybrid通信方式</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-04-17T18:01:39+08:00"
-              content="2016-04-17" >
-          04-17
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/04/13/选择恐惧症的福音！教你认清MVC，MVP和MVVM/" itemprop="url">
-              
-                <span itemprop="name">选择恐惧症的福音！教你认清MVC，MVP和MVVM</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-04-13T13:04:24+08:00"
-              content="2016-04-13" >
-          04-13
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/04/07/万能的APT！编译时注解的妙用/" itemprop="url">
-              
-                <span itemprop="name">万能的APT！编译时注解的妙用</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-04-07T23:52:47+08:00"
-              content="2016-04-07" >
-          04-07
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/archives/page/2/">2</a><a class="extend next" rel="next" href="/archives/page/2/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
   </nav>
-
 
 
 
@@ -744,12 +466,6 @@
   
 
   
-  
-    <script type="text/javascript" id="motion.page.archive">
-      $('.archive-year').velocity('transition.slideLeftIn');
-    </script>
-  
-
 
   
 
