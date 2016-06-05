@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2016-06-05T12:36:09.000Z</updated>
+  <updated>2016-06-05T12:37:24.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://yoursite.com/2016/06/05/%E6%8E%A2%E7%A9%B6Behavior%E7%9A%84%E7%9C%9F%E5%AE%9E%E9%9D%A2%E7%9B%AE/"/>
     <id>http://yoursite.com/2016/06/05/探究Behavior的真实面目/</id>
     <published>2016-06-05T09:15:53.000Z</published>
-    <updated>2016-06-05T12:36:09.000Z</updated>
+    <updated>2016-06-05T12:37:24.000Z</updated>
     
     <content type="html">&lt;p&gt;v7包下的组件类似CoordinatorLayout推出也有一段时间了，大家使用的时候应该会体会到其中很多的便利，今天这篇文章带大家来了解一个比较重要的ui组件——Behavior。从字面意思上就可以看出它的作用，就是用来规定某些组件的行为的，那它到底是什么，又该怎么用呢？看完这篇文章希望大家会有自己的收获～&lt;/p&gt;
 &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
@@ -41,7 +41,7 @@
 &lt;p&gt; &lt;img src=&quot;/images/探究Behavior的真实面目/bad.png&quot; alt=&quot;bad&quot;&gt;&lt;/p&gt;
 &lt;p&gt;最终界面的展示就像这样，RecyclerView把AppBarLayout给覆盖了。这里其实很好理解，如刚才的代码所示，CoordinatorLayout其实只是一个ViewGroup，它不像LinearLayout那样具有特定的布局特点，甚至可以说它内部的逻辑和FrameLayout是没什么差别的，所以如果你不设置对应的Behavior的话，布局就会有问题。从这里也可以反映出Behavior的作用，就是规范子View的显示和交互。&lt;/p&gt;
 &lt;h1 id=&quot;原理-amp-系统是怎么用Behavior的&quot;&gt;&lt;a href=&quot;#原理-amp-系统是怎么用Behavior的&quot; class=&quot;headerlink&quot; title=&quot;原理&amp;amp;系统是怎么用Behavior的&quot;&gt;&lt;/a&gt;原理&amp;amp;系统是怎么用Behavior的&lt;/h1&gt;&lt;p&gt;说完了Behavior的作用，那该怎么用它呢？这一小节让我们来讲讲Behavior的原理以及系统是如何使用它的。&lt;/p&gt;
-&lt;p&gt;首先先看原理。我们知道Behavior是用来帮助CoordinatorLayout的，所以我们要从CoordinatorLayout中寻找答案。首先，我们可以看到CoordinatorLayout中有一个LayoutParams，它的子类的LayoutParams都是这个，其中它的构造函数如下。&lt;/p&gt;
+&lt;p&gt;首先先看原理。我们知道Behavior是用来帮助CoordinatorLayout的，所以我们要从CoordinatorLayout中寻找答案。首先，我们可以看到CoordinatorLayout中有一个LayoutParams，它的子View的LayoutParams都是这个，其中它的构造函数如下。&lt;/p&gt;
 &lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;LayoutParams(Context context, AttributeSet attrs) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;(context, attrs);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .........&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (mBehaviorResolved) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        mBehavior = parseBehavior(context, attrs, a.getString(&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                R.styleable.CoordinatorLayout_LayoutParams_layout_behavior));&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    a.recycle();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
 &lt;p&gt;可以看到它通过parseBehavior去得到了对应子View的Behavior。大家可以试试用RecyclerView的getLayoutParams方法去获取LayoutParams并且调用getBehavior方法，可以得到的就是我们在xml文件中设置的那个Behavior。&lt;/p&gt;
 &lt;p&gt;知道了如何将Behavior设置进去，那它是如何发挥作用的呢？让我们来看看onLayout函数。&lt;/p&gt;
