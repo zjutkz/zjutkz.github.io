@@ -1,0 +1,877 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="hotpatch," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="最近几个月博客里的文章除了两篇和相关的，其他都或多或少设计到了hotpatch，洋洋洒洒也写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="hotpatch完结篇之ART虚拟机cresh之谜">
+<meta property="og:url" content="http://yoursite.com/2016/08/25/hotpatch完结篇之ART虚拟机cresh之谜/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="最近几个月博客里的文章除了两篇和相关的，其他都或多或少设计到了hotpatch，洋洋洒洒也写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。">
+<meta property="og:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机cresh之谜/oat_dump.png">
+<meta property="og:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机cresh之谜/dex_oat_code.png">
+<meta property="og:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机cresh之谜/trampoline.png">
+<meta property="og:updated_time" content="2016-08-25T08:58:27.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="hotpatch完结篇之ART虚拟机cresh之谜">
+<meta name="twitter:description" content="最近几个月博客里的文章除了两篇和相关的，其他都或多或少设计到了hotpatch，洋洋洒洒也写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。">
+<meta name="twitter:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机cresh之谜/oat_dump.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> hotpatch完结篇之ART虚拟机cresh之谜 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                hotpatch完结篇之ART虚拟机cresh之谜
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-25T16:58:09+08:00" content="2016-08-25">
+              2016-08-25
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/25/hotpatch完结篇之ART虚拟机cresh之谜/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/08/25/hotpatch完结篇之ART虚拟机cresh之谜/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/08/25/hotpatch完结篇之ART虚拟机cresh之谜/" class="leancloud_visitors" data-flag-title="hotpatch完结篇之ART虚拟机cresh之谜">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近几个月博客里的文章除了两篇和相关的，其他都或多或少设计到了hotpatch，洋洋洒洒也写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。</p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在看这篇文章之前，如果你对hotpatch的了解不是很多，可以先看我之前写的几篇文章：</p>
+<p><a href="http://zjutkz.net/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/" target="_blank" rel="external">Android中的类加载-查找和在hotpatch上的问题</a></p>
+<p><a href="http://zjutkz.net/2016/07/22/热修复中的资源修复/" target="_blank" rel="external">热修复中的资源修复</a></p>
+<p><a href="http://zjutkz.net/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/" target="_blank" rel="external">当你准备开发一个热修复框架的时候，你需要了解的一切</a></p>
+<p><a href="http://zjutkz.net/2016/05/15/记一次苦逼的资源逆向分析/" target="_blank" rel="external">记一次苦逼的资源逆向分析</a></p>
+<p><a href="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" target="_blank" rel="external">从Instant-Run出发，谈谈Android上的热修复</a></p>
+<p><a href="http://zjutkz.net/2016/05/06/让我们来聊一聊插件化吧/" target="_blank" rel="external">让我们来聊一聊插件化吧</a></p>
+<h1 id="OAT文件解析"><a href="#OAT文件解析" class="headerlink" title="OAT文件解析"></a>OAT文件解析</h1><p>我们知道，在ART虚拟机上，当应用首次安装，或者动态的通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中，Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/data/dalvik-cache 目录下，如果你的手机是ARM的话，就应该在/data/dalvik-cache/arm下，会有一个data@app@[package name]-1@base.apk@classes.dex的文件，虽然这个文件是后缀是.dex，这个它确实就是我们要找的oat文件。我们可以使用dump命令去把它dump出来，具体的命令如下：</p>
+<p>oatdump –file-name=data@app@[package name]-1@base.apk@classes.dex –output=dump.txt</p>
+<p>然后就可以续快的使用adb pull把对应的dump.txt拉取到你想到存放的路径下了。</p>
+<p>下面让分块来解析oat文件。</p>
+<p> <img src="/images/hotpatch完结篇之ART虚拟机cresh之谜/oat_dump.png" alt="oat_dump"></p>
+<p>首先让我们看看oat文件的头部。</p>
+<p>MAGIC表示魔数，和java文件的魔术是一个道理。</p>
+<p>CHECKSUM表示校验和，这个也很好理解。</p>
+<p>INSTRUCTION SET表示指令集，一个有四个选项，在arm机器中就是Thumb2。</p>
+<p>INSTRUCTION SET FEATURES表示指令集功能，和我们今天的文章没什么关联。</p>
+<p>DEX FILE COUNT表示oat文件中的dex文件个数。我们知道oat文件包含着两部分——oat data和oat exec。其中oat data里就有被转换的dex文件，而oat exec中有所转换好的native code。</p>
+<p>XECUTABLE OFFSET表示oat exec段的偏移量，也就是oat data和oat exec分隔的地方。</p>
+<p>后面的几个都表示ARM虚拟机下的trampoline机制，这一点我们留到后面再讲。</p>
+<p>最后我们看一下KEY VALUE STORE的值。</p>
+<p>其中–zip-location表示对应apk文件的路径。–oat-location表示生成的oat文件的路径。image-location表示image文件的路径，具体路径是/data/dalvik-cache/arm/system@framework@boot.art，大家可以把它看成一个特殊的oat文件，里面包含着android系统的dex和对应的native code，所以取名boot。</p>
+<p>在这之后，就是dex文件的内容和对应的native code了，我们这里以一个为例。</p>
+<p> <img src="/images/hotpatch完结篇之ART虚拟机cresh之谜/dex_oat_code.png" alt="dex_oat_code"></p>
+<p>dex_method_idx表示这个方法在对应的dex文件中的方法索引。</p>
+<p>DEX CODE下的代码就是dex文件对应的代码。</p>
+<p>CODE下的代码就是对应的native code。</p>
+<h1 id="ART机制出初探"><a href="#ART机制出初探" class="headerlink" title="ART机制出初探"></a>ART机制出初探</h1><p>大致了解了一下oat文件的格式，下面让我们看看ART虚拟机是如何操作它的。</p>
+<p>首先在ART虚拟机中，会通过OatFile::Open函数去加载一个oat文件。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">OatFile* OatFile::Open(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; filename,<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; location,</span><br><span class="line">byte* requested_base,<span class="keyword">uint8_t</span>* oat_file_begin,<span class="keyword">bool</span> executable,<span class="built_in">std</span>::<span class="built_in">string</span>* error_msg) &#123;</span><br><span class="line">        CHECK(!filename.empty()) &lt;&lt; location;</span><br><span class="line">        CheckLocation(location);</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;OatFile&gt; ret;</span><br><span class="line">        <span class="keyword">if</span> (kUsePortableCompiler &amp;&amp; executable) &#123;</span><br><span class="line">        	<span class="comment">// If we are using PORTABLE, use dlopen to deal with relocations.</span></span><br><span class="line">        	<span class="comment">// We use our own ELF loader for Quick to deal with legacy apps that</span></span><br><span class="line">        	<span class="comment">// open a generated dex file by name, remove the file, then open</span></span><br><span class="line">        	<span class="comment">// another generated dex file with the same name. http://b/10614658</span></span><br><span class="line">        	ret.reset(OpenDlopen(filename, location, requested_base, error_msg));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        	<span class="comment">// If we aren't trying to execute, we just use our own ElfFile loader for a couple reasons:</span></span><br><span class="line">        	<span class="comment">// On target, dlopen may fail when compiling due to selinux restrictions on installd.</span></span><br><span class="line">        	<span class="comment">// On host, dlopen is expected to fail when cross compiling, so fall back to OpenElfFile.</span></span><br><span class="line">        	<span class="comment">// This won't work for portable runtime execution because it doesn't process relocations.</span></span><br><span class="line">        	<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;File&gt; file(OS::OpenFileForReading(filename.c_str()));</span><br><span class="line">        	<span class="keyword">if</span> (file.get() == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        		*error_msg = StringPrintf(<span class="string">"Failed to open oat filename for reading: %s"</span>, strerror(errno));</span><br><span class="line">        		<span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        	&#125;</span><br><span class="line">        	ret.reset(OpenElfFile(file.get(), location, requested_base, oat_file_begin, <span class="literal">false</span>, executable,</span><br><span class="line">        	error_msg));</span><br><span class="line"></span><br><span class="line">        	<span class="comment">// It would be nice to unlink here. But we might have opened the file created by the</span></span><br><span class="line">        	<span class="comment">// ScopedLock, which we better not delete to avoid races. <span class="doctag">TODO:</span> Investigate how to fix the API</span></span><br><span class="line">        	<span class="comment">// to allow removal when we know the ELF must be borked.</span></span><br><span class="line">        &#125;</span><br><span class="line">   		<span class="keyword">return</span> ret.release();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中通过kUsePortableCompiler &amp;&amp; executable的的值去判断执行OpenDlopen还是OpenElfFile。这个逻辑不用具体去了解，这两个函数最终都会执行到Setup()方法。</p>
+<p>而在Setup方法中，最重要的是去获取包含在oatdata段的DEX文件描述信息。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; dex_file_count; i++) &#123;</span><br><span class="line">        <span class="keyword">uint32_t</span> dex_file_location_size = *<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> <span class="keyword">uint32_t</span>*&gt;(oat);</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(dex_file_location_size == <span class="number">0U</span>)) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd with empty location name"</span>,</span><br><span class="line">        	GetLocation().c_str(), i);</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        oat += <span class="keyword">sizeof</span>(dex_file_location_size);</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(oat &gt; End())) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd truncated after dex file "</span></span><br><span class="line">        	<span class="string">"location size"</span>, GetLocation().c_str(), i);</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span>* dex_file_location_data = <span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> <span class="keyword">char</span>*&gt;(oat);</span><br><span class="line">        oat += dex_file_location_size;</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(oat &gt; End())) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd with truncated dex file "</span></span><br><span class="line">        	<span class="string">"location"</span>, GetLocation().c_str(), i);</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">std</span>::<span class="function"><span class="built_in">string</span> <span class="title">dex_file_location</span><span class="params">(dex_file_location_data, dex_file_location_size)</span></span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">uint32_t</span> dex_file_checksum = *<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> <span class="keyword">uint32_t</span>*&gt;(oat);</span><br><span class="line">        oat += <span class="keyword">sizeof</span>(dex_file_checksum);</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(oat &gt; End())) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd for '%s' truncated after "</span></span><br><span class="line">        	<span class="string">"dex file checksum"</span>, GetLocation().c_str(), i,</span><br><span class="line">        	dex_file_location.c_str());</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">uint32_t</span> dex_file_offset = *<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> <span class="keyword">uint32_t</span>*&gt;(oat);</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(dex_file_offset == <span class="number">0U</span>)) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd for '%s' with zero dex "</span></span><br><span class="line">        	<span class="string">"file offset"</span>, GetLocation().c_str(), i, dex_file_location.c_str());</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(dex_file_offset &gt; Size())) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd for '%s' with dex file "</span></span><br><span class="line">        	<span class="string">"offset %ud &gt; %zd"</span>, GetLocation().c_str(), i,</span><br><span class="line">        	dex_file_location.c_str(), dex_file_offset, Size());</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        oat += <span class="keyword">sizeof</span>(dex_file_offset);</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(oat &gt; End())) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd for '%s' truncated "</span></span><br><span class="line">        	<span class="string">" after dex file offsets"</span>, GetLocation().c_str(), i,</span><br><span class="line">        	dex_file_location.c_str());</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">uint8_t</span>* dex_file_pointer = Begin() + dex_file_offset;</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(!DexFile::IsMagicValid(dex_file_pointer))) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd for '%s' with invalid "</span></span><br><span class="line">        	<span class="string">" dex file magic '%s'"</span>, GetLocation().c_str(), i,</span><br><span class="line">        	dex_file_location.c_str(), dex_file_pointer);</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(!DexFile::IsVersionValid(dex_file_pointer))) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd for '%s' with invalid "</span></span><br><span class="line">        	<span class="string">" dex file version '%s'"</span>, GetLocation().c_str(), i,</span><br><span class="line">        	dex_file_location.c_str(), dex_file_pointer);</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">const</span> DexFile::Header* header = <span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> DexFile::Header*&gt;(dex_file_pointer);</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">uint32_t</span>* methods_offsets_pointer = <span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> <span class="keyword">uint32_t</span>*&gt;(oat);</span><br><span class="line"></span><br><span class="line">        oat += (<span class="keyword">sizeof</span>(*methods_offsets_pointer) * header-&gt;class_defs_size_);</span><br><span class="line">        <span class="keyword">if</span> (UNLIKELY(oat &gt; End())) &#123;</span><br><span class="line">        	*error_msg = StringPrintf(<span class="string">"In oat file '%s' found OatDexFile #%zd for '%s' with truncated "</span></span><br><span class="line">        	<span class="string">" method offsets"</span>, GetLocation().c_str(), i,</span><br><span class="line">        	dex_file_location.c_str());</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">string</span> canonical_location = DexFile::GetDexCanonicalLocation(dex_file_location.c_str());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Create the OatDexFile and add it to the owning container.</span></span><br><span class="line">        OatDexFile* oat_dex_file = <span class="keyword">new</span> OatDexFile(<span class="keyword">this</span>,</span><br><span class="line">        dex_file_location,</span><br><span class="line">        canonical_location,</span><br><span class="line">        dex_file_checksum,</span><br><span class="line">        dex_file_pointer,</span><br><span class="line">        methods_offsets_pointer);</span><br></pre></td></tr></table></figure>
+<p>这段函数比较长，但是主要逻辑就是解析出dex</p>
+<p>文件的一些值，最终生成一个OatDexFile文件。其中最重要的是下面两个值：</p>
+<p>dex_file_offset和methods_offsets_pointer。</p>
+<p>前者让我们可以定位到在oatdata段中的dex文件，后者则是一个数组，包含了该dex文件中的所有方法。我们可以通过class_i这个数组得到对应class的偏移量。然后通过前面提到的method_index去索引得到对应的method：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> OatMethodOffsets* OatFile::OatClass::GetOatMethodOffsets(<span class="keyword">uint32_t</span> method_index) <span class="keyword">const</span> &#123;</span><br><span class="line">        <span class="comment">// <span class="doctag">NOTE:</span> We don't keep the number of methods and cannot do a bounds check for method_index.</span></span><br><span class="line">        <span class="keyword">if</span> (methods_pointer_ == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        	CHECK_EQ(kOatClassNoneCompiled, type_);</span><br><span class="line">        	<span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">size_t</span> methods_pointer_index;</span><br><span class="line">        <span class="keyword">if</span> (bitmap_ == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        	CHECK_EQ(kOatClassAllCompiled, type_);</span><br><span class="line">        	methods_pointer_index = method_index;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        	CHECK_EQ(kOatClassSomeCompiled, type_);</span><br><span class="line">        	<span class="keyword">if</span> (!BitVector::IsBitSet(bitmap_, method_index)) &#123;</span><br><span class="line">        		<span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        	&#125;</span><br><span class="line">        	<span class="keyword">size_t</span> num_set_bits = BitVector::NumSetBits(bitmap_, method_index);</span><br><span class="line">        	methods_pointer_index = num_set_bits;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">const</span> OatMethodOffsets&amp; oat_method_offsets = methods_pointer_[methods_pointer_index];</span><br><span class="line">        <span class="keyword">return</span> &amp;oat_method_offsets;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在我们可以知道，在ART虚拟机中，有一个class_index和一个mehod_index，它会通过这两个值去索引对应的数组，最终找到想要执行的方法。</p>
+<p>得到了想要执行的方法，我们可以看看这个方法是如何执行的。我们可以看一下ArtMethod的invoke方法。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> ArtMethod::Invoke(Thread* self, <span class="keyword">uint32_t</span>* args, <span class="keyword">uint32_t</span> args_size, JValue* result,<span class="keyword">const</span> <span class="keyword">char</span>* shorty) &#123;</span><br><span class="line"></span><br><span class="line">    ........</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Call the invoke stub, passing everything as arguments.</span></span><br><span class="line">    <span class="keyword">if</span> (UNLIKELY(!runtime-&gt;IsStarted())) &#123;</span><br><span class="line">    	<span class="keyword">if</span> (IsStatic()) &#123;</span><br><span class="line">    		art::interpreter::EnterInterpreterFromInvoke(self, <span class="keyword">this</span>, <span class="literal">nullptr</span>, args, 			result);</span><br><span class="line">    	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    		Object* receiver = <span class="keyword">reinterpret_cast</span>&lt;StackReference&lt;Object&gt;*&gt;(&amp;args[<span class="number">0</span>])-				&gt;AsMirrorPtr();</span><br><span class="line">    		art::interpreter::EnterInterpreterFromInvoke(self, <span class="keyword">this</span>, receiver, args + <span class="number">1</span>, result);</span><br><span class="line">    	&#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    	<span class="keyword">const</span> <span class="keyword">bool</span> kLogInvocationStartAndReturn = <span class="literal">false</span>;</span><br><span class="line">    	<span class="keyword">bool</span> have_quick_code = GetEntryPointFromQuickCompiledCode() != <span class="literal">nullptr</span>;</span><br><span class="line">    	<span class="meta">#<span class="meta-keyword">if</span> defined(ART_USE_PORTABLE_COMPILER)</span></span><br><span class="line">    	<span class="keyword">bool</span> have_portable_code = GetEntryPointFromPortableCompiledCode() != <span class="literal">nullptr</span>;</span><br><span class="line">    	<span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    	<span class="keyword">bool</span> have_portable_code = <span class="literal">false</span>;</span><br><span class="line">    	<span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    	<span class="keyword">if</span> (LIKELY(have_quick_code || have_portable_code)) &#123;</span><br><span class="line">    		<span class="keyword">if</span> (!IsStatic()) &#123;</span><br><span class="line">    			.............</span><br><span class="line">    			(*art_quick_invoke_stub)(<span class="keyword">this</span>, args, args_size, self, result, shorty);</span><br><span class="line">    		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    			(*art_quick_invoke_static_stub)(<span class="keyword">this</span>, args, args_size, self, result, shorty);</span><br><span class="line">    		&#125;</span><br><span class="line">    	<span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    	(*art_quick_invoke_stub)(<span class="keyword">this</span>, args, args_size, self, result, shorty);</span><br><span class="line">    	<span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    		(*art_portable_invoke_stub)(<span class="keyword">this</span>, args, args_size, self, result, shorty[<span class="number">0</span>]);</span><br><span class="line">    	&#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Pop transition.</span></span><br><span class="line">    self-&gt;PopManagedStackFragment(fragment);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在QUICK类型下(PORTABLE忽略)，其中会根据是否是静态方法调用art_quick_invoke_stub和art_quick_invoke_static_stub，我们来看art_quick_invoke_stub这是一段ARM汇编代码。我们重点关注下面三句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">str    ip, [sp]                        @ store NULL for method* at bottom of frame  </span><br><span class="line">ldr    ip, [r0, #METHOD_CODE_OFFSET]   @ get pointer to the code  </span><br><span class="line">blx    ip                              @ call the method</span><br></pre></td></tr></table></figure>
+<p>当找到了对应的方法之后，会偏移到METHOD_CODE_OFFSET这儿，然后执行。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Offset of field Method::entry_point_from_compiled_code_  </span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> METHOD_CODE_OFFSET 44</span></span><br></pre></td></tr></table></figure>
+<p>这里看到，METHOD_CODE_OFFSET这个值在5.0以上是44，在4.4上是40。而这个位置的地址指向的是entry_point_from_compiled<em>code</em>  ，这个就是我们下面要讲的Trampoline机制。</p>
+<h1 id="方法调用机制"><a href="#方法调用机制" class="headerlink" title="方法调用机制"></a>方法调用机制</h1><p>说是Trampoline，其实这只是ART方法调用机制的一个子集。在ART中，会调用ClassLinker的LinkCode方法关联方法。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (oat_class != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        <span class="comment">// Every kind of method should at least get an invoke stub from the oat_method.</span></span><br><span class="line">        <span class="comment">// non-abstract methods also get their code pointers.</span></span><br><span class="line">        <span class="keyword">const</span> OatFile::OatMethod oat_method = oat_class-&gt;GetOatMethod(method_index);</span><br><span class="line">        oat_method.LinkMethod(method.Get());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Install entry point from interpreter.</span></span><br><span class="line"><span class="keyword">bool</span> enter_interpreter = NeedsInterpreter(method.Get(),</span><br><span class="line">method-&gt;GetEntryPointFromQuickCompiledCode(),</span><br><span class="line"><span class="keyword">if</span> (enter_interpreter &amp;&amp; !method-&gt;IsNative()) &#123;</span><br><span class="line">	method-&gt;SetEntryPointFromInterpreter(interpreter::artInterpreterToInterpreterBridge);</span><br><span class="line">    method-&gt;SetEntryPointFromInterpreter(artInterpreterToCompiledCodeBridge);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (method-&gt;IsStatic() &amp;&amp; !method-&gt;IsConstructor()) &#123;</span><br><span class="line">    <span class="comment">// For static methods excluding the class initializer, install the trampoline.</span></span><br><span class="line">    <span class="comment">// It will be replaced by the proper entry point by ClassLinker::FixupStaticTrampolines</span></span><br><span class="line">    <span class="comment">// after initializing class (see ClassLinker::InitializeClass method).</span></span><br><span class="line">    method-&gt;SetEntryPointFromQuickCompiledCode(GetQuickResolutionTrampoline());</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (enter_interpreter) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!method-&gt;IsNative()) &#123;</span><br><span class="line">        <span class="comment">// Set entry point from compiled code if there's no code or in interpreter only mode.</span></span><br><span class="line">        method-&gt;SetEntryPointFromQuickCompiledCode(GetQuickToInterpreterBridge());</span><br><span class="line">   &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">   method-&gt;SetEntryPointFromQuickCompiledCode(GetQuickGenericJniTrampoline());</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>光看代码可能比较难懂，但是其实逻辑是非常清晰的。</p>
+<p>首先，在ART虚拟机中，一个方法会有两个入口，分别是EntryPointFromInterpreter和EntryPointFromCompiledCode，通过对应的setter去设置，设置的值就是上面提到的entry_point_from_compiled_code和entry_point_from_interpreter<em>code</em>这是什么意思呢，虽然ART虚拟机会有AOT操作，但是我们还是可以手动开启解释器模式的，另外一些代码可能没有native code，在这样的情况下，ART就需要使用原来dalvik的那部分逻辑，使用解释模式运行，所以现在就存在四种情况：</p>
+<p>解释器－&gt;native code，解释器－&gt;解释器，native code－&gt;解释器，native code－&gt;native code。</p>
+<p>所以每个方法就需要两个入口，保证解释器和native code都可以调用成功。</p>
+<p>我们这里只关注EntryPointFromCompiledCode，在LinkCode中，我们先会调用oat_method.LinkMethod(method.Get())方法，在这个方法中，我们会将entry_point_from_compiled_code设置成这个方法的code_offset。然后去判断这个方法是否是静态的非构造函数，如果是则将entry_point_from_compiled_code设置成GetQuickResolutionTrampoline。</p>
+<p>这里就涉及到了前面说的Trampoline机制。</p>
+<p>Trampoline的中文意思是蹦床，在ART虚拟机中，我们可以通过Trampoline从native code跳回到ART虚拟机内。具体的实现逻辑大家可以参考老罗的<a href="http://blog.csdn.net/luoshengyang/article/details/40289405" target="_blank" rel="external">Android运行时ART执行类方法的过程分析</a>一文。我们上面截图的那一段oat文件其实也有用到：</p>
+<p> <img src="/images/hotpatch完结篇之ART虚拟机cresh之谜/trampoline.png" alt="trampoline"></p>
+<p>可以看到pAllocObject就是一个Trampoline，通过这个东西native code就可以调用ART虚拟机内部构造一个对象的逻辑了。</p>
+<h1 id="hotpatch-crash之谜"><a href="#hotpatch-crash之谜" class="headerlink" title="hotpatch crash之谜"></a>hotpatch crash之谜</h1><p>通过上面的学习，我们知道了ART虚拟机调用方法的逻辑其实就是通过预先将dex code转换成native code，然后配以特定的函数调用机制去调用。</p>
+<p>在这之中，Trampoline起到了非常重要的作用，在跨dex的方法调用中(例如patch的方法调用app的方法)时，ART就会使用Trampoline机制去跳回到虚拟机内部执行。从这一点，我们可以证明其实简单的跨dex调用在ART环境中是不存在问题的。</p>
+<p>但是在ART虚拟机做AOT操作的时候，它已经将具体的地址全部写死了，包括class_index和method_index，这样就会有问题了。如果我们的patch地址发生了改变，无论是什么地址，或者说method_index发生了改变，那么在app中的方法调用的时候，通过index索引的机制去完成就会出现错位的问题，这里Trampoline也无能为力了，因为patch中的方法在app中确确实实是存在的，所以ART无法通过Trampoline去执行。</p>
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>既然出现了问题，那就得想办法解决，这里提供几个思路：</p>
+<p>1.既然交叉调用会有问题，那么我们可以将patch的类以及调用了它们方法的类全部打进patch里。但是这种方案存在两个问题，首先，这样会使patch包的大小急剧增加，并且最后基本就是将整个app的类打进了patch，此外，<a href="https://github.com/WeMobileDev/article/blob/master/Android_N混合编译与对热补丁影响解析.md" target="_blank" rel="external">Android_N混合编译与对热补丁影响解析</a>一文中指出，在Android_N上新增了一个base.art，类似于boot.art，只不过它是将一些非android framework的代码进行缓存，这样就导致了patch的不可控。</p>
+<p>2.我们可以参考instant run的方法，新增一个ClassLoader作为代替系统的PathClassLoader，绕开前面的缓存机制。</p>
+<p>3.通过diff算法生成diff文件，在客户端合成全量的。</p>
+<p>4.不采用ClassLoader的实现，自己去hook native层对应的entry_point，将其指向自己的函数。但是这种方案实现难度和风险都是最大的，DexPosed和AndFix这样的框架在patch成功率上应该是不如ClassLoader的框架的。</p>
+<h1 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h1><p>这篇文章应该是博客里关于hotpatch的最后一篇文章了，其实研究这样的技术是我比较中意的。之前在android社区里看到了很多类似［杀不死的进程］之类的文章，其实这种技术我是非常非常反感的，它的出现只会污染android的生态环境，最终开发者将自食其果。有这点时间，不如多研究研究Material Design，研究研究插件化和hotpatch，实在不行多去和产品撕撕逼也不错啊～</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/hotpatch/" rel="tag">#hotpatch</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/10/我们为什么要使用RecyclerView/" rel="next" title="我们为什么要使用RecyclerView">
+                <i class="fa fa-chevron-left"></i> 我们为什么要使用RecyclerView
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/08/25/hotpatch完结篇之ART虚拟机cresh之谜/"
+           data-title="hotpatch完结篇之ART虚拟机cresh之谜" data-url="http://yoursite.com/2016/08/25/hotpatch完结篇之ART虚拟机cresh之谜/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">17</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#OAT文件解析"><span class="nav-number">2.</span> <span class="nav-text">OAT文件解析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ART机制出初探"><span class="nav-number">3.</span> <span class="nav-text">ART机制出初探</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#方法调用机制"><span class="nav-number">4.</span> <span class="nav-text">方法调用机制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#hotpatch-crash之谜"><span class="nav-number">5.</span> <span class="nav-text">hotpatch crash之谜</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解决方案"><span class="nav-number">6.</span> <span class="nav-text">解决方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#结尾"><span class="nav-number">7.</span> <span class="nav-text">结尾</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
