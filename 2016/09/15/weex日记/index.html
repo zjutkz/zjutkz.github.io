@@ -59,18 +59,18 @@
 
 
 
-<meta name="description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总比它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
+<meta name="description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="weex日记">
 <meta property="og:url" content="http://yoursite.com/2016/09/15/weex日记/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总比它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
+<meta property="og:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
 <meta property="og:image" content="http://yoursite.com/images/weex日记/weex.png">
 <meta property="og:image" content="http://yoursite.com/images/weex日记/weex_communication.png">
-<meta property="og:updated_time" content="2016-09-15T03:39:35.000Z">
+<meta property="og:updated_time" content="2016-09-15T03:53:05.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="weex日记">
-<meta name="twitter:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总比它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
+<meta name="twitter:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
 <meta name="twitter:image" content="http://yoursite.com/images/weex日记/weex.png">
 
 
@@ -264,7 +264,7 @@
       
 
       
-        <p>weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总比它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。</p>
+        <p>weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。</p>
 <a id="more"></a>
 <h1 id="weex是什么"><a href="#weex是什么" class="headerlink" title="weex是什么"></a>weex是什么</h1><p> 首先我们看看weex的GitHub上是如何描述的。<img src="/images/weex日记/weex.png" alt="weex"></p>
 <p>很简单，它就是一个为了跨平台而生的框架，大气点说——write once，run anywhere。因此很多人把它和facebook的react native进行比较，这样的比较是合理的，毕竟它们两个做的事在宏观上来说是差不多的，weex确实也借鉴了rn的一些理念，不过如果你仔细了解过weex，你会发现其实在很多细节上它和rn还是存在不同的。</p>
@@ -285,7 +285,7 @@
 <p>在WXSDKEngine的initialize方法中会调用doInitInternal去进行真正的初始化操作。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">doInitInternal</span><span class="params">(<span class="keyword">final</span> Application application,<span class="keyword">final</span> InitConfig config)</span></span>&#123;</span><br><span class="line">  WXEnvironment.sApplication = application;</span><br><span class="line">  WXEnvironment.JsFrameworkInit = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">  WXBridgeManager.getInstance().getJSHandler().post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">      WXSDKManager sm = WXSDKManager.getInstance();</span><br><span class="line">      <span class="keyword">if</span>(config != <span class="keyword">null</span> ) &#123;</span><br><span class="line">        sm.setIWXHttpAdapter(config.getHttpAdapter());</span><br><span class="line">        sm.setIWXImgLoaderAdapter(config.getImgAdapter());</span><br><span class="line">        sm.setIWXUserTrackAdapter(config.getUtAdapter());</span><br><span class="line">        sm.setIWXDebugAdapter(config.getDebugAdapter());</span><br><span class="line">        sm.setIWXStorageAdapter(config.getStorageAdapter());</span><br><span class="line">        <span class="keyword">if</span>(config.getDebugAdapter()!=<span class="keyword">null</span>)&#123;</span><br><span class="line">          config.getDebugAdapter().initDebug(application);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      WXSoInstallMgrSdk.init(application);</span><br><span class="line">      <span class="keyword">boolean</span> isSoInitSuccess = WXSoInstallMgrSdk.initSo(V8_SO_NAME, <span class="number">1</span>, config!=<span class="keyword">null</span>?config.getUtAdapter():<span class="keyword">null</span>);</span><br><span class="line">      <span class="keyword">if</span> (!isSoInitSuccess) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      sm.initScriptsFramework(config.getFramework());</span><br><span class="line"></span><br><span class="line">      WXEnvironment.sSDKInitExecuteTime = System.currentTimeMillis() - start;</span><br><span class="line">      WXLogUtils.renderPerformanceLog(<span class="string">"SDKInitExecuteTime"</span>, WXEnvironment.sSDKInitExecuteTime);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">  register();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在这个方法中，主要是三个操作：</p>
-<p>1.调用WXSoInstallMgrSdk.initSo方法去加载so文件，从so文件的名字可以看出，weex的js引擎在android端选用了v8而并且和rn一样选用的是JSCore(不过weex在iOS端还是选了系统自带的JSCore，据说会有内存泄漏，没具体了解过)。</p>
+<p>1.调用WXSoInstallMgrSdk.initSo方法去加载so文件，从so文件的名字可以看出，weex的js引擎在android端选用了v8而并非和rn一样选用的是JSCore(不过weex在iOS端还是选了系统自带的JSCore，据说会有内存泄漏，没具体了解过)。</p>
 <p>对于这一部分，值得一提的是weex加载so文件的方式，并非普通的system.loadLibrary，而是经过了一系列的优化措施，基本能保证加载成功，这样的方法我们是可以学习一下的，非常的好。</p>
 <p>2.调用WXSDKManager的initScriptsFramework方法去加载整个JSFramework。</p>
 <p>对于这一部分，我们需要知道JSFramework的源码是main.js。8000多行的源码，有兴趣的同学可以去看一下。</p>
