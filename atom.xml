@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2016-09-22T14:13:46.000Z</updated>
+  <updated>2016-09-23T02:40:55.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://yoursite.com/2016/09/22/Weex%E6%97%A5%E8%AE%B0%E2%80%94%E2%80%942/"/>
     <id>http://yoursite.com/2016/09/22/Weex日记——2/</id>
     <published>2016-09-22T14:08:37.000Z</published>
-    <updated>2016-09-22T14:13:46.000Z</updated>
+    <updated>2016-09-23T02:40:55.000Z</updated>
     
     <content type="html">&lt;p&gt;经过一个星期的weex学习，踩到了一些坑，也更加了解了weex，继续weex系列的文章，这篇文章会有一些干货，希望大家看完会有收获～&lt;/p&gt;
 &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
@@ -64,7 +64,7 @@
 &lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onCreate&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Bundle savedInstanceState)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onCreate(savedInstanceState);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    setContentView(R.layout.activity_main);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(PreLoader.get(&lt;span class=&quot;string&quot;&gt;&quot;BPage.js&quot;&lt;/span&gt;) != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt; &amp;amp;&amp;amp; PreLoader.get(&lt;span class=&quot;string&quot;&gt;&quot;BPage.js&quot;&lt;/span&gt;).weexView != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        	((ViewGroup)findViewById(R.id.container)).addView(PreLoader.get(&lt;span class=&quot;string&quot;&gt;&quot;BPage.js&quot;&lt;/span&gt;).weexView);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    ｝&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
 &lt;p&gt;通过这样的预加载，就能做到秒开一个Weex页面，不会影响用户体验～&lt;/p&gt;
 &lt;h1 id=&quot;后记&quot;&gt;&lt;a href=&quot;#后记&quot; class=&quot;headerlink&quot; title=&quot;后记&quot;&gt;&lt;/a&gt;后记&lt;/h1&gt;&lt;p&gt;周末有事，所以今天就把周末的文章写完了，也算是一个小节，Weex之路还要继续走下去啊～&lt;/p&gt;
-&lt;p&gt;另外昨天我一个最好的初中同学去英国读书了，加上之前发生的一些事，有些说不出的感觉。&lt;/p&gt;
+&lt;p&gt;另外昨天我一个关系最好的初中同学去英国读书了，加上之前发生的一些事，感觉十多年的感情转瞬即逝。&lt;/p&gt;
 &lt;p&gt;这是一个流行离开的世界，但是我们都不擅长告别。&lt;/p&gt;
 &lt;p&gt; &lt;img src=&quot;/images/weex日记——2/England.jpeg&quot; alt=&quot;England&quot;&gt;&lt;/p&gt;
 </content>
