@@ -208,6 +208,113 @@
             
               
                 
+                <a class="post-title-link" href="/2016/10/07/关于Android业务组件化的一些思考/" itemprop="url">
+                  关于Android业务组件化的一些思考
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-07T14:02:17+08:00" content="2016-10-07">
+              2016-10-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/07/关于Android业务组件化的一些思考/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/07/关于Android业务组件化的一些思考/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/10/07/关于Android业务组件化的一些思考/" class="leancloud_visitors" data-flag-title="关于Android业务组件化的一些思考">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>前几天在MDCC上看到冯老师关于组件化的ppt，觉得这个技术对于现今的Android开发是非常实用的，所以这几天趁着国庆假期，对其作了一点思考，以文章的形式作一个小结。通过这篇文章，希望大家能够明白，我们为什么要使用组件化，以及在进行组件化改造的时候需要注意的几个点。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/10/07/关于Android业务组件化的一些思考/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/09/23/Weex日记——2/" itemprop="url">
                   Weex日记——2
                 </a>
@@ -1151,116 +1258,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/05/15/记一次苦逼的资源逆向分析/" itemprop="url">
-                  记一次苦逼的资源逆向分析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-05-15T16:45:54+08:00" content="2016-05-15">
-              2016-05-15
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/05/15/记一次苦逼的资源逆向分析/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/15/记一次苦逼的资源逆向分析/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-             <span id="/2016/05/15/记一次苦逼的资源逆向分析/" class="leancloud_visitors" data-flag-title="记一次苦逼的资源逆向分析">
-               &nbsp; | &nbsp;
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               <span class="post-meta-item-text">阅读 </span>
-               <span class="leancloud-visitors-count"></span>
-              </span>
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>上一篇文章和大家讨论了Instant Run的机制，并且总结了它和现有的hot patch框架的优缺点，现在回过头去看那篇文章结尾处的“结合二者的优点，打造一个官方版的hot patch”这句话，脑子里只有一个念头，还是太年轻了啊！！</p>
-<p>为什么这么说呢？其实现有的hot patch框架对代码patch这一块做的已经是非常不错了，重点要改进的就是资源patch，但是在后来的研究中发现，Instant Run的资源patch是全量下发的，也就是说每次patch的时候，整个app的资源都会被打进补丁中，这对于Instant Run来说是无所谓的，但是对于我们的hot patch来说就没办法接受了，因为这样会使我们的patch包变得异常的大，从kb级别变成了mb级别。</p>
-<p>那怎么办呢，海口已经夸下了，总不能就这么放弃吧，于是我开始了苦逼的资源逆向，阅读并改造aapt源码的过程。</p>
-<p>友情提示，本篇文章可能会引起大家的胃部不适，因为所有的代码都是C++的。</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2016/05/15/记一次苦逼的资源逆向分析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1306,7 +1303,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">19</span>
+              <span class="site-state-item-count">20</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1316,7 +1313,7 @@
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">17</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
