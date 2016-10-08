@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2016-10-07T06:02:29.000Z</updated>
+  <updated>2016-10-08T06:59:25.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://yoursite.com/2016/10/07/%E5%85%B3%E4%BA%8EAndroid%E4%B8%9A%E5%8A%A1%E7%BB%84%E4%BB%B6%E5%8C%96%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/"/>
     <id>http://yoursite.com/2016/10/07/关于Android业务组件化的一些思考/</id>
     <published>2016-10-07T06:02:17.000Z</published>
-    <updated>2016-10-07T06:02:29.000Z</updated>
+    <updated>2016-10-08T06:59:25.000Z</updated>
     
     <content type="html">&lt;p&gt;前几天在MDCC上看到冯老师关于组件化的ppt，觉得这个技术对于现今的Android开发是非常实用的，所以这几天趁着国庆假期，对其作了一点思考，以文章的形式作一个小结。通过这篇文章，希望大家能够明白，我们为什么要使用组件化，以及在进行组件化改造的时候需要注意的几个点。&lt;/p&gt;
 &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
@@ -50,7 +50,7 @@
 &lt;p&gt;关于这一点，我和冯老师也进行过沟通，下面是他的回答：&lt;/p&gt;
 &lt;p&gt; &lt;img src=&quot;/images/关于Android业务组件化的一些思考/feng.png&quot; alt=&quot;feng&quot;&gt;&lt;/p&gt;
 &lt;p&gt;还有一个问题就是，如果你想在Debug模式下使用主App去依赖业务，是没有办法通过compile的方式去实现的，因为Debug模式下各个业务线是Application，没有办法compile，这种时候，你就需要手动去将业务module的AAR添加到App中进行依赖。业务module的AAR可以在对应的build目录下找到。这个操作可以通过gradle插件去进行自动化的完成，至于怎么写对应的插件大家自己去实现吧，比较的简单。&lt;/p&gt;
-&lt;h1 id=&quot;组件化相关&quot;&gt;&lt;a href=&quot;#组件化相关&quot; class=&quot;headerlink&quot; title=&quot;组件化相关&quot;&gt;&lt;/a&gt;组件化相关&lt;/h1&gt;&lt;p&gt;当我们完成了组件化的准备工作之后，我们需要利用一些框架或者说技术让我们的组件化之路更加完善。这里首当其冲所需要的就是URLRouter。&lt;/p&gt;
+&lt;h1 id=&quot;怎么样更好的组件化&quot;&gt;&lt;a href=&quot;#怎么样更好的组件化&quot; class=&quot;headerlink&quot; title=&quot;怎么样更好的组件化&quot;&gt;&lt;/a&gt;怎么样更好的组件化&lt;/h1&gt;&lt;p&gt;当我们完成了组件化的准备工作之后，我们需要利用一些框架或者说技术让我们的组件化之路更加完善。这里首当其冲所需要的就是URLRouter。&lt;/p&gt;
 &lt;p&gt;所谓URLRouter，就是通过类似打开网页的方式去通过路由打开一个Activity，而非直接通过显式Intent去方式去进行跳转。那是因为在进行了组件化开发之后，各个业务模块进行是可以独立运行的了，我们再使用显式Intent的方式去联系每个模块之间中间结构就会显得耦合性比较大，而且在Debug模式下也没办法使用显式Intent的方式去进行模块间的跳转。使用URLRouter的方式则可以很好的解耦，具体方法大家可以参考&lt;a href=&quot;http://zjutkz.net/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;这篇文章&lt;/a&gt;里的第三种方式。&lt;/p&gt;
 &lt;p&gt;无非就是在配置Activity的时候设置一些data。&lt;/p&gt;
 &lt;figure class=&quot;highlight xml&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;activity&lt;/span&gt; &lt;span class=&quot;attr&quot;&gt;android:name&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;.SubBizActivity&quot;&lt;/span&gt;&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;intent-filter&lt;/span&gt;&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;data&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;span class=&quot;attr&quot;&gt;android:host&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;bizTwo&quot;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;span class=&quot;attr&quot;&gt;android:path&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;/someWorks&quot;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;span class=&quot;attr&quot;&gt;android:scheme&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;appName&quot;&lt;/span&gt;/&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;action&lt;/span&gt; &lt;span class=&quot;attr&quot;&gt;android:name&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;android.intent.action.VIEW&quot;&lt;/span&gt;/&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;category&lt;/span&gt; &lt;span class=&quot;attr&quot;&gt;android:name&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;android.intent.category.DEFAULT&quot;&lt;/span&gt;/&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;category&lt;/span&gt; &lt;span class=&quot;attr&quot;&gt;android:name&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;android.intent.category.BROWSABLE&quot;&lt;/span&gt;/&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;tag&quot;&gt;&amp;lt;/&lt;span class=&quot;name&quot;&gt;intent-filter&lt;/span&gt;&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;tag&quot;&gt;&amp;lt;/&lt;span class=&quot;name&quot;&gt;activity&lt;/span&gt;&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
@@ -59,6 +59,9 @@
 &lt;p&gt; &lt;img src=&quot;/images/关于Android业务组件化的一些思考/router.png&quot; alt=&quot;router&quot;&gt;&lt;/p&gt;
 &lt;p&gt;就像图中所示的一样，通过URLRouter，我们就可以将业务线之间的关系解耦，互相调用也很方便。&lt;/p&gt;
 &lt;p&gt;当然要做到完善，这样的URLRouter最好是封装成一个库，减少上层的开发并且增强鲁棒性。&lt;/p&gt;
+&lt;p&gt;还有一点，通过这种方式实现组件化需要用到gradle的一些特性，比如上面说的分Debug和Release模式，在Release模式下不要编译DebugOnly的东西等等。而这样的特性我们可以通过自动化的方式去完成，而不需要开发每次新建一个module都去手写一遍。&lt;/p&gt;
+&lt;p&gt;具体的方式我这里想到的就是使用Android Studio的自定义模板。具体关于自定义模板的教程我这里不详细讲了，毕竟不是这篇文章的重点，大家可以参考&lt;a href=&quot;http://www.jianshu.com/p/81d03519dd33&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;这篇文章&lt;/a&gt;和&lt;a href=&quot;http://mp.weixin.qq.com/s?__biz=MzA3ODg4MDk0Ng==&amp;amp;mid=2651112554&amp;amp;idx=1&amp;amp;sn=95e57e0d6cb95f5c209ee8065380a395&amp;amp;scene=23&amp;amp;srcid=0812wCGnGEoqXAuvJWnZg3NA#rd&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;这篇文章&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;对于组件化这个场景，我们所需要做的就是改写gradle.properties.ftl这个文件，添加一个isDebug属性。然后改写的build.gradle.ftl文件，添加我前面所写的那些sourceSets闭包里的代码。这些一两句话也说不清，有机会的话下次可以专门写一篇文章讲如何自定义Android Studio的模板。&lt;/p&gt;
 &lt;h1 id=&quot;关于组件化的思考&quot;&gt;&lt;a href=&quot;#关于组件化的思考&quot; class=&quot;headerlink&quot; title=&quot;关于组件化的思考&quot;&gt;&lt;/a&gt;关于组件化的思考&lt;/h1&gt;&lt;p&gt;说了这么多，相信大家对组件化已经有了一个大致的概念，也知道了我们为什么要使用组件化。而在我看来，这样的技术其实对于纯开发而言难度是不大的，真正的难度在于如何剥离现有的业务线。粒度大拆分比较容易，但是不利于今后的维护。粒度小需要对业务有很深的理解，但是能很好的解耦并且提高灵活度，所以具体的情况需要在具体的实际开发中进行分析。&lt;/p&gt;
 &lt;p&gt;我的看法是组件化的前期可以先把业务线剥离的粗一点，尽管上手并且适应这样的开发，到了后期等开发熟悉了这样的形式并且对各条业务线有了很好的理解，再慢慢的细化也不迟。&lt;/p&gt;
 </content>

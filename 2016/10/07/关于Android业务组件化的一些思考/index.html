@@ -71,7 +71,7 @@
 <meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/bizone.png">
 <meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/feng.png">
 <meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/router.png">
-<meta property="og:updated_time" content="2016-10-07T06:02:29.000Z">
+<meta property="og:updated_time" content="2016-10-08T06:59:25.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="关于Android业务组件化的一些思考">
 <meta name="twitter:description" content="前几天在MDCC上看到冯老师关于组件化的ppt，觉得这个技术对于现今的Android开发是非常实用的，所以这几天趁着国庆假期，对其作了一点思考，以文章的形式作一个小结。通过这篇文章，希望大家能够明白，我们为什么要使用组件化，以及在进行组件化改造的时候需要注意的几个点。">
@@ -296,7 +296,7 @@
 <p>关于这一点，我和冯老师也进行过沟通，下面是他的回答：</p>
 <p> <img src="/images/关于Android业务组件化的一些思考/feng.png" alt="feng"></p>
 <p>还有一个问题就是，如果你想在Debug模式下使用主App去依赖业务，是没有办法通过compile的方式去实现的，因为Debug模式下各个业务线是Application，没有办法compile，这种时候，你就需要手动去将业务module的AAR添加到App中进行依赖。业务module的AAR可以在对应的build目录下找到。这个操作可以通过gradle插件去进行自动化的完成，至于怎么写对应的插件大家自己去实现吧，比较的简单。</p>
-<h1 id="组件化相关"><a href="#组件化相关" class="headerlink" title="组件化相关"></a>组件化相关</h1><p>当我们完成了组件化的准备工作之后，我们需要利用一些框架或者说技术让我们的组件化之路更加完善。这里首当其冲所需要的就是URLRouter。</p>
+<h1 id="怎么样更好的组件化"><a href="#怎么样更好的组件化" class="headerlink" title="怎么样更好的组件化"></a>怎么样更好的组件化</h1><p>当我们完成了组件化的准备工作之后，我们需要利用一些框架或者说技术让我们的组件化之路更加完善。这里首当其冲所需要的就是URLRouter。</p>
 <p>所谓URLRouter，就是通过类似打开网页的方式去通过路由打开一个Activity，而非直接通过显式Intent去方式去进行跳转。那是因为在进行了组件化开发之后，各个业务模块进行是可以独立运行的了，我们再使用显式Intent的方式去联系每个模块之间中间结构就会显得耦合性比较大，而且在Debug模式下也没办法使用显式Intent的方式去进行模块间的跳转。使用URLRouter的方式则可以很好的解耦，具体方法大家可以参考<a href="http://zjutkz.net/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/" target="_blank" rel="external">这篇文章</a>里的第三种方式。</p>
 <p>无非就是在配置Activity的时候设置一些data。</p>
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">".SubBizActivity"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">data</span></span><br><span class="line">            <span class="attr">android:host</span>=<span class="string">"bizTwo"</span></span><br><span class="line">            <span class="attr">android:path</span>=<span class="string">"/someWorks"</span></span><br><span class="line">            <span class="attr">android:scheme</span>=<span class="string">"appName"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.VIEW"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.DEFAULT"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.BROWSABLE"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
@@ -305,6 +305,9 @@
 <p> <img src="/images/关于Android业务组件化的一些思考/router.png" alt="router"></p>
 <p>就像图中所示的一样，通过URLRouter，我们就可以将业务线之间的关系解耦，互相调用也很方便。</p>
 <p>当然要做到完善，这样的URLRouter最好是封装成一个库，减少上层的开发并且增强鲁棒性。</p>
+<p>还有一点，通过这种方式实现组件化需要用到gradle的一些特性，比如上面说的分Debug和Release模式，在Release模式下不要编译DebugOnly的东西等等。而这样的特性我们可以通过自动化的方式去完成，而不需要开发每次新建一个module都去手写一遍。</p>
+<p>具体的方式我这里想到的就是使用Android Studio的自定义模板。具体关于自定义模板的教程我这里不详细讲了，毕竟不是这篇文章的重点，大家可以参考<a href="http://www.jianshu.com/p/81d03519dd33" target="_blank" rel="external">这篇文章</a>和<a href="http://mp.weixin.qq.com/s?__biz=MzA3ODg4MDk0Ng==&amp;mid=2651112554&amp;idx=1&amp;sn=95e57e0d6cb95f5c209ee8065380a395&amp;scene=23&amp;srcid=0812wCGnGEoqXAuvJWnZg3NA#rd" target="_blank" rel="external">这篇文章</a>。</p>
+<p>对于组件化这个场景，我们所需要做的就是改写gradle.properties.ftl这个文件，添加一个isDebug属性。然后改写的build.gradle.ftl文件，添加我前面所写的那些sourceSets闭包里的代码。这些一两句话也说不清，有机会的话下次可以专门写一篇文章讲如何自定义Android Studio的模板。</p>
 <h1 id="关于组件化的思考"><a href="#关于组件化的思考" class="headerlink" title="关于组件化的思考"></a>关于组件化的思考</h1><p>说了这么多，相信大家对组件化已经有了一个大致的概念，也知道了我们为什么要使用组件化。而在我看来，这样的技术其实对于纯开发而言难度是不大的，真正的难度在于如何剥离现有的业务线。粒度大拆分比较容易，但是不利于今后的维护。粒度小需要对业务有很深的理解，但是能很好的解耦并且提高灵活度，所以具体的情况需要在具体的实际开发中进行分析。</p>
 <p>我的看法是组件化的前期可以先把业务线剥离的粗一点，尽管上手并且适应这样的开发，到了后期等开发熟悉了这样的形式并且对各条业务线有了很好的理解，再慢慢的细化也不迟。</p>
 
@@ -459,7 +462,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#关于组件化的资料："><span class="nav-number">1.</span> <span class="nav-text">关于组件化的资料：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是组件化"><span class="nav-number">2.</span> <span class="nav-text">什么是组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何进行组件化"><span class="nav-number">3.</span> <span class="nav-text">如何进行组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#组件化相关"><span class="nav-number">4.</span> <span class="nav-text">组件化相关</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于组件化的思考"><span class="nav-number">5.</span> <span class="nav-text">关于组件化的思考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#关于组件化的资料："><span class="nav-number">1.</span> <span class="nav-text">关于组件化的资料：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是组件化"><span class="nav-number">2.</span> <span class="nav-text">什么是组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何进行组件化"><span class="nav-number">3.</span> <span class="nav-text">如何进行组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#怎么样更好的组件化"><span class="nav-number">4.</span> <span class="nav-text">怎么样更好的组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于组件化的思考"><span class="nav-number">5.</span> <span class="nav-text">关于组件化的思考</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
