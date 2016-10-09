@@ -1,0 +1,854 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="组件化," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="前几天在MDCC上看到冯老师关于组件化的ppt，觉得这个技术对于现今的Android开发是非常实用的，所以这几天趁着国庆假期，对其作了一点思考，以文章的形式作一个小结。通过这篇文章，希望大家能够明白，我们为什么要使用组件化，以及在进行组件化改造的时候需要注意的几个点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于Android业务组件化的一些思考">
+<meta property="og:url" content="http://yoursite.com/2016/10/07/关于Android业务组件化的一些思考/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="前几天在MDCC上看到冯老师关于组件化的ppt，觉得这个技术对于现今的Android开发是非常实用的，所以这几天趁着国庆假期，对其作了一点思考，以文章的形式作一个小结。通过这篇文章，希望大家能够明白，我们为什么要使用组件化，以及在进行组件化改造的时候需要注意的几个点。">
+<meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/original.png">
+<meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/module.png">
+<meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/as.png">
+<meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/bizone.png">
+<meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/feng.png">
+<meta property="og:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/router.png">
+<meta property="og:updated_time" content="2016-10-08T06:59:25.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="关于Android业务组件化的一些思考">
+<meta name="twitter:description" content="前几天在MDCC上看到冯老师关于组件化的ppt，觉得这个技术对于现今的Android开发是非常实用的，所以这几天趁着国庆假期，对其作了一点思考，以文章的形式作一个小结。通过这篇文章，希望大家能够明白，我们为什么要使用组件化，以及在进行组件化改造的时候需要注意的几个点。">
+<meta name="twitter:image" content="http://yoursite.com/images/关于Android业务组件化的一些思考/original.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 关于Android业务组件化的一些思考 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                关于Android业务组件化的一些思考
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-07T14:02:17+08:00" content="2016-10-07">
+              2016-10-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/07/关于Android业务组件化的一些思考/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/07/关于Android业务组件化的一些思考/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/10/07/关于Android业务组件化的一些思考/" class="leancloud_visitors" data-flag-title="关于Android业务组件化的一些思考">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前几天在MDCC上看到冯老师关于组件化的ppt，觉得这个技术对于现今的Android开发是非常实用的，所以这几天趁着国庆假期，对其作了一点思考，以文章的形式作一个小结。通过这篇文章，希望大家能够明白，我们为什么要使用组件化，以及在进行组件化改造的时候需要注意的几个点。</p>
+<a id="more"></a>
+<h1 id="关于组件化的资料："><a href="#关于组件化的资料：" class="headerlink" title="关于组件化的资料："></a>关于组件化的资料：</h1><p>首先关于冯老师的组件化分享，大家可以去看<a href="https://github.com/MDCC2016/Android-Session-Slides" target="_blank" rel="external">这个repo</a>，里面是这次MDCC关于Android的一些分享。</p>
+<p>其次，大家可以去看一下<a href="https://github.com/liangzhitao/ComponentizationApp" target="_blank" rel="external">这个repo</a>，是一个关于组件化的实践，我也是先看了这个demo再写的这篇文章，所以里面有很多东西是差不多的，大家也可以学习一下。</p>
+<h1 id="什么是组件化"><a href="#什么是组件化" class="headerlink" title="什么是组件化"></a>什么是组件化</h1><p>在说组件化之前，相信大家对Android上的插件化肯定或多或少都有一定的了解，插件化的出现，让我们的App的运行的时候能够动态的进行组装，就像我们使用chrome的插件一样，非常的方便，甚至演变到后期，插件化越来越像［虚拟机］发展，使用一个类似［boot］的壳，就可以像Java虚拟机加载Java文件一样加载一个App。</p>
+<p>组件化可以说和插件化有异曲同工之妙，只不过插件化是在［运行时］，而组件化是在［编译时］。换句话说，插件化是基于多APK的，而组件化本质上还是只有一个APK。相信大家在平时工作中会有这样一个苦恼，那就是编译一个App的时间实在是太太太太太长了，特别是一个比较大的应用，可能2，3分钟都不够，对于一些耐心好的同学，可以去喝一杯咖啡，思考一下人生，而像我这样急性子的人嘛，简直就是噩梦，在等待编译的时候经常手足无措。［组件化］就可以很好的解决这样的问题，此外，由于整个App的各个业务被分离了，所以它们之间的耦合度也就被降低了，各个业务线可以由专门的开发同学进行开发，相互之间也不会有干扰，提升开发效率。</p>
+<p>下面用两张图来辅助说明一下：</p>
+<p> <img src="/images/关于Android业务组件化的一些思考/original.png" alt="original"></p>
+<p> <img src="/images/关于Android业务组件化的一些思考/module.png" alt="module"></p>
+<p>可以看到，在没有进行组件化改造的情况下，我们的App依赖的各条业务线是捆绑在一起的，根本没办法解耦，更别说模块的复用了，可以说整个App就是各条业务线混合在一起的一个大容器。</p>
+<p>下面那张图是进行了组件化分离之后，各个业务线分离，逻辑变得清晰，每个业务线都可以成为另外一个业务线的上游或者下游。更重要的是，它们每一个都可以单独编译，缩减了编译的时间。也正因为这一点，各个业务线的研发也可以做到互相不干扰，加快了开发的速度。</p>
+<h1 id="如何进行组件化"><a href="#如何进行组件化" class="headerlink" title="如何进行组件化"></a>如何进行组件化</h1><p>对于组件化的实践，之前的方式就是各个组件以AAR的形式输出，主App去依赖那些AAR，但是这种方式，对于开发人员来说成本会有一点大，主要是以AAR形式输出的话，在每次修改之后都要重新去打一次AAR，非常的麻烦，所以冯老师提出了一种新的方式，就是以Debug模式和Release模式去区分，在Debug模式下，各个业务线作为Application可以单独运行，而在Release模式下，则作为Library，可以提供给主App进行依赖。这样一来就可以做到每个业务线的平行开发，在Release模式下再合到一起，非常的灵活。</p>
+<p>那具体应该如何实施呢？这里以一个demo为例，让我们先看看整个as工程的结构。</p>
+<p> <img src="/images/关于Android业务组件化的一些思考/as.png" alt="as"></p>
+<p>忽略那个moduler，它是一个gradle插件，可以看到主App就是app模块，而bizone，biztwo和bizthree代表的就是三条业务线，每一个都是一个独立的module。</p>
+<p>然后，我们可以通过一个全局的变量去标记是Debug模式还是Release模式，当然大家也可以使用gradle的build type，但是我个人感觉还是自己设一个标记会好一点，因为这样更加灵活，对于一些混淆上的问题，我们可以通过设置Debug模式，再启用build type的release就可以去验证了。</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (isDebug.toBoolean()) &#123;</span><br><span class="line">    apply <span class="string">plugin:</span> <span class="string">'com.android.application'</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    apply <span class="string">plugin:</span> <span class="string">'com.android.library'</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过在业务module的gradle配置文件中判断是否是Debug模式去区分是Application还是Library，这和之前提供的观点是一致的，也是这种组件化方式最核心的地方。</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">    compile fileTree(<span class="string">include:</span> [<span class="string">'*.jar'</span>], <span class="string">dir:</span> <span class="string">'libs'</span>)</span><br><span class="line">    compile <span class="string">'com.android.support:appcompat-v7:23.2.1'</span></span><br><span class="line">    testCompile <span class="string">'junit:junit:4.12'</span></span><br><span class="line">    <span class="keyword">if</span>(!isDebug.toBoolean())&#123;</span><br><span class="line">        compile project(<span class="string">':bizone'</span>)</span><br><span class="line">        compile project(<span class="string">':biztwo'</span>)</span><br><span class="line">        compile project(<span class="string">':bizthree'</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是主App的gradle依赖，在Release模式下，直接compile那几个业务module就好了。</p>
+<p>通过上面的操作，我们已经可以进行组件化开发了，很简单有没有。</p>
+<p>但是需要考虑的东西还有很多。比如有一些不存在UI的业务，或者说一些业务没办法独立运行，需要一个触发源。这种情况下，最理想的方式是通过其他某个已存在的module去触发它们，或者使用一个类似于DebugActivity的东西来当作触发源，而这样的DebugOnly的东西是不应该打包到Release模式中的，所以我们需要通过gradle配置去做一些自动化的东西。</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">sourceSets &#123;</span><br><span class="line">    main &#123;</span><br><span class="line">        <span class="keyword">if</span> (isDebug.toBoolean()) &#123;</span><br><span class="line">            manifest.srcFile <span class="string">'src/main/debug/AndroidManifest.xml'</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            manifest.srcFile <span class="string">'src/main/release/AndroidManifest.xml'</span></span><br><span class="line">            java &#123;</span><br><span class="line">                exclude <span class="string">'debug/**'</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/images/关于Android业务组件化的一些思考/bizone.png" alt="bizone"></p>
+<p>通过上面这种方式，我们就可以在Release的环境下去除掉debug包里的东西 。另外需要两个Manifest文件的原因是在Debug模式下，我们需要一个Activity标示为MAIN和LAUNCHER，而Release模式下则不需要。</p>
+<p>关于这一点，我和冯老师也进行过沟通，下面是他的回答：</p>
+<p> <img src="/images/关于Android业务组件化的一些思考/feng.png" alt="feng"></p>
+<p>还有一个问题就是，如果你想在Debug模式下使用主App去依赖业务，是没有办法通过compile的方式去实现的，因为Debug模式下各个业务线是Application，没有办法compile，这种时候，你就需要手动去将业务module的AAR添加到App中进行依赖。业务module的AAR可以在对应的build目录下找到。这个操作可以通过gradle插件去进行自动化的完成，至于怎么写对应的插件大家自己去实现吧，比较的简单。</p>
+<h1 id="怎么样更好的组件化"><a href="#怎么样更好的组件化" class="headerlink" title="怎么样更好的组件化"></a>怎么样更好的组件化</h1><p>当我们完成了组件化的准备工作之后，我们需要利用一些框架或者说技术让我们的组件化之路更加完善。这里首当其冲所需要的就是URLRouter。</p>
+<p>所谓URLRouter，就是通过类似打开网页的方式去通过路由打开一个Activity，而非直接通过显式Intent去方式去进行跳转。那是因为在进行了组件化开发之后，各个业务模块进行是可以独立运行的了，我们再使用显式Intent的方式去联系每个模块之间中间结构就会显得耦合性比较大，而且在Debug模式下也没办法使用显式Intent的方式去进行模块间的跳转。使用URLRouter的方式则可以很好的解耦，具体方法大家可以参考<a href="http://zjutkz.net/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/" target="_blank" rel="external">这篇文章</a>里的第三种方式。</p>
+<p>无非就是在配置Activity的时候设置一些data。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">".SubBizActivity"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">data</span></span><br><span class="line">            <span class="attr">android:host</span>=<span class="string">"bizTwo"</span></span><br><span class="line">            <span class="attr">android:path</span>=<span class="string">"/someWorks"</span></span><br><span class="line">            <span class="attr">android:scheme</span>=<span class="string">"appName"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.VIEW"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.DEFAULT"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.BROWSABLE"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>然后在跳转的时候使用setData的方式进行跳转。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">String url = <span class="string">"appName://bizTwo/someWorks"</span>;</span><br><span class="line">Intent intent = <span class="keyword">new</span> Intent(Intent.ACTION_VIEW, Uri.parse(url));</span><br><span class="line">intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">PackageManager packageManager = getPackageManager();</span><br><span class="line">List&lt;ResolveInfo&gt; activities = packageManager.queryIntentActivities(intent, <span class="number">0</span>);</span><br><span class="line"><span class="keyword">if</span> (!activities.isEmpty()) &#123;</span><br><span class="line">    startActivity(intent);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> <img src="/images/关于Android业务组件化的一些思考/router.png" alt="router"></p>
+<p>就像图中所示的一样，通过URLRouter，我们就可以将业务线之间的关系解耦，互相调用也很方便。</p>
+<p>当然要做到完善，这样的URLRouter最好是封装成一个库，减少上层的开发并且增强鲁棒性。</p>
+<p>还有一点，通过这种方式实现组件化需要用到gradle的一些特性，比如上面说的分Debug和Release模式，在Release模式下不要编译DebugOnly的东西等等。而这样的特性我们可以通过自动化的方式去完成，而不需要开发每次新建一个module都去手写一遍。</p>
+<p>具体的方式我这里想到的就是使用Android Studio的自定义模板。具体关于自定义模板的教程我这里不详细讲了，毕竟不是这篇文章的重点，大家可以参考<a href="http://www.jianshu.com/p/81d03519dd33" target="_blank" rel="external">这篇文章</a>和<a href="http://mp.weixin.qq.com/s?__biz=MzA3ODg4MDk0Ng==&amp;mid=2651112554&amp;idx=1&amp;sn=95e57e0d6cb95f5c209ee8065380a395&amp;scene=23&amp;srcid=0812wCGnGEoqXAuvJWnZg3NA#rd" target="_blank" rel="external">这篇文章</a>。</p>
+<p>对于组件化这个场景，我们所需要做的就是改写gradle.properties.ftl这个文件，添加一个isDebug属性。然后改写的build.gradle.ftl文件，添加我前面所写的那些sourceSets闭包里的代码。这些一两句话也说不清，有机会的话下次可以专门写一篇文章讲如何自定义Android Studio的模板。</p>
+<h1 id="关于组件化的思考"><a href="#关于组件化的思考" class="headerlink" title="关于组件化的思考"></a>关于组件化的思考</h1><p>说了这么多，相信大家对组件化已经有了一个大致的概念，也知道了我们为什么要使用组件化。而在我看来，这样的技术其实对于纯开发而言难度是不大的，真正的难度在于如何剥离现有的业务线。粒度大拆分比较容易，但是不利于今后的维护。粒度小需要对业务有很深的理解，但是能很好的解耦并且提高灵活度，所以具体的情况需要在具体的实际开发中进行分析。</p>
+<p>我的看法是组件化的前期可以先把业务线剥离的粗一点，尽管上手并且适应这样的开发，到了后期等开发熟悉了这样的形式并且对各条业务线有了很好的理解，再慢慢的细化也不迟。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/组件化/" rel="tag">#组件化</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/09/23/Weex日记——2/" rel="next" title="Weex日记——2">
+                <i class="fa fa-chevron-left"></i> Weex日记——2
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/10/07/关于Android业务组件化的一些思考/"
+           data-title="关于Android业务组件化的一些思考" data-url="http://yoursite.com/2016/10/07/关于Android业务组件化的一些思考/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#关于组件化的资料："><span class="nav-number">1.</span> <span class="nav-text">关于组件化的资料：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是组件化"><span class="nav-number">2.</span> <span class="nav-text">什么是组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何进行组件化"><span class="nav-number">3.</span> <span class="nav-text">如何进行组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#怎么样更好的组件化"><span class="nav-number">4.</span> <span class="nav-text">怎么样更好的组件化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#关于组件化的思考"><span class="nav-number">5.</span> <span class="nav-text">关于组件化的思考</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

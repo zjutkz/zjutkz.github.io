@@ -1,0 +1,872 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="weex," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="weex日记">
+<meta property="og:url" content="http://yoursite.com/2016/09/15/weex日记/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
+<meta property="og:image" content="http://yoursite.com/images/weex日记/weex.png">
+<meta property="og:image" content="http://yoursite.com/images/weex日记/weex_communication.png">
+<meta property="og:updated_time" content="2016-09-15T03:53:05.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="weex日记">
+<meta name="twitter:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
+<meta name="twitter:image" content="http://yoursite.com/images/weex日记/weex.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> weex日记 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                weex日记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-15T11:39:12+08:00" content="2016-09-15">
+              2016-09-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/09/15/weex日记/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/15/weex日记/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/09/15/weex日记/" class="leancloud_visitors" data-flag-title="weex日记">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。</p>
+<a id="more"></a>
+<h1 id="weex是什么"><a href="#weex是什么" class="headerlink" title="weex是什么"></a>weex是什么</h1><p> 首先我们看看weex的GitHub上是如何描述的。<img src="/images/weex日记/weex.png" alt="weex"></p>
+<p>很简单，它就是一个为了跨平台而生的框架，大气点说——write once，run anywhere。因此很多人把它和facebook的react native进行比较，这样的比较是合理的，毕竟它们两个做的事在宏观上来说是差不多的，weex确实也借鉴了rn的一些理念，不过如果你仔细了解过weex，你会发现其实在很多细节上它和rn还是存在不同的。</p>
+<h1 id="weex怎么用"><a href="#weex怎么用" class="headerlink" title="weex怎么用"></a>weex怎么用</h1><p>下面我简单的说一下weex的初始化配置吧。</p>
+<p>很简单，首先，你需要安装一个官方的app，<a href="http://alibaba.github.io/weex/doc/tutorial.html" target="_blank" rel="external">playground</a>，它可以向你展示weex的一些demo，并且提供了二维码的功能，让你方便的调试自己的程序。</p>
+<p>然后，你需要安装一个工具<a href="https://www.npmjs.com/package/weex-toolkit" target="_blank" rel="external">Weex Toolkit</a>。这个工具的作用是能够将你产出的.we文件转换成对应的js bundle，从而给app进行解析。在安装这个工具之前请确保你的电脑上已经有node了。</p>
+<p>最后，就可以开始编写代码了，你写好的代码应该是.we结尾的，然后在控制台中输入</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">weex yourprofile.we</span><br></pre></td></tr></table></figure>
+<p>你就可以在浏览器中看到效果了，如果你想在移动端使用，则输入</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">weex yourprofile.we --qr</span><br></pre></td></tr></table></figure>
+<p>然后使用playground去扫在控制台出现的二维码就可以了。</p>
+<p>更多和Weex Toolkit相关的使用大家可以去它的<a href="https://github.com/weexteam/weex-toolkit" target="_blank" rel="external">GitHub</a>上查看。需要注意的是，如果你在使用该工具的时候控制台报出了错误，请根据错误的提示安装相关的依赖，或者将Weex Toolkit版本升级。</p>
+<p>以上就是所有weex的初始化配置，如果你有过开发rn的经验，你会发现它比rn的配置要简单很多。</p>
+<h1 id="weex的工作原理"><a href="#weex的工作原理" class="headerlink" title="weex的工作原理"></a>weex的工作原理</h1><p>在第一章节中简单的说了一下weex是什么，在这一章节中，会从源码角度去看看，weex是如何工作的。</p>
+<p>对于工作原理，主要要了解的就是weex的js端和native端是如何通信的。在看这里之前，你最好已经看过了我另外一篇文章<a href="http://zjutkz.net/2016/05/03/其实没那么复杂！探究react-native通信机制/" target="_blank" rel="external">其实没那么复杂！探究react-native通信机制</a>。因为我前面说过，weex在原理机制上其实是借鉴了rn的，所以在通信模块上它们有很多相似的地方，在理解rn通信机制的文章里我已经讲的非常详细了，所以这里我会比较简单的讲一下。</p>
+<p>首先，在weex官方的playground源码里，在application中进行了weex初始化。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">WXSDKEngine.initialize(<span class="keyword">this</span>,<span class="keyword">new</span> InitConfig.Builder().setImgAdapter(<span class="keyword">new</span> ImageAdapter()).setDebugAdapter(<span class="keyword">new</span> PlayDebugAdapter()).build());</span><br></pre></td></tr></table></figure>
+<p>在WXSDKEngine的initialize方法中会调用doInitInternal去进行真正的初始化操作。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">doInitInternal</span><span class="params">(<span class="keyword">final</span> Application application,<span class="keyword">final</span> InitConfig config)</span></span>&#123;</span><br><span class="line">  WXEnvironment.sApplication = application;</span><br><span class="line">  WXEnvironment.JsFrameworkInit = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">  WXBridgeManager.getInstance().getJSHandler().post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">      WXSDKManager sm = WXSDKManager.getInstance();</span><br><span class="line">      <span class="keyword">if</span>(config != <span class="keyword">null</span> ) &#123;</span><br><span class="line">        sm.setIWXHttpAdapter(config.getHttpAdapter());</span><br><span class="line">        sm.setIWXImgLoaderAdapter(config.getImgAdapter());</span><br><span class="line">        sm.setIWXUserTrackAdapter(config.getUtAdapter());</span><br><span class="line">        sm.setIWXDebugAdapter(config.getDebugAdapter());</span><br><span class="line">        sm.setIWXStorageAdapter(config.getStorageAdapter());</span><br><span class="line">        <span class="keyword">if</span>(config.getDebugAdapter()!=<span class="keyword">null</span>)&#123;</span><br><span class="line">          config.getDebugAdapter().initDebug(application);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      WXSoInstallMgrSdk.init(application);</span><br><span class="line">      <span class="keyword">boolean</span> isSoInitSuccess = WXSoInstallMgrSdk.initSo(V8_SO_NAME, <span class="number">1</span>, config!=<span class="keyword">null</span>?config.getUtAdapter():<span class="keyword">null</span>);</span><br><span class="line">      <span class="keyword">if</span> (!isSoInitSuccess) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      sm.initScriptsFramework(config.getFramework());</span><br><span class="line"></span><br><span class="line">      WXEnvironment.sSDKInitExecuteTime = System.currentTimeMillis() - start;</span><br><span class="line">      WXLogUtils.renderPerformanceLog(<span class="string">"SDKInitExecuteTime"</span>, WXEnvironment.sSDKInitExecuteTime);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">  register();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个方法中，主要是三个操作：</p>
+<p>1.调用WXSoInstallMgrSdk.initSo方法去加载so文件，从so文件的名字可以看出，weex的js引擎在android端选用了v8而并非和rn一样选用的是JSCore(不过weex在iOS端还是选了系统自带的JSCore，据说会有内存泄漏，没具体了解过)。</p>
+<p>对于这一部分，值得一提的是weex加载so文件的方式，并非普通的system.loadLibrary，而是经过了一系列的优化措施，基本能保证加载成功，这样的方法我们是可以学习一下的，非常的好。</p>
+<p>2.调用WXSDKManager的initScriptsFramework方法去加载整个JSFramework。</p>
+<p>对于这一部分，我们需要知道JSFramework的源码是main.js。8000多行的源码，有兴趣的同学可以去看一下。</p>
+<p>3.调用register()方法去注册一些系统的模块。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">register</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    registerComponent(</span><br><span class="line">      WXText.class,</span><br><span class="line">      <span class="keyword">new</span> SimpleComponentHolder(</span><br><span class="line">        WXText.class,</span><br><span class="line">        <span class="keyword">new</span> WXText.Ceator()</span><br><span class="line">      ),</span><br><span class="line">      <span class="keyword">false</span>,</span><br><span class="line">      WXBasicComponentType.TEXT</span><br><span class="line">    );</span><br><span class="line">    registerComponent(</span><br><span class="line">      WXDiv.class,</span><br><span class="line">      <span class="keyword">new</span> SimpleComponentHolder(</span><br><span class="line">        WXDiv.class,</span><br><span class="line">        <span class="keyword">new</span> WXDiv.Ceator()</span><br><span class="line">      ),</span><br><span class="line">      <span class="keyword">false</span>,</span><br><span class="line">      WXBasicComponentType.CONTAINER,</span><br><span class="line">      WXBasicComponentType.DIV,</span><br><span class="line">      WXBasicComponentType.HEADER,</span><br><span class="line">      WXBasicComponentType.FOOTER</span><br><span class="line">    );</span><br><span class="line">    registerComponent(</span><br><span class="line">      WXImage.class,</span><br><span class="line">      <span class="keyword">new</span> SimpleComponentHolder(</span><br><span class="line">        WXImage.class,</span><br><span class="line">        <span class="keyword">new</span> WXImage.Ceator()</span><br><span class="line">      ),</span><br><span class="line">      <span class="keyword">false</span>,</span><br><span class="line">      WXBasicComponentType.IMAGE,</span><br><span class="line">      WXBasicComponentType.IMG</span><br><span class="line">    );</span><br><span class="line">    registerComponent( WXScroller.class,</span><br><span class="line">      <span class="keyword">new</span> SimpleComponentHolder(</span><br><span class="line">        WXScroller.class,</span><br><span class="line">        <span class="keyword">new</span> WXScroller.Ceator()</span><br><span class="line">      ),</span><br><span class="line">      <span class="keyword">false</span>,</span><br><span class="line">      WXBasicComponentType.SCROLLER</span><br><span class="line">    );</span><br><span class="line">    registerComponent( WXSlider.class,</span><br><span class="line">      <span class="keyword">new</span> SimpleComponentHolder(</span><br><span class="line">        WXSlider.class,</span><br><span class="line">        <span class="keyword">new</span> WXSlider.Creator()</span><br><span class="line">      ),</span><br><span class="line">      <span class="keyword">true</span>,</span><br><span class="line">      WXBasicComponentType.SLIDER</span><br><span class="line">    );</span><br><span class="line">    registerComponent( WXSliderNeighbor.class,</span><br><span class="line">      <span class="keyword">new</span> SimpleComponentHolder(</span><br><span class="line">              WXSliderNeighbor.class,</span><br><span class="line">        <span class="keyword">new</span> WXSliderNeighbor.Creator()</span><br><span class="line">      ),</span><br><span class="line">      <span class="keyword">true</span>,</span><br><span class="line">      WXBasicComponentType.SLIDER_NEIGHBOR</span><br><span class="line">    );</span><br><span class="line">    registerComponent(WXListComponent.class, <span class="keyword">false</span>,WXBasicComponentType.LIST,WXBasicComponentType.VLIST);</span><br><span class="line">    registerComponent(HorizontalListComponent.class,<span class="keyword">false</span>,WXBasicComponentType.HLIST);</span><br><span class="line">    registerComponent(WXBasicComponentType.CELL, WXCell.class, <span class="keyword">true</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.INDICATOR, WXIndicator.class, <span class="keyword">true</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.VIDEO, WXVideo.class, <span class="keyword">false</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.INPUT, WXInput.class, <span class="keyword">false</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.TEXTAREA, Textarea.class,<span class="keyword">false</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.SWITCH, WXSwitch.class, <span class="keyword">false</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.A, WXA.class, <span class="keyword">false</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.EMBED, WXEmbed.class, <span class="keyword">true</span>);</span><br><span class="line">    registerComponent(WXBasicComponentType.WEB, WXWeb.class);</span><br><span class="line">    registerComponent(WXBasicComponentType.REFRESH, WXRefresh.class);</span><br><span class="line">    registerComponent(WXBasicComponentType.LOADING, WXLoading.class);</span><br><span class="line">    registerComponent(WXBasicComponentType.LOADING_INDICATOR, WXLoadingIndicator.class);</span><br><span class="line">    registerComponent(WXBasicComponentType.HEADER, WXHeader.class);</span><br><span class="line"></span><br><span class="line">    registerModule(<span class="string">"modal"</span>, WXModalUIModule.class, <span class="keyword">false</span>);</span><br><span class="line">    registerModule(<span class="string">"instanceWrap"</span>, WXInstanceWrap.class, <span class="keyword">true</span>);</span><br><span class="line">    registerModule(<span class="string">"animation"</span>, WXAnimationModule.class, <span class="keyword">true</span>);</span><br><span class="line">    registerModule(<span class="string">"webview"</span>, WXWebViewModule.class, <span class="keyword">true</span>);</span><br><span class="line">    registerModule(<span class="string">"navigator"</span>, WXNavigatorModule.class);</span><br><span class="line">    registerModule(<span class="string">"stream"</span>, WXStreamModule.class);</span><br><span class="line">    registerModule(<span class="string">"timer"</span>, WXTimerModule.class, <span class="keyword">true</span>);</span><br><span class="line">    registerModule(<span class="string">"storage"</span>, WXStorageModule.class, <span class="keyword">true</span>);</span><br><span class="line">    registerModule(<span class="string">"clipboard"</span>, WXClipboardModule.class, <span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">    registerDomObject(WXBasicComponentType.INDICATOR, WXIndicator.IndicatorDomNode.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.TEXT, WXTextDomObject.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.INPUT, BasicEditTextDomObject.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.TEXTAREA, TextAreaEditTextDomObject.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.SWITCH, WXSwitchDomObject.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.LIST, WXListDomObject.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.VLIST, WXListDomObject.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.HLIST, WXListDomObject.class);</span><br><span class="line">    registerDomObject(WXBasicComponentType.SCROLLER, WXScrollerDomObject.class);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (WXException e) &#123;</span><br><span class="line">    WXLogUtils.e(<span class="string">"[WXSDKEngine] register:"</span>, e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>主要是三部分，Component，Module和DomObject。</p>
+<p>这三部分也是weex中最重要的三个组件。</p>
+<p>Component中含有我们native的view，它和DomObject是一一对应的。我们可以通过范型去指定它所承载的view。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span>  <span class="title">WXComponent</span>&lt;<span class="title">T</span> <span class="keyword">extends</span> <span class="title">View</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>我们可以自定义一个Component继承自WXComponent。</p>
+<p>Module表示native的Api，我们可以将Module暴露给js供其调用，例如toast等等。</p>
+<p>DomObject表示前端template标签在dom tree里的所有信息，例如style，attr，ref等等。这里提到了dom tree，可以说一下weex和rn一样，使用了virtual dom去提高渲染的性能，具体的vdom逻辑大家可以参考<a href="http://mp.weixin.qq.com/s?__biz=MzAxNDEwNjk5OQ==&amp;mid=2650400085&amp;idx=1&amp;sn=4b578bbde5e6eba946bddcd332ad63cb&amp;scene=0#wechat_redirect&amp;utm_source=tuicool&amp;utm_medium=referral" target="_blank" rel="external">这篇文章</a>。</p>
+<p>回到上面的逻辑，经过上面提高的三个步骤之后，整个init逻辑也就执行完了。接下去，我们可以在相应的activity中做操作，在playground的IndexActivity的onCreate方法中，调用了renderPage或者renderPageByUrl方法，而这两个方法在最后都会调用WXSDKInstance的render方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">render</span><span class="params">(String pageName, String template, Map&lt;String, Object&gt; options, String jsonInitData, <span class="keyword">int</span> width, <span class="keyword">int</span> height, WXRenderStrategy flag)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (mRendered || TextUtils.isEmpty(template)) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>(options==<span class="keyword">null</span>)&#123;</span><br><span class="line">    options=<span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>(WXEnvironment.sDynamicMode &amp;&amp; !TextUtils.isEmpty(WXEnvironment.sDynamicUrl) &amp;&amp; options!=<span class="keyword">null</span> &amp;&amp; options.get(<span class="string">"dynamicMode"</span>)==<span class="keyword">null</span>)&#123;</span><br><span class="line">    options.put(<span class="string">"dynamicMode"</span>,<span class="string">"true"</span>);</span><br><span class="line">    renderByUrl(pageName, WXEnvironment.sDynamicUrl, options, jsonInitData, width, height, flag);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  mWXPerformance.pageName = pageName;</span><br><span class="line">  mWXPerformance.JSTemplateSize = template.length() / <span class="number">1024</span>;</span><br><span class="line"></span><br><span class="line">  mRenderStartTime = System.currentTimeMillis();</span><br><span class="line">  mRenderStrategy = flag;</span><br><span class="line">  mGodViewWidth = width;</span><br><span class="line">  mGodViewHeight = height;</span><br><span class="line">  mInstanceId = WXSDKManager.getInstance().generateInstanceId();</span><br><span class="line">  WXSDKManager.getInstance().createInstance(<span class="keyword">this</span>, template, options, jsonInitData);</span><br><span class="line">  mRendered = <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个方法中，会调用WXSDKManager的createInstance方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">createInstance</span><span class="params">(WXSDKInstance instance, String code, Map&lt;String, Object&gt; options, String jsonInitData)</span> </span>&#123;</span><br><span class="line">  mWXRenderManager.createInstance(instance);</span><br><span class="line">  mBridgeManager.createInstance(instance.getInstanceId(), code, options, jsonInitData);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>BridgeManager的createInstance方法最后调用了invokeExecJS去执行js代码，这样就跑到了js层了。</p>
+<p>在js层处理完逻辑之后，会调用WXBridge的callNative方法，最终辗转到WXBridgeManager的callNative。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * Dispatch the native task to be executed.</span><br><span class="line"> * <span class="doctag">@param</span> instanceId &#123;<span class="doctag">@link</span> WXSDKInstance#mInstanceId&#125;</span><br><span class="line"> * <span class="doctag">@param</span> tasks tasks to be executed</span><br><span class="line"> * <span class="doctag">@param</span> callback next tick id</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">callNative</span><span class="params">(String instanceId, String tasks, String callback)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  .........</span><br><span class="line">  .........</span><br><span class="line"></span><br><span class="line">  <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">  JSONArray array = JSON.parseArray(tasks);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span>(WXSDKManager.getInstance().getSDKInstance(instanceId)!=<span class="keyword">null</span>) &#123;</span><br><span class="line">    WXSDKManager.getInstance().getSDKInstance(instanceId).jsonParseTime(System.currentTimeMillis() - start);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">int</span> size = array.size();</span><br><span class="line">  <span class="keyword">if</span> (size &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      JSONObject task;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; size; ++i) &#123;</span><br><span class="line">        task = (JSONObject) array.get(i);</span><br><span class="line">        <span class="keyword">if</span> (task != <span class="keyword">null</span> &amp;&amp; WXSDKManager.getInstance().getSDKInstance(instanceId) != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">if</span> (TextUtils.equals(WXDomModule.WXDOM, (String) task.get(WXDomModule.MODULE))) &#123;</span><br><span class="line">            sDomModule = getDomModule(instanceId);</span><br><span class="line">            sDomModule.callDomMethod(task);</span><br><span class="line">          &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            WXModuleManager.callModuleMethod(instanceId, (String) task.get(WXDomModule.MODULE),</span><br><span class="line">                    (String) task.get(WXDomModule.METHOD), (JSONArray) task.get(WXDomModule.ARGS));</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">      WXLogUtils.e(<span class="string">"[WXBridgeManager] callNative exception: "</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ..........</span><br><span class="line">  <span class="keyword">return</span> INSTANCE_RENDERING;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，js层会把想要传递的信息封装在一个json对象中，并且最终调用了WXModuleManager的callModuleMethod方法。在这个方法中，会根据js端提供的方法名字进行分发，调用对应native的方法。</p>
+<p>所以这里我们知道，整个weex的通信机制和rn是如出一撤的，基本就是在两端维护两个类似协议的注册表，通过jni的形式(Bridge)进行通信，并且通过解析json数据来调用两端具体的方法。</p>
+<p>在native层调用方法中，有一个比较特殊的module叫WXDomModule。这个module是和页面渲染相关的。具体就是解析json数据，将数据转换成native层已经注册的Component。最终，我们对应的Activity会注册一个IWXRenderListener这样的监听器，weex的sdk会回调这个监听器中的onViewCreated方法。我们只需要做对应的view添加就行了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onViewCreated</span><span class="params">(WXSDKInstance instance, View view)</span> </span>&#123;</span><br><span class="line">    ((ViewGroup)findViewById(R.id.container)).addView(view);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到这里weex的通信机制就大致讲完了，我们可以用一张图来概括：</p>
+<p> <img src="/images/weex日记/weex_communication.png" alt="weex_communication"></p>
+<p>图片出自<a href="http://alibaba.github.io/weex/doc/advanced/how-it-works.html" target="_blank" rel="external">weex的官方教程</a>。</p>
+<h1 id="weex-vs-rn"><a href="#weex-vs-rn" class="headerlink" title="weex vs rn"></a>weex vs rn</h1><p>上面讲完了weex的整个框架，可以看到在［通信］这一层面，它和rn没有多大的区别，并且也都用了virtual dom去提升性能，那么它和rn到底又有哪些区别呢？</p>
+<p>首先我先来说说我认识weex所具备的优势：</p>
+<p>1.我们知道rn是先出的iOS，后出的android，在很多东西上都有它的平台独立性，比如navigator，在很多时候我们在写js代码的时候需要去判断是iOS还是android平台。而weex在这方面做的比较好，换句话说，封装的比较完善。</p>
+<p>2.在前端框架选择上，rn选择了react而weex选择了vue。对于这两个框架的好与坏我这样的前端新手不做评价，但是对于我来说，vue的模板风格是我更能接受的，基本就是原生h5的开发，而react所采用jsx则复杂很多，所有的代码都挤在一起，看起来就有些费劲。当然这都是见仁见智的～</p>
+<p>3.前面也说过，weex在配置上比rn要简单一些。</p>
+<p>4.rn原生上是不支持多bundle的，并且它的整个sdk会和业务代码打成一个js bundle，这样就会导致整个js bundle过大，想要做到分包就要自己去修改代码和造分包工具，比较麻烦。weex天生支持分包，并且sdk的bundle会抽离出来，业务方打出来的bundle只含有业务代码。</p>
+<p>5.rn在使用上基本就是替换整个app，而weex则更灵活，可以做到［嵌入app］内使用，仅仅替换一个页面，或者一个view。</p>
+<p>6.weex在页面渲染方面支持<a href="http://alibaba.github.io/weex/doc/syntax/render-logic.html" target="_blank" rel="external">tree模式和node模式</a>，开发者可以灵活的选择。</p>
+<p>综上，可以看到weex相比较于rn，显得更加轻便灵活，对开发者也更佳友好。但是weex也有自己的缺点：</p>
+<p>1.由于开源的比较晚，社区活跃度肯定是不及rn的，所以weex现在的坑肯定要比rn多，说不定你用着用着就会发现一个奇葩的问题没有人能解决。</p>
+<p>2.这也是我在实际编码过程中发现的，当时在写rn的时候，对于异步回调习惯了用promise而不是callback，转移到weex之后，发现它好像只支持callback而不支持promise，不知道是出于什么原因。不过既然存在这个问题，我相信在其他编码的细节方面weex肯定也会有不如rn的地方，这很正常。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>总而言之，weex是一个值得深入学习的框架，希望能越做越好吧，也感谢小敏哥和教父在weex上对我的帮助，谢谢大神～</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/weex/" rel="tag">#weex</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/" rel="next" title="hotpatch完结篇之ART虚拟机crash之谜">
+                <i class="fa fa-chevron-left"></i> hotpatch完结篇之ART虚拟机crash之谜
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/09/23/Weex日记——2/" rel="prev" title="Weex日记——2">
+                Weex日记——2 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/09/15/weex日记/"
+           data-title="weex日记" data-url="http://yoursite.com/2016/09/15/weex日记/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#weex是什么"><span class="nav-number">1.</span> <span class="nav-text">weex是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#weex怎么用"><span class="nav-number">2.</span> <span class="nav-text">weex怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#weex的工作原理"><span class="nav-number">3.</span> <span class="nav-text">weex的工作原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#weex-vs-rn"><span class="nav-number">4.</span> <span class="nav-text">weex vs rn</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
