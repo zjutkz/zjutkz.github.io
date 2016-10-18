@@ -1,0 +1,869 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Weex," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="事隔近一个月之后，终于回归Weex系列了，这篇文章会带给大家一些Weex Android端源码中值得我们学习的片段，另外还有一个Native端主动调用JS方法的workaround。
+我个人觉得看完这个系列的三篇文章，你应该对Weex Android端会有一个非常全面的了解了。至于具体的语法规则这类的嘛，去看wiki吧，这不是我写文章的目的～">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Weex日记——3">
+<meta property="og:url" content="http://yoursite.com/2016/10/18/Weex日记——3/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="事隔近一个月之后，终于回归Weex系列了，这篇文章会带给大家一些Weex Android端源码中值得我们学习的片段，另外还有一个Native端主动调用JS方法的workaround。
+我个人觉得看完这个系列的三篇文章，你应该对Weex Android端会有一个非常全面的了解了。至于具体的语法规则这类的嘛，去看wiki吧，这不是我写文章的目的～">
+<meta property="og:image" content="http://yoursite.com/images/weex日记——3/weex_load_so.png">
+<meta property="og:image" content="http://yoursite.com/images/weex日记——3/handler.png">
+<meta property="og:image" content="http://yoursite.com/images/weex日记——3/demo.png">
+<meta property="og:updated_time" content="2016-10-18T04:02:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Weex日记——3">
+<meta name="twitter:description" content="事隔近一个月之后，终于回归Weex系列了，这篇文章会带给大家一些Weex Android端源码中值得我们学习的片段，另外还有一个Native端主动调用JS方法的workaround。
+我个人觉得看完这个系列的三篇文章，你应该对Weex Android端会有一个非常全面的了解了。至于具体的语法规则这类的嘛，去看wiki吧，这不是我写文章的目的～">
+<meta name="twitter:image" content="http://yoursite.com/images/weex日记——3/weex_load_so.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> Weex日记——3 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Weex日记——3
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-18T11:56:51+08:00" content="2016-10-18">
+              2016-10-18
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/18/Weex日记——3/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/18/Weex日记——3/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/10/18/Weex日记——3/" class="leancloud_visitors" data-flag-title="Weex日记——3">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>事隔近一个月之后，终于回归Weex系列了，这篇文章会带给大家一些Weex Android端源码中值得我们学习的片段，另外还有一个Native端主动调用JS方法的workaround。</p>
+<p>我个人觉得看完这个系列的三篇文章，你应该对Weex Android端会有一个非常全面的了解了。至于具体的语法规则这类的嘛，去看wiki吧，这不是我写文章的目的～</p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇文章说了关于Android组件化的一些的东西，文章中提到可以用Android Studio模板去完成一些自动化的事情，比如build.gradle的修改，文件结构的修改等等，这里我写了一个传到了<a href="https://github.com/zjutkz/ModularizationTemplate" target="_blank" rel="external">我的GitHub</a>上，有需要的同学可以自取，使用方式已经写的很清楚了。</p>
+<p>好了下面还是言归正传，开始Weex的学习吧。</p>
+<h1 id="Weex中值得学习的代码"><a href="#Weex中值得学习的代码" class="headerlink" title="Weex中值得学习的代码"></a>Weex中值得学习的代码</h1><p>首先，第一个值得学习的地方就是Weex对于so加载的方法。我们知道，对于so文件的加载，普通的方式就是直接使用如下代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">System.loadLibrary(libName);</span><br></pre></td></tr></table></figure>
+<p>但是这样的方式会存在一定的问题，有时候会报出UnsatisfiedLinkError错误，发生这个错误的原因基本就是找不到对应的so文件，至于为什么会找不到，情况有很多种，比如拷贝文件的时候发生错误，又或者是没有考虑对应的cpu架构(例如mips)等等。而我们知道Weex在Android端是基于v8引擎的，如果这个so文件加载失败，那么整个Weex体系就崩溃了，所以确保so加载的成功在Weex上尤为重要，下面先看看Weex源码中加载so的逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">initSo</span><span class="params">(String libName, <span class="keyword">int</span> version, IWXUserTrackAdapter utAdapter)</span> </span>&#123;</span><br><span class="line">  String cpuType = _cpuType();</span><br><span class="line">  <span class="keyword">if</span> (cpuType.equalsIgnoreCase(MIPS) ) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">boolean</span> InitSuc = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (checkSoIsInValid(libName, ARMEABI_Size) ||checkSoIsInValid(libName, X86_Size)) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Load library with &#123;<span class="doctag">@link</span> System#loadLibrary(String)&#125;</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      System.loadLibrary(libName);</span><br><span class="line">      commit(utAdapter, <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">      InitSuc = <span class="keyword">true</span>;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception | Error e2) &#123;</span><br><span class="line">      <span class="keyword">if</span> (cpuType.contains(ARMEABI) || cpuType.contains(X86)) &#123;</span><br><span class="line">        commit(utAdapter, WXErrorCode.WX_ERR_LOAD_SO.getErrorCode(), WXErrorCode.WX_ERR_LOAD_SO.getErrorMsg() + <span class="string">":"</span> + e2.getMessage());</span><br><span class="line">      &#125;</span><br><span class="line">      InitSuc = <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (!InitSuc) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//File extracted from apk already exists.</span></span><br><span class="line">        <span class="keyword">if</span> (isExist(libName, version)) &#123;</span><br><span class="line">          <span class="keyword">boolean</span> res = _loadUnzipSo(libName, version, utAdapter);</span><br><span class="line">          <span class="keyword">if</span> (res) &#123;</span><br><span class="line">            <span class="keyword">return</span> res;</span><br><span class="line">          &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">//Delete the corrupt so library, and extract it again.</span></span><br><span class="line">            removeSoIfExit(libName, version);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//Fail for loading file from libs, extract so library from so and load it.</span></span><br><span class="line">        <span class="keyword">if</span> (cpuType.equalsIgnoreCase(MIPS)) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            InitSuc = unZipSelectedFiles(libName, version, utAdapter);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (IOException e2) &#123;</span><br><span class="line">            e2.printStackTrace();</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception | Error e) &#123;</span><br><span class="line">      InitSuc = <span class="keyword">false</span>;</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> InitSuc;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法在WXSoInstallMgrSdk类中，调用的时机是Weex初始化的时候。</p>
+<p>首先，该方法和普通的加载so逻辑是一样的，调用System.loadLibrary方法，但是它不仅仅是这样调用以后就简单的返回了，而是去进行一个校验，如果这样的方式加载失败了，那么会调用isExist方法，下面让我们看看这个方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">isExist</span><span class="params">(String libName, <span class="keyword">int</span> version)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  String file = _targetSoFile(libName, version);</span><br><span class="line">  File a = <span class="keyword">new</span> File(file);</span><br><span class="line">  <span class="keyword">return</span> a.exists();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> String <span class="title">_targetSoFile</span><span class="params">(String libName, <span class="keyword">int</span> version)</span> </span>&#123;</span><br><span class="line">    Context context = mContext;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == context) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="string">""</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    String path = <span class="string">"/data/data/"</span> + context.getPackageName() + <span class="string">"/files"</span>;</span><br><span class="line"></span><br><span class="line">    File f = context.getFilesDir();</span><br><span class="line">    <span class="keyword">if</span> (f != <span class="keyword">null</span>) &#123;</span><br><span class="line">      path = f.getPath();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> path + <span class="string">"/lib"</span> + libName + <span class="string">"bk"</span> + version + <span class="string">".so"</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其实这个方法就是去判断在data/data/your_package目录下是否存在对应的so文件。</p>
+<p>如果存在，则调用_loadUnzipSo方法去加载：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">_loadUnzipSo</span><span class="params">(String libName, <span class="keyword">int</span> version, IWXUserTrackAdapter utAdapter)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">boolean</span> initSuc = <span class="keyword">false</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (isExist(libName, version)) &#123;</span><br><span class="line">      System.load(_targetSoFile(libName, version));</span><br><span class="line">      commit(utAdapter, <span class="string">"2000"</span>, <span class="string">"Load file extract from apk successfully."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    initSuc = <span class="keyword">true</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">    commit(utAdapter, WXErrorCode.WX_ERR_COPY_FROM_APK.getErrorCode(), WXErrorCode.WX_ERR_COPY_FROM_APK.getErrorMsg() + <span class="string">":"</span> + e.getMessage());</span><br><span class="line">    initSuc = <span class="keyword">false</span>;</span><br><span class="line">    WXLogUtils.e(<span class="string">""</span>, e);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> initSuc;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到这里使用了System.load方法而不是System.loadLibrary方法，主要的区别就是System.load方法可以自定义文件路径。</p>
+<p>如果这样还是加载so失败，则进行第三步，首先判断对应cpu架构是否是mips，如果是的话直接返回false，表示加载失败，否则调用unZipSelectedFiles方法，先去解压程序的apk文件，查看是否有对应的so文件，如果有则进行加载，下面是具体的逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">unZipSelectedFiles</span><span class="params">(String libName, <span class="keyword">int</span> version, IWXUserTrackAdapter utAdapter)</span> <span class="keyword">throws</span> ZipException, IOException </span>&#123;</span><br><span class="line"></span><br><span class="line">  String sourcePath = <span class="string">"lib/armeabi/lib"</span> + libName + <span class="string">".so"</span>;</span><br><span class="line"></span><br><span class="line">  String zipPath = <span class="string">""</span>;</span><br><span class="line">  Context context = mContext;</span><br><span class="line">  <span class="keyword">if</span> (context == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ApplicationInfo aInfo = context.getApplicationInfo();</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">null</span> != aInfo) &#123;</span><br><span class="line">    zipPath = aInfo.sourceDir;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ZipFile zf;</span><br><span class="line">  zf = <span class="keyword">new</span> ZipFile(zipPath);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (Enumeration&lt;?&gt; entries = zf.entries(); entries.hasMoreElements(); ) &#123;</span><br><span class="line">      ZipEntry entry = ((ZipEntry) entries.nextElement());</span><br><span class="line">      <span class="keyword">if</span> (entry.getName().startsWith(sourcePath)) &#123;</span><br><span class="line"></span><br><span class="line">        InputStream in = <span class="keyword">null</span>;</span><br><span class="line">        FileOutputStream os = <span class="keyword">null</span>;</span><br><span class="line">        FileChannel channel = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">int</span> total = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">          <span class="comment">//Make sure the old library is deleted.</span></span><br><span class="line">          removeSoIfExit(libName, version);</span><br><span class="line"></span><br><span class="line">          <span class="comment">//Copy file</span></span><br><span class="line">          in = zf.getInputStream(entry);</span><br><span class="line">          os = context.openFileOutput(<span class="string">"lib"</span> + libName + <span class="string">"bk"</span> + version + <span class="string">".so"</span>,</span><br><span class="line">                                      Context.MODE_PRIVATE);</span><br><span class="line">          channel = os.getChannel();</span><br><span class="line"></span><br><span class="line">          <span class="keyword">byte</span>[] buffers = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1024</span>];</span><br><span class="line">          <span class="keyword">int</span> realLength;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">while</span> ((realLength = in.read(buffers)) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">//os.write(buffers);</span></span><br><span class="line">            channel.write(ByteBuffer.wrap(buffers, <span class="number">0</span>, realLength));</span><br><span class="line">            total += realLength;</span><br><span class="line"></span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">          <span class="keyword">if</span> (in != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              in.close();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">              e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (channel != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              channel.close();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">              e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (os != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              os.close();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">              e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (zf != <span class="keyword">null</span>) &#123;</span><br><span class="line">            zf.close();</span><br><span class="line">            zf = <span class="keyword">null</span>;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (total &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span> _loadUnzipSo(libName, version, utAdapter);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (java.io.IOException e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line"></span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (zf != <span class="keyword">null</span>) &#123;</span><br><span class="line">      zf.close();</span><br><span class="line">      zf = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过这种方式，Weex增强了加载so文件的成功率，确保整个框架的顺利运行。</p>
+<p> <img src="/images/weex日记——3/weex_load_so.png" alt="weex_load_so"></p>
+<p>说完了so加载，让我们再来看看Weex在Android端内部是如何进行消息通信的。</p>
+<p>我们知道，在使用Weex的时候，会在Application里调用对应的初始化逻辑，就是WXSDKEngine的initialize方法。在这个方法中，Weex会去执行一些具体的任务，比如前面提到的so文件加载，初始化JSFramework，注册module模块等等。而这样的任务其实是比较耗时的，所以不可能将他们放在主线程中进行。但是放在子线程中就会出现一个问题，怎么保证这些任务的顺序呢？我们不可能在没有加载so文件或者没有初始化JSFramework的情况下就去注册module吧？所以这里Weex采用了一个比较巧妙的做法，那就是利用了Android的HandlerThread机制。</p>
+<p>在WXBridgeManager中存在一个JSThread和JSHandler：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> WXThread mJSThread;</span><br><span class="line"><span class="keyword">private</span> Handler mJSHandler;</span><br></pre></td></tr></table></figure>
+<p>其中WXThread是一个HandlerThread：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WXThread</span> <span class="keyword">extends</span> <span class="title">HandlerThread</span></span></span><br></pre></td></tr></table></figure>
+<p>关于HandlerThread这里我不展开了，不了解的同学自行谷歌吧。而我们前面提到的加载so文件，初始化JSFramework和注册模块这些任务，都是通过这个JSHandler去post执行的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">WXBridgeManager.getInstance().getJSHandler().post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">    WXSDKManager sm = WXSDKManager.getInstance();</span><br><span class="line">    <span class="keyword">if</span>(config != <span class="keyword">null</span> ) &#123;</span><br><span class="line">      sm.setIWXHttpAdapter(config.getHttpAdapter());</span><br><span class="line">      sm.setIWXImgLoaderAdapter(config.getImgAdapter());</span><br><span class="line">      sm.setIWXUserTrackAdapter(config.getUtAdapter());</span><br><span class="line">      sm.setIWXDebugAdapter(config.getDebugAdapter());</span><br><span class="line">      sm.setIWXStorageAdapter(config.getStorageAdapter());</span><br><span class="line">      <span class="keyword">if</span>(config.getDebugAdapter()!=<span class="keyword">null</span>)&#123;</span><br><span class="line">        config.getDebugAdapter().initDebug(application);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    WXSoInstallMgrSdk.init(application);</span><br><span class="line">    <span class="keyword">boolean</span> isSoInitSuccess = WXSoInstallMgrSdk.initSo(V8_SO_NAME, <span class="number">1</span>, config!=<span class="keyword">null</span>?config.getUtAdapter():<span class="keyword">null</span>);</span><br><span class="line">    <span class="keyword">if</span> (!isSoInitSuccess) &#123;</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    sm.initScriptsFramework(<span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">    WXEnvironment.sSDKInitExecuteTime = System.currentTimeMillis() - start;</span><br><span class="line">    WXLogUtils.renderPerformanceLog(<span class="string">"SDKInitExecuteTime"</span>, WXEnvironment.sSDKInitExecuteTime);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">registerModule</span><span class="params">(<span class="keyword">final</span> String moduleName, <span class="keyword">final</span> ModuleFactory factory, <span class="keyword">final</span> <span class="keyword">boolean</span> global)</span> <span class="keyword">throws</span> WXException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (moduleName == <span class="keyword">null</span> || factory == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (TextUtils.equals(moduleName,WXDomModule.WXDOM)) &#123;</span><br><span class="line">      WXLogUtils.e(<span class="string">"Connot registered module name is dom."</span>);</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    WXBridgeManager.getInstance().getJSHandler().post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (sModuleFactoryMap.containsKey(moduleName)) &#123;</span><br><span class="line">          WXLogUtils.w(<span class="string">"WXComponentRegistry Duplicate the Module name: "</span> + moduleName);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (global) &#123;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            WXModule wxModule = factory.buildInstance();</span><br><span class="line">            sGlobalModuleMap.put(moduleName, wxModule);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            WXLogUtils.e(moduleName + <span class="string">" class must have a default constructor without params. "</span>, e);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          registerNativeModule(moduleName, factory);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (WXException e) &#123;</span><br><span class="line">          WXLogUtils.e(<span class="string">""</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">        registerJSModule(moduleName, factory);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>对于Handler机制，大家不熟悉的可以先去看我的<a href="http://www.zjutkz.net/2016/04/23/为分析agera做准备！带你了解Android的handler机制/" target="_blank" rel="external">这篇文章</a>。其实就是内部存在一个消息队列，每一个消息都遵循先进先出的方式执行。而我们前面提到的这些任务，Weex也规定好了它们的顺序：先加载so文件，再初始化JSFramework，最后注册模块。这样就保证了所有任务在子线程中也可以按顺序执行。这样的方式是值得我们学习的，而不是去写一堆的锁，又低效又容易出错。</p>
+<p>但是Weex团队在使用在使用这种方式进行子线程任务分发的时候犯了一个致命的错误，导致Weex在使用上会出现问题。</p>
+<p>下面想象这样一个场景，我们在整个应用的第一个页面就需要使用Weex的某个模块，比如Stream，那我们在对应的.we文件中会去require它，这样问题就来了，很大概率会出现该模块找不到，换句话说就是我们在使用这个模块的时候，它还没有注册完。</p>
+<p>首先我们知道，渲染一个页面调用的是Weex的render方法，在这个方法中，具体的createInstance其实也是通过JSHandler去post执行的。这下问题就变得不清晰了，明明我们在Application中去初始化了Weex，而在第一个Activity中调用render从而渲染页面，然后去require Stream模块，都是通过Handler的post去执行的，应该会严格按照顺序来啊，为什么会出现［调用模块在注册模块之前］这样的问题呢？</p>
+<p>还是从代码中寻找原因吧。上面已经给出，注册一个模块，最终调用的是registerModule方法，在这个方法内会调用Handler的post方法。所以到这里，还是不会有问题的，问题就在它内部的registerJSModule方法里。这个方法最后调用的是WXBridgeManager的registerModules方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerModules</span><span class="params">(<span class="keyword">final</span> Map&lt;String, Object&gt; modules)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> ( mJSHandler == <span class="keyword">null</span> || modules == <span class="keyword">null</span></span><br><span class="line">      || modules.size() == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  post(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      invokeRegisterModules(modules);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;, <span class="keyword">null</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，在这个方法里，又去执行了一个post，这样就会有问题了。</p>
+<p> <img src="/images/weex日记——3/handler.png" alt="handler"></p>
+<p>如图所示，真正执行注册模块的逻辑是那个repost中的代码，其实已经在调用模块的后面了。 <img src="/images/weex日记——3/demo.png" alt="demo"></p>
+<p>就像上面这个demo一样，ccc这个task由于在内部进行了repost，实际执行会在ddd这个task之后。</p>
+<p>关于这个问题，具体可见<a href="https://github.com/alibaba/weex/issues/1200#issuecomment-252586588" target="_blank" rel="external">这个issue</a>。在和对应的Weex开发进行邮件通过之后，他们已经修复了这个问题。</p>
+<h1 id="如何在native层主动调用js方法"><a href="#如何在native层主动调用js方法" class="headerlink" title="如何在native层主动调用js方法"></a>如何在native层主动调用js方法</h1><p>在实际业务场景中可能存在这样一个需求，我们的native层需要主动去调用js层自定义的方法，这个不做任何处理是做不到的。对于这个问题，我也进行一个思考，目前发现了两个可行的方案。</p>
+<p>方案一：修改源码做一个类似timer的机制。</p>
+<p>我们知道在Weex中调用native向js层通信其实就是执行一段js代码，具体逻辑在WXBridgeManager中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mWXBridge.execJS(<span class="string">""</span>, <span class="keyword">null</span>, METHOD_REGISTER_COMPONENTS, args);</span><br></pre></td></tr></table></figure>
+<p>其中第三个参数表示是一个什么类型的逻辑，第四个参数就是具体要传到js层的参数。而对于第三个参数，Weex其实已经提供了类似［主动调用js层方法］的功能：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_CREATE_INSTANCE = <span class="string">"createInstance"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_DESTROY_INSTANCE = <span class="string">"destroyInstance"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_CALL_JS = <span class="string">"callJS"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_SET_TIMEOUT = <span class="string">"setTimeoutCallback"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_REGISTER_MODULES = <span class="string">"registerModules"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_REGISTER_COMPONENTS = <span class="string">"registerComponents"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_FIRE_EVENT = <span class="string">"fireEvent"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_CALLBACK = <span class="string">"callback"</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String METHOD_REFRESH_INSTANCE = <span class="string">"refreshInstance"</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String UNDEFINED = <span class="string">"-1"</span>;</span><br></pre></td></tr></table></figure>
+<p>可以看到存在一个METHOD_CALL_JS。</p>
+<p>而在Weex的众多模块中，有一个timer模块，可以做到native层主动调用js方法，用的就是METHOD_CALL_JS这个类型。但是这个方法不管是handler的messageType还是内部逻辑都已经写死了，如果要做到自定义，我们可以通过类似timer的逻辑去自己写一套机制。这个方案我这里不具体展开了，有兴趣的同学可以自行实现。</p>
+<p>方案二：通过callback实现。</p>
+<p>既然Weex没有提供对应的方案，我们可以通过一些手段去变相的完成这样的需求。</p>
+<p>首先，我们可以在.we文件里去主动调用一个native层的方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">created: <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.prepareForNative();</span><br><span class="line">&#125;,</span><br><span class="line">prepareForNative: <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">				<span class="keyword">var</span> native = <span class="built_in">require</span>(<span class="string">'@weex-module/native'</span>);</span><br><span class="line">				<span class="keyword">var</span> log = <span class="built_in">require</span>(<span class="string">'@weex-module/wxlog'</span>);</span><br><span class="line">				native.nativeCall(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">  					log.log(data.param);</span><br><span class="line">				&#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在created回调中调用这个方法，该方法中存在一个回调，我们把需要native层主动调用的js层方法放在这个回调中，这里我简单的放了一个log函数。</p>
+<p>接着，在native层接收到这个方法的时候，保存这个callback：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NativeCall</span> <span class="keyword">extends</span> <span class="title">WXModule</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"NativeCall"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> JSCallback callback;</span><br><span class="line">    <span class="keyword">private</span> Map&lt;String,Object&gt; data = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> NativeCall instance;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@WXModuleAnno</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">nativeCall</span><span class="params">(JSCallback callback)</span></span>&#123;</span><br><span class="line">        instance = <span class="keyword">this</span>;</span><br><span class="line">        <span class="keyword">this</span>.callback = callback;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NativeCall <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(instance == <span class="keyword">null</span>)&#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (NativeCall.class)&#123;</span><br><span class="line">                <span class="keyword">if</span>(instance == <span class="keyword">null</span>)&#123;</span><br><span class="line">                    instance = <span class="keyword">new</span> NativeCall();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> instance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">callJS</span><span class="params">()</span></span>&#123;</span><br><span class="line">        data.put(<span class="string">"param"</span>,<span class="string">"This is a param"</span>);</span><br><span class="line">        <span class="keyword">if</span>(callback != <span class="keyword">null</span>)&#123;</span><br><span class="line">            callback.invokeAndKeepAlive(data);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，我们就可以在需要调用js层方法的时候，调用NativeCall类的callJS方法，通过callback的形式返回。</p>
+<p>在实际使用过程中，这样的方案肯定是会存在问题的，需要大家自己斟酌一下，不过这样的思路是可行的就对了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Weex/" rel="tag">#Weex</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/07/关于Android业务组件化的一些思考/" rel="next" title="关于Android业务组件化的一些思考">
+                <i class="fa fa-chevron-left"></i> 关于Android业务组件化的一些思考
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/10/18/Weex日记——3/"
+           data-title="Weex日记——3" data-url="http://yoursite.com/2016/10/18/Weex日记——3/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">21</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Weex中值得学习的代码"><span class="nav-number">2.</span> <span class="nav-text">Weex中值得学习的代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何在native层主动调用js方法"><span class="nav-number">3.</span> <span class="nav-text">如何在native层主动调用js方法</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
