@@ -4,9 +4,9 @@
   <subtitle>try everything</subtitle>
   <link href="/atom.xml" rel="self"/>
   
-  <link href="http://www.zjutkz.net/"/>
+  <link href="http://yoursite.com/"/>
   <updated>2016-10-18T04:02:26.000Z</updated>
-  <id>http://www.zjutkz.net/</id>
+  <id>http://yoursite.com/</id>
   
   <author>
     <name>zjutkz</name>
@@ -17,8 +17,8 @@
   
   <entry>
     <title>Weex日记——3</title>
-    <link href="http://www.zjutkz.net/2016/10/18/Weex%E6%97%A5%E8%AE%B0%E2%80%94%E2%80%943/"/>
-    <id>http://www.zjutkz.net/2016/10/18/Weex日记——3/</id>
+    <link href="http://yoursite.com/2016/10/18/Weex%E6%97%A5%E8%AE%B0%E2%80%94%E2%80%943/"/>
+    <id>http://yoursite.com/2016/10/18/Weex日记——3/</id>
     <published>2016-10-18T03:56:51.000Z</published>
     <updated>2016-10-18T04:02:26.000Z</updated>
     
@@ -89,14 +89,14 @@
     </summary>
     
     
-      <category term="Weex" scheme="http://www.zjutkz.net/tags/Weex/"/>
+      <category term="Weex" scheme="http://yoursite.com/tags/Weex/"/>
     
   </entry>
   
   <entry>
     <title>关于Android业务组件化的一些思考</title>
-    <link href="http://www.zjutkz.net/2016/10/07/%E5%85%B3%E4%BA%8EAndroid%E4%B8%9A%E5%8A%A1%E7%BB%84%E4%BB%B6%E5%8C%96%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/"/>
-    <id>http://www.zjutkz.net/2016/10/07/关于Android业务组件化的一些思考/</id>
+    <link href="http://yoursite.com/2016/10/07/%E5%85%B3%E4%BA%8EAndroid%E4%B8%9A%E5%8A%A1%E7%BB%84%E4%BB%B6%E5%8C%96%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/"/>
+    <id>http://yoursite.com/2016/10/07/关于Android业务组件化的一些思考/</id>
     <published>2016-10-07T06:02:17.000Z</published>
     <updated>2016-10-08T06:59:25.000Z</updated>
     
@@ -151,14 +151,14 @@
     </summary>
     
     
-      <category term="组件化" scheme="http://www.zjutkz.net/tags/%E7%BB%84%E4%BB%B6%E5%8C%96/"/>
+      <category term="组件化" scheme="http://yoursite.com/tags/%E7%BB%84%E4%BB%B6%E5%8C%96/"/>
     
   </entry>
   
   <entry>
     <title>Weex日记——2</title>
-    <link href="http://www.zjutkz.net/2016/09/23/Weex%E6%97%A5%E8%AE%B0%E2%80%94%E2%80%942/"/>
-    <id>http://www.zjutkz.net/2016/09/23/Weex日记——2/</id>
+    <link href="http://yoursite.com/2016/09/23/Weex%E6%97%A5%E8%AE%B0%E2%80%94%E2%80%942/"/>
+    <id>http://yoursite.com/2016/09/23/Weex日记——2/</id>
     <published>2016-09-23T03:26:01.000Z</published>
     <updated>2016-09-23T03:38:18.000Z</updated>
     
@@ -216,14 +216,14 @@
     </summary>
     
     
-      <category term="weex" scheme="http://www.zjutkz.net/tags/weex/"/>
+      <category term="weex" scheme="http://yoursite.com/tags/weex/"/>
     
   </entry>
   
   <entry>
     <title>weex日记</title>
-    <link href="http://www.zjutkz.net/2016/09/15/weex%E6%97%A5%E8%AE%B0/"/>
-    <id>http://www.zjutkz.net/2016/09/15/weex日记/</id>
+    <link href="http://yoursite.com/2016/09/15/weex%E6%97%A5%E8%AE%B0/"/>
+    <id>http://yoursite.com/2016/09/15/weex日记/</id>
     <published>2016-09-15T03:39:12.000Z</published>
     <updated>2016-09-15T03:53:05.000Z</updated>
     
@@ -296,14 +296,14 @@
     </summary>
     
     
-      <category term="weex" scheme="http://www.zjutkz.net/tags/weex/"/>
+      <category term="weex" scheme="http://yoursite.com/tags/weex/"/>
     
   </entry>
   
   <entry>
     <title>hotpatch完结篇之ART虚拟机crash之谜</title>
-    <link href="http://www.zjutkz.net/2016/08/25/hotpatch%E5%AE%8C%E7%BB%93%E7%AF%87%E4%B9%8BART%E8%99%9A%E6%8B%9F%E6%9C%BAcrash%E4%B9%8B%E8%B0%9C/"/>
-    <id>http://www.zjutkz.net/2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/</id>
+    <link href="http://yoursite.com/2016/08/25/hotpatch%E5%AE%8C%E7%BB%93%E7%AF%87%E4%B9%8BART%E8%99%9A%E6%8B%9F%E6%9C%BAcrash%E4%B9%8B%E8%B0%9C/"/>
+    <id>http://yoursite.com/2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/</id>
     <published>2016-08-25T09:01:28.000Z</published>
     <updated>2016-08-25T09:25:56.000Z</updated>
     
@@ -387,14 +387,14 @@
     </summary>
     
     
-      <category term="hotpatch" scheme="http://www.zjutkz.net/tags/hotpatch/"/>
+      <category term="hotpatch" scheme="http://yoursite.com/tags/hotpatch/"/>
     
   </entry>
   
   <entry>
     <title>我们为什么要使用RecyclerView</title>
-    <link href="http://www.zjutkz.net/2016/08/10/%E6%88%91%E4%BB%AC%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8RecyclerView/"/>
-    <id>http://www.zjutkz.net/2016/08/10/我们为什么要使用RecyclerView/</id>
+    <link href="http://yoursite.com/2016/08/10/%E6%88%91%E4%BB%AC%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8RecyclerView/"/>
+    <id>http://yoursite.com/2016/08/10/我们为什么要使用RecyclerView/</id>
     <published>2016-08-10T06:06:48.000Z</published>
     <updated>2016-08-11T09:20:15.000Z</updated>
     
@@ -449,14 +449,14 @@
     </summary>
     
     
-      <category term="recyclerView" scheme="http://www.zjutkz.net/tags/recyclerView/"/>
+      <category term="recyclerView" scheme="http://yoursite.com/tags/recyclerView/"/>
     
   </entry>
   
   <entry>
     <title>Android中的类加载-查找和在hotpatch上的问题</title>
-    <link href="http://www.zjutkz.net/2016/08/06/Android%E4%B8%AD%E7%9A%84%E7%B1%BB%E5%8A%A0%E8%BD%BD-%E6%9F%A5%E6%89%BE%E5%92%8C%E5%9C%A8hotpatch%E4%B8%8A%E7%9A%84%E9%97%AE%E9%A2%98/"/>
-    <id>http://www.zjutkz.net/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/</id>
+    <link href="http://yoursite.com/2016/08/06/Android%E4%B8%AD%E7%9A%84%E7%B1%BB%E5%8A%A0%E8%BD%BD-%E6%9F%A5%E6%89%BE%E5%92%8C%E5%9C%A8hotpatch%E4%B8%8A%E7%9A%84%E9%97%AE%E9%A2%98/"/>
+    <id>http://yoursite.com/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/</id>
     <published>2016-08-06T04:35:32.000Z</published>
     <updated>2016-08-06T04:40:32.000Z</updated>
     
@@ -532,14 +532,14 @@
     </summary>
     
     
-      <category term="hotpatch" scheme="http://www.zjutkz.net/tags/hotpatch/"/>
+      <category term="hotpatch" scheme="http://yoursite.com/tags/hotpatch/"/>
     
   </entry>
   
   <entry>
     <title>热修复中的资源修复</title>
-    <link href="http://www.zjutkz.net/2016/07/22/%E7%83%AD%E4%BF%AE%E5%A4%8D%E4%B8%AD%E7%9A%84%E8%B5%84%E6%BA%90%E4%BF%AE%E5%A4%8D/"/>
-    <id>http://www.zjutkz.net/2016/07/22/热修复中的资源修复/</id>
+    <link href="http://yoursite.com/2016/07/22/%E7%83%AD%E4%BF%AE%E5%A4%8D%E4%B8%AD%E7%9A%84%E8%B5%84%E6%BA%90%E4%BF%AE%E5%A4%8D/"/>
+    <id>http://yoursite.com/2016/07/22/热修复中的资源修复/</id>
     <published>2016-07-22T15:04:55.000Z</published>
     <updated>2016-07-23T03:14:08.000Z</updated>
     
@@ -576,14 +576,14 @@
     </summary>
     
     
-      <category term="hot patch" scheme="http://www.zjutkz.net/tags/hot-patch/"/>
+      <category term="hot patch" scheme="http://yoursite.com/tags/hot-patch/"/>
     
   </entry>
   
   <entry>
     <title>Android中资源查找过程分析</title>
-    <link href="http://www.zjutkz.net/2016/06/19/Android%E4%B8%AD%E8%B5%84%E6%BA%90%E6%9F%A5%E6%89%BE%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90/"/>
-    <id>http://www.zjutkz.net/2016/06/19/Android中资源查找过程分析/</id>
+    <link href="http://yoursite.com/2016/06/19/Android%E4%B8%AD%E8%B5%84%E6%BA%90%E6%9F%A5%E6%89%BE%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2016/06/19/Android中资源查找过程分析/</id>
     <published>2016-06-18T16:27:34.000Z</published>
     <updated>2016-06-18T16:27:56.000Z</updated>
     
@@ -645,14 +645,14 @@
     </summary>
     
     
-      <category term="资源查找" scheme="http://www.zjutkz.net/tags/%E8%B5%84%E6%BA%90%E6%9F%A5%E6%89%BE/"/>
+      <category term="资源查找" scheme="http://yoursite.com/tags/%E8%B5%84%E6%BA%90%E6%9F%A5%E6%89%BE/"/>
     
   </entry>
   
   <entry>
     <title>探究Behavior的真实面目</title>
-    <link href="http://www.zjutkz.net/2016/06/05/%E6%8E%A2%E7%A9%B6Behavior%E7%9A%84%E7%9C%9F%E5%AE%9E%E9%9D%A2%E7%9B%AE/"/>
-    <id>http://www.zjutkz.net/2016/06/05/探究Behavior的真实面目/</id>
+    <link href="http://yoursite.com/2016/06/05/%E6%8E%A2%E7%A9%B6Behavior%E7%9A%84%E7%9C%9F%E5%AE%9E%E9%9D%A2%E7%9B%AE/"/>
+    <id>http://yoursite.com/2016/06/05/探究Behavior的真实面目/</id>
     <published>2016-06-05T09:15:53.000Z</published>
     <updated>2016-06-05T12:38:23.000Z</updated>
     
@@ -713,14 +713,14 @@
     </summary>
     
     
-      <category term="Behavior" scheme="http://www.zjutkz.net/tags/Behavior/"/>
+      <category term="Behavior" scheme="http://yoursite.com/tags/Behavior/"/>
     
   </entry>
   
   <entry>
     <title>当你准备开发一个热修复框架的时候，你需要了解的一切</title>
-    <link href="http://www.zjutkz.net/2016/05/23/%E5%BD%93%E4%BD%A0%E5%87%86%E5%A4%87%E5%BC%80%E5%8F%91%E4%B8%80%E4%B8%AA%E7%83%AD%E4%BF%AE%E5%A4%8D%E6%A1%86%E6%9E%B6%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8C%E4%BD%A0%E9%9C%80%E8%A6%81%E4%BA%86%E8%A7%A3%E7%9A%84%E4%B8%80%E5%88%87/"/>
-    <id>http://www.zjutkz.net/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/</id>
+    <link href="http://yoursite.com/2016/05/23/%E5%BD%93%E4%BD%A0%E5%87%86%E5%A4%87%E5%BC%80%E5%8F%91%E4%B8%80%E4%B8%AA%E7%83%AD%E4%BF%AE%E5%A4%8D%E6%A1%86%E6%9E%B6%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8C%E4%BD%A0%E9%9C%80%E8%A6%81%E4%BA%86%E8%A7%A3%E7%9A%84%E4%B8%80%E5%88%87/"/>
+    <id>http://yoursite.com/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/</id>
     <published>2016-05-23T11:42:32.000Z</published>
     <updated>2016-05-24T01:44:18.000Z</updated>
     
@@ -805,14 +805,14 @@
     </summary>
     
     
-      <category term="hotpatch" scheme="http://www.zjutkz.net/tags/hotpatch/"/>
+      <category term="hotpatch" scheme="http://yoursite.com/tags/hotpatch/"/>
     
   </entry>
   
   <entry>
     <title>记一次苦逼的资源逆向分析</title>
-    <link href="http://www.zjutkz.net/2016/05/15/%E8%AE%B0%E4%B8%80%E6%AC%A1%E8%8B%A6%E9%80%BC%E7%9A%84%E8%B5%84%E6%BA%90%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/"/>
-    <id>http://www.zjutkz.net/2016/05/15/记一次苦逼的资源逆向分析/</id>
+    <link href="http://yoursite.com/2016/05/15/%E8%AE%B0%E4%B8%80%E6%AC%A1%E8%8B%A6%E9%80%BC%E7%9A%84%E8%B5%84%E6%BA%90%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2016/05/15/记一次苦逼的资源逆向分析/</id>
     <published>2016-05-15T08:45:54.000Z</published>
     <updated>2016-05-15T08:56:45.000Z</updated>
     
@@ -946,14 +946,14 @@
     </summary>
     
     
-      <category term="aapt 资源逆向" scheme="http://www.zjutkz.net/tags/aapt-%E8%B5%84%E6%BA%90%E9%80%86%E5%90%91/"/>
+      <category term="aapt 资源逆向" scheme="http://yoursite.com/tags/aapt-%E8%B5%84%E6%BA%90%E9%80%86%E5%90%91/"/>
     
   </entry>
   
   <entry>
     <title></title>
-    <link href="http://www.zjutkz.net/2016/05/10/%E4%BB%8EInstant-Run%E5%87%BA%E5%8F%91%EF%BC%8C%E8%B0%88%E8%B0%88Android%E4%B8%8A%E7%9A%84%E7%83%AD%E4%BF%AE%E5%A4%8D/"/>
-    <id>http://www.zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/</id>
+    <link href="http://yoursite.com/2016/05/10/%E4%BB%8EInstant-Run%E5%87%BA%E5%8F%91%EF%BC%8C%E8%B0%88%E8%B0%88Android%E4%B8%8A%E7%9A%84%E7%83%AD%E4%BF%AE%E5%A4%8D/"/>
+    <id>http://yoursite.com/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/</id>
     <published>2016-05-10T08:43:31.000Z</published>
     <updated>2016-10-11T03:56:48.000Z</updated>
     
@@ -968,8 +968,8 @@
   
   <entry>
     <title>让我们来聊一聊插件化吧</title>
-    <link href="http://www.zjutkz.net/2016/05/06/%E8%AE%A9%E6%88%91%E4%BB%AC%E6%9D%A5%E8%81%8A%E4%B8%80%E8%81%8A%E6%8F%92%E4%BB%B6%E5%8C%96%E5%90%A7/"/>
-    <id>http://www.zjutkz.net/2016/05/06/让我们来聊一聊插件化吧/</id>
+    <link href="http://yoursite.com/2016/05/06/%E8%AE%A9%E6%88%91%E4%BB%AC%E6%9D%A5%E8%81%8A%E4%B8%80%E8%81%8A%E6%8F%92%E4%BB%B6%E5%8C%96%E5%90%A7/"/>
+    <id>http://yoursite.com/2016/05/06/让我们来聊一聊插件化吧/</id>
     <published>2016-05-06T07:28:32.000Z</published>
     <updated>2016-05-08T10:55:01.000Z</updated>
     
@@ -1084,14 +1084,14 @@
     </summary>
     
     
-      <category term="plugin" scheme="http://www.zjutkz.net/tags/plugin/"/>
+      <category term="plugin" scheme="http://yoursite.com/tags/plugin/"/>
     
   </entry>
   
   <entry>
     <title>其实没那么复杂！探究react-native通信机制</title>
-    <link href="http://www.zjutkz.net/2016/05/03/%E5%85%B6%E5%AE%9E%E6%B2%A1%E9%82%A3%E4%B9%88%E5%A4%8D%E6%9D%82%EF%BC%81%E6%8E%A2%E7%A9%B6react-native%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6/"/>
-    <id>http://www.zjutkz.net/2016/05/03/其实没那么复杂！探究react-native通信机制/</id>
+    <link href="http://yoursite.com/2016/05/03/%E5%85%B6%E5%AE%9E%E6%B2%A1%E9%82%A3%E4%B9%88%E5%A4%8D%E6%9D%82%EF%BC%81%E6%8E%A2%E7%A9%B6react-native%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6/"/>
+    <id>http://yoursite.com/2016/05/03/其实没那么复杂！探究react-native通信机制/</id>
     <published>2016-05-03T10:02:46.000Z</published>
     <updated>2016-05-05T07:05:19.000Z</updated>
     
@@ -1235,14 +1235,14 @@
     </summary>
     
     
-      <category term="react native" scheme="http://www.zjutkz.net/tags/react-native/"/>
+      <category term="react native" scheme="http://yoursite.com/tags/react-native/"/>
     
   </entry>
   
   <entry>
     <title>要做一个有冒险精神的人！开启漫漫的agera之旅</title>
-    <link href="http://www.zjutkz.net/2016/04/23/%E8%A6%81%E5%81%9A%E4%B8%80%E4%B8%AA%E6%9C%89%E5%86%92%E9%99%A9%E7%B2%BE%E7%A5%9E%E7%9A%84%E4%BA%BA%EF%BC%81%E5%BC%80%E5%90%AF%E6%BC%AB%E6%BC%AB%E7%9A%84agera%E4%B9%8B%E6%97%85/"/>
-    <id>http://www.zjutkz.net/2016/04/23/要做一个有冒险精神的人！开启漫漫的agera之旅/</id>
+    <link href="http://yoursite.com/2016/04/23/%E8%A6%81%E5%81%9A%E4%B8%80%E4%B8%AA%E6%9C%89%E5%86%92%E9%99%A9%E7%B2%BE%E7%A5%9E%E7%9A%84%E4%BA%BA%EF%BC%81%E5%BC%80%E5%90%AF%E6%BC%AB%E6%BC%AB%E7%9A%84agera%E4%B9%8B%E6%97%85/"/>
+    <id>http://yoursite.com/2016/04/23/要做一个有冒险精神的人！开启漫漫的agera之旅/</id>
     <published>2016-04-23T14:31:07.000Z</published>
     <updated>2016-04-23T15:23:42.000Z</updated>
     
@@ -1556,14 +1556,14 @@
     </summary>
     
     
-      <category term="agera" scheme="http://www.zjutkz.net/tags/agera/"/>
+      <category term="agera" scheme="http://yoursite.com/tags/agera/"/>
     
   </entry>
   
   <entry>
     <title>为分析agera做准备！带你了解Android的handler机制</title>
-    <link href="http://www.zjutkz.net/2016/04/23/%E4%B8%BA%E5%88%86%E6%9E%90agera%E5%81%9A%E5%87%86%E5%A4%87%EF%BC%81%E5%B8%A6%E4%BD%A0%E4%BA%86%E8%A7%A3Android%E7%9A%84handler%E6%9C%BA%E5%88%B6/"/>
-    <id>http://www.zjutkz.net/2016/04/23/为分析agera做准备！带你了解Android的handler机制/</id>
+    <link href="http://yoursite.com/2016/04/23/%E4%B8%BA%E5%88%86%E6%9E%90agera%E5%81%9A%E5%87%86%E5%A4%87%EF%BC%81%E5%B8%A6%E4%BD%A0%E4%BA%86%E8%A7%A3Android%E7%9A%84handler%E6%9C%BA%E5%88%B6/"/>
+    <id>http://yoursite.com/2016/04/23/为分析agera做准备！带你了解Android的handler机制/</id>
     <published>2016-04-23T08:46:57.000Z</published>
     <updated>2016-04-23T08:47:25.000Z</updated>
     
@@ -1643,14 +1643,14 @@
     </summary>
     
     
-      <category term="handler" scheme="http://www.zjutkz.net/tags/handler/"/>
+      <category term="handler" scheme="http://yoursite.com/tags/handler/"/>
     
   </entry>
   
   <entry>
     <title>好好和h5沟通！几种常见的hybrid通信方式</title>
-    <link href="http://www.zjutkz.net/2016/04/17/%E5%A5%BD%E5%A5%BD%E5%92%8Ch5%E6%B2%9F%E9%80%9A%EF%BC%81%E5%87%A0%E7%A7%8D%E5%B8%B8%E8%A7%81%E7%9A%84hybrid%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/"/>
-    <id>http://www.zjutkz.net/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/</id>
+    <link href="http://yoursite.com/2016/04/17/%E5%A5%BD%E5%A5%BD%E5%92%8Ch5%E6%B2%9F%E9%80%9A%EF%BC%81%E5%87%A0%E7%A7%8D%E5%B8%B8%E8%A7%81%E7%9A%84hybrid%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/"/>
+    <id>http://yoursite.com/2016/04/17/好好和h5沟通！几种常见的hybrid通信方式/</id>
     <published>2016-04-17T10:01:39.000Z</published>
     <updated>2016-04-17T10:36:03.000Z</updated>
     
@@ -1810,14 +1810,14 @@
     </summary>
     
     
-      <category term="hybrid" scheme="http://www.zjutkz.net/tags/hybrid/"/>
+      <category term="hybrid" scheme="http://yoursite.com/tags/hybrid/"/>
     
   </entry>
   
   <entry>
     <title>选择恐惧症的福音！教你认清MVC，MVP和MVVM</title>
-    <link href="http://www.zjutkz.net/2016/04/13/%E9%80%89%E6%8B%A9%E6%81%90%E6%83%A7%E7%97%87%E7%9A%84%E7%A6%8F%E9%9F%B3%EF%BC%81%E6%95%99%E4%BD%A0%E8%AE%A4%E6%B8%85MVC%EF%BC%8CMVP%E5%92%8CMVVM/"/>
-    <id>http://www.zjutkz.net/2016/04/13/选择恐惧症的福音！教你认清MVC，MVP和MVVM/</id>
+    <link href="http://yoursite.com/2016/04/13/%E9%80%89%E6%8B%A9%E6%81%90%E6%83%A7%E7%97%87%E7%9A%84%E7%A6%8F%E9%9F%B3%EF%BC%81%E6%95%99%E4%BD%A0%E8%AE%A4%E6%B8%85MVC%EF%BC%8CMVP%E5%92%8CMVVM/"/>
+    <id>http://yoursite.com/2016/04/13/选择恐惧症的福音！教你认清MVC，MVP和MVVM/</id>
     <published>2016-04-13T05:04:24.000Z</published>
     <updated>2016-07-29T09:56:34.000Z</updated>
     
@@ -1947,14 +1947,14 @@
     </summary>
     
     
-      <category term="Android Architecture" scheme="http://www.zjutkz.net/tags/Android-Architecture/"/>
+      <category term="Android Architecture" scheme="http://yoursite.com/tags/Android-Architecture/"/>
     
   </entry>
   
   <entry>
     <title>万能的APT！编译时注解的妙用</title>
-    <link href="http://www.zjutkz.net/2016/04/07/%E4%B8%87%E8%83%BD%E7%9A%84APT%EF%BC%81%E7%BC%96%E8%AF%91%E6%97%B6%E6%B3%A8%E8%A7%A3%E7%9A%84%E5%A6%99%E7%94%A8/"/>
-    <id>http://www.zjutkz.net/2016/04/07/万能的APT！编译时注解的妙用/</id>
+    <link href="http://yoursite.com/2016/04/07/%E4%B8%87%E8%83%BD%E7%9A%84APT%EF%BC%81%E7%BC%96%E8%AF%91%E6%97%B6%E6%B3%A8%E8%A7%A3%E7%9A%84%E5%A6%99%E7%94%A8/"/>
+    <id>http://yoursite.com/2016/04/07/万能的APT！编译时注解的妙用/</id>
     <published>2016-04-07T15:52:47.000Z</published>
     <updated>2016-04-10T11:23:07.000Z</updated>
     
@@ -2110,7 +2110,7 @@
     </summary>
     
     
-      <category term="编译时注解" scheme="http://www.zjutkz.net/tags/%E7%BC%96%E8%AF%91%E6%97%B6%E6%B3%A8%E8%A7%A3/"/>
+      <category term="编译时注解" scheme="http://yoursite.com/tags/%E7%BC%96%E8%AF%91%E6%97%B6%E6%B3%A8%E8%A7%A3/"/>
     
   </entry>
   

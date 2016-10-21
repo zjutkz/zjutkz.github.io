@@ -59,16 +59,16 @@
 
 
 
-<meta name="description" content="说起RecyclerView，大家肯定都不陌生，它被创造出来的使命就是用来代替ListView，GridView等滑动组件的。从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意">
+<meta name="description" content="说起RecyclerView，大家肯定都不陌生，从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比">
 <meta property="og:type" content="article">
 <meta property="og:title" content="重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析">
 <meta property="og:url" content="http://yoursite.com/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="说起RecyclerView，大家肯定都不陌生，它被创造出来的使命就是用来代替ListView，GridView等滑动组件的。从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意">
-<meta property="og:updated_time" content="2016-04-08T12:57:00.000Z">
+<meta property="og:description" content="说起RecyclerView，大家肯定都不陌生，从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比">
+<meta property="og:updated_time" content="2016-10-21T09:33:00.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析">
-<meta name="twitter:description" content="说起RecyclerView，大家肯定都不陌生，它被创造出来的使命就是用来代替ListView，GridView等滑动组件的。从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意">
+<meta name="twitter:description" content="说起RecyclerView，大家肯定都不陌生，从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比">
 
 
 
@@ -261,7 +261,7 @@
       
 
       
-        <p>说起RecyclerView，大家肯定都不陌生，它被创造出来的使命就是用来代替ListView，GridView等滑动组件的。从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比如谷歌并没有封装点击事件给我们调用，也没有像ListView那样有API可以直接生成header和footer。</p>
+        <p>说起RecyclerView，大家肯定都不陌生，从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比如谷歌并没有封装点击事件给我们调用，也没有像ListView那样有API可以直接生成header和footer。</p>
 <p>如果你要求比较低，直接拿RecyclerView来用是没问题的，大不了点击事件什么的自己写嘛，不过作为一个有追求的程序员，这样显然是满足不了我的，所以我选择了对其进行封装。</p>
 <p>看到这里可能有人会说，github上不是有一个封装的很好的库叫做<a href="https://github.com/cymcsg/UltimateRecyclerView" target="_blank" rel="external">UltimateRecyclerView</a>了吗，为什么你还要花时间去重复造轮子呢？这里我想说，这样的第三方库直接拿来用确实很方便，但是我觉得你更应该去花时间自己封装一下，因为这期间你能学到的东西是很多的。比如说，你了解android的嵌套滑动机制吗？你知道recyclerView的工作原理吗？你明白adapter和view之间的观察者模式吗？这些如果你不了解没关系，你可以选择和我一样自己去封装一遍recyclerView，相信你会了解的，不过在这儿我会给大家带来我的分析，希望大家看完以后会有收获～</p>
 <a id="more"></a>
