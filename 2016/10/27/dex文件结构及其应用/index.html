@@ -1,0 +1,909 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="dex," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="做Android的同学对dex文件一定不会陌生，它其中包含了我们一个工程所有的类，方法，字段等等的信息。通过对dex文件格式的学习，我们可以收获到的东西是非常多的。
+可能很多同学一想到文件格式这类的内容都会觉得头大，认为这是一个很高深的内容。我一开始接触这方面东西的时候也有这样的抵触情绪，不过随着学习的深入，发现其实整个架构是很清晰的，所以写了这篇文章，一方面帮助自己总结，另一方面也是给有需要的同">
+<meta property="og:type" content="article">
+<meta property="og:title" content="dex文件结构及其应用">
+<meta property="og:url" content="http://yoursite.com/2016/10/27/dex文件结构及其应用/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="做Android的同学对dex文件一定不会陌生，它其中包含了我们一个工程所有的类，方法，字段等等的信息。通过对dex文件格式的学习，我们可以收获到的东西是非常多的。
+可能很多同学一想到文件格式这类的内容都会觉得头大，认为这是一个很高深的内容。我一开始接触这方面东西的时候也有这样的抵触情绪，不过随着学习的深入，发现其实整个架构是很清晰的，所以写了这篇文章，一方面帮助自己总结，另一方面也是给有需要的同">
+<meta property="og:image" content="http://yoursite.com/images/dex文件结构及其应用/dex_structure.png">
+<meta property="og:image" content="http://yoursite.com/images/dex文件结构及其应用/dex_header.png">
+<meta property="og:image" content="http://yoursite.com/images/dex文件结构及其应用/dex_file_1.png">
+<meta property="og:image" content="http://yoursite.com/images/dex文件结构及其应用/dex_file_2.png">
+<meta property="og:image" content="http://yoursite.com/images/dex文件结构及其应用/dexdiff_algorithm.png">
+<meta property="og:updated_time" content="2016-10-27T12:54:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="dex文件结构及其应用">
+<meta name="twitter:description" content="做Android的同学对dex文件一定不会陌生，它其中包含了我们一个工程所有的类，方法，字段等等的信息。通过对dex文件格式的学习，我们可以收获到的东西是非常多的。
+可能很多同学一想到文件格式这类的内容都会觉得头大，认为这是一个很高深的内容。我一开始接触这方面东西的时候也有这样的抵触情绪，不过随着学习的深入，发现其实整个架构是很清晰的，所以写了这篇文章，一方面帮助自己总结，另一方面也是给有需要的同">
+<meta name="twitter:image" content="http://yoursite.com/images/dex文件结构及其应用/dex_structure.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> dex文件结构及其应用 | zjutkz's blog </title>
+</head>
+  
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                dex文件结构及其应用
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-27T16:38:29+08:00" content="2016-10-27">
+              2016-10-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/27/dex文件结构及其应用/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/27/dex文件结构及其应用/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/10/27/dex文件结构及其应用/" class="leancloud_visitors" data-flag-title="dex文件结构及其应用">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>做Android的同学对dex文件一定不会陌生，它其中包含了我们一个工程所有的类，方法，字段等等的信息。通过对dex文件格式的学习，我们可以收获到的东西是非常多的。</p>
+<p>可能很多同学一想到文件格式这类的内容都会觉得头大，认为这是一个很高深的内容。我一开始接触这方面东西的时候也有这样的抵触情绪，不过随着学习的深入，发现其实整个架构是很清晰的，所以写了这篇文章，一方面帮助自己总结，另一方面也是给有需要的同学，因为这方面的内容是dalvik和ART共有的特性，了解这些也有助于大家更好的理解Android虚拟机的运行。</p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最开始接触dex文件这方面的内容是因为hotpatch，当时出现了现有的hotpatch框架在ART虚拟机上crash的问题，于是我就去翻了翻虚拟机的源码，其中发现它加载类和方法的方式比较特殊，有很多的类似method_id，class_id的东西。当时我天真的以为这是ART的特性，直到前几天在看dalvik的源码的时候我才恍然大悟，原来这是整个Android环境共有的特性，或者说是dalvik上的特性，ART只是沿用了而已。这也是可以理解的，毕竟ART上的oat文件只是对dex文件进行了一层包装，多了native code，具体的类，方法查找流程肯定是不会变的。所以我就下定决心要好好研究研究dex文件，以加深对整个Android的理解。</p>
+<p>本来是想写一篇纯dex文件结构分析的，不过在写之前看到区长已经写了<a href="http://blog.csdn.net/sbsujjbcy/article/details/52869361" target="_blank" rel="external">这样一篇文章</a>了，所以决定对于这方面的分析从简，更多的讲讲该如何利用dex文件。</p>
+<h1 id="dex文件结构解析"><a href="#dex文件结构解析" class="headerlink" title="dex文件结构解析"></a>dex文件结构解析</h1><p>在开始分析之前，先上一张dex文件结构图：</p>
+<p> <img src="/images/dex文件结构及其应用/dex_structure.png" alt="dex_structure"></p>
+<p>因为没有找到这张图的具体出处，就不写来源了，有知道的同学可以告诉我，我再加上。</p>
+<p>通过上面这张图，我们可以很清晰的理解整个dex文件中都含有上面。总体来说可以分为三部分：</p>
+<p>1.Header Section</p>
+<p>2.Table Section</p>
+<p>3.Data Section</p>
+<p>下面我一一来讲解，当然有兴趣的同学也可以直接去<a href="https://source.android.com/devices/tech/dalvik/dex-format.html#types" target="_blank" rel="external">这里</a>看Google官方的分析。</p>
+<p>首先是Header Section。这其中定义了Table Section中各个Table的大小和偏移量，用以找到对应的某一个Section。此外，Header中还有一些用于校验的数据，类似checksum和魔术：</p>
+<p> <img src="/images/dex文件结构及其应用/dex_header.png" alt="dex_header"></p>
+<p>上面这张表格里就是Header Section中的所有内容，通过字段名加描述应该很好理解。其中第二列格式表示的是每一个字段的数据类型和大小，其中uint占4个字节，ubyte占一个字节。</p>
+<p>从这张表格中我们可以知道，Header Section中存储了大致三部分的东西：</p>
+<p>1.文件校验相关(magic，checksum和signature)。这部分的数据让解析调用该文件的使用者明确这个文件是否已经损坏。</p>
+<p>2.文件内容相关(file_size，header_size和endian_tag)。这没什么好说的。对于大小端，如果有不清楚的同学可以参考<a href="http://blog.jobbole.com/102432/" target="_blank" rel="external">这篇文章</a>。</p>
+<p>3.map_off字段。用来表示MapList在Data Section中的偏移量，通过这个偏移量，我们可以得到MapList数据(也就是第一张图Data Section中的Map Section)。这里我不详细展开，大家只需要这知道这个MapList中包含了dex文件中可能出现的所有类型，作用是用于校验。</p>
+<p>4.size&amp;offset(剩余部分)。通过这些部分，我们可以拿到Table Section中的各项数据。</p>
+<p>第二部分是Table Section。这部分的内容和Header Section是紧密相连的。可以看到这一部分一共有6个table(string,type,proto,field和method)，而Header Section中也正好对应了这6个table的size和offset。所以我们可以通过Header Section里的size，offset以及它们各自所占的大小来精确的定位到每一个table的在dex文件中的位置，大致过程如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">BufferByte buffer = file2buffer(dexFile);</span><br><span class="line">buffer.position(table_offset);</span><br><span class="line">ByteBuffer b = buffer.slice();</span><br><span class="line">b.limit(table_size * item_length);</span><br></pre></td></tr></table></figure>
+<p>到这里我们知道，我们可以通过Header Section中每一个table的size和offset去Table Section中寻址到具体的table。而这个table中就包含了一个dex中的所有数据(字符串，类，字段，方法等等)。那当我们定位到了一个具体的table，我们如何找到这个table中一个具体的item呢？这其中的秘密就要从每一个table内部的结构说起了。</p>
+<p>那我们该怎么去看一个table的内部结构呢？这里就要用到一句至理名言了：Read the fucking source code！我们要查找的是关于dex的结构，所以当然要看的是类似Dex，DexFile这样的类。在AndroidXRef上搜索一下，就可以找到DexFile这样类了，具体的路径是dalvik/libdex/DexFile.h。通过路径我们可以知道，这个类已经是和dalvik虚拟机紧密相连的了，当然我前面也提到，ART上沿用了这样的机制，毕竟都是处理dex文件嘛。需要注意的是，在ART上还存在一个dex_file，具体路径是art/runtime/dex_file.h，我比较了一下两者的内容，大致都是一样的，只是后者有了一些ART平台的特性。</p>
+<p>仔细观察这个头文件，你可以发现它内部定义的struct其实就是我们前面讲的那些，举个例子：</p>
+<p> <img src="/images/dex文件结构及其应用/dex_file_1.png" alt="dex_file_1"></p>
+<p>struct DexHeader里所定义的所有字段，就是我们上面提到的Header Section里的内容，并且每一个字段的大小也是一一对应的。</p>
+<p>接着让我们通过dex_file.h来观察一下Table Section里每一个table的内容：</p>
+<p> <img src="/images/dex文件结构及其应用/dex_file_2.png" alt="dex_file_2"></p>
+<p>让我们一个个来讲解。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">struct DexStringId对应Table Section的string_ids_size/off。其中内部有一个4字节的stringDataOff，指向文中第一张图的Data Section。通过这个stringDataOff，我们就可以定位到该dex文件中所有的字符串数据，包括类名，方法名，输入输出的字符串等等。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">struct DexTypeId对应Table Section的type_ids_size/off。其中内部有一个4字节的descriptor_idx，是string_ids数组中的一个索引，通过该索引我们就可以得到一个用来描述类型的字符串，包括方法的返回类型，方法的参数类型等等。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct DexFieldId对应Table Section中的field_ids_size/off。其中内部是</span><br><span class="line">一个2字节(ushort类型)的classIdx，用来表示该field所属的类，它是type_ids数组中的一个索引；</span><br><span class="line">一个2字节(ushort类型)的typeIdx，用来表示该field的类型，它是type_ids数组中的一个索引；</span><br><span class="line">一个4字节的nameIdx，用来表示该field的名字，它是string_ids数组中的一个索引。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct DexMethodId对应Table Section的method_ids_size/off。其中内部是 </span><br><span class="line">一个2字节(ushort类型)的classIdx，和DexTypeId一样用来表示该field所属的类，它是type_ids数组中的一个索引；</span><br><span class="line">一个2字节(ushort类型)的protoIdx，用来表示该method的原型(返回类型，入参类型)，它是proto_ids数组中的一个索引；</span><br><span class="line">一个4字节的nameIdx，用来表示该method的名字，它是string_ids数组中的一个索引。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">struct DexProtoId对应Table Section的proto_ids_size/off。其中内部是</span><br><span class="line">一个4字节的shortyIdx，用来表示一个method的原型，它是string_ids数组中的一个索引；</span><br><span class="line">一个4字节的returnTypeIdx，用来表示一个method的返回类型，它是type_ids数组中的一个索引；</span><br><span class="line">一个4字节的parametersOff，用来表示TypeList在Data Section中的偏移量，TypeList是一个method的参数列表。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">struct DexClassDef对应Table Section的class_defs_size/off。其中是</span><br><span class="line">内部一个4字节的classIdx，用来表示一个类，它是type_ids数组的一个索引；</span><br><span class="line">一个4字节的accessFlags，用来表示该类的权限，如public，private等等，用一个int值表示(就是该4字节)；</span><br><span class="line">一个4字节的superclassIdx，用来表示该类的父类(类名)，它是type_ids数组中的一个索引；</span><br><span class="line">一个4字节的interfacesOff，用来表示该类所实现的接口，它用来表示TypeList在Data Section中的偏移量(和DexProtoId中的parametersOff类似)；</span><br><span class="line">一个4字节的sourceFileIdx，用来表示该类的文件名(xxxx.java)，它用来表示string_ids数组中的一个索引；</span><br><span class="line">一个4字节的annotationsOff，用来表示该类的所有注解，它是annotations_directory_item在Data Section中的偏移量；</span><br><span class="line">一个4字节的classDataOff，它表示该类的所有有关数据(方法，字段等等)，它用来表示class_data_item在Data Section中的偏移量，一个4字节的staticValuesOff，用来表示该类中的静态数据名，它用来表示DexEncodedArray在Data Section中的偏移量。</span><br><span class="line"></span><br><span class="line">需要注意的是：annotationsOff，classDataOff两个字段所指向的数据并不是简单的字符串资源，而是一个结构体，其中annotations_directory_item中包含一个类中所有的类注解数据，方法注解数据和字段注解数据；而class_data_item中则包含一个类中的类数据，方法数据和字段数据。有兴趣的同学可以自行研究下去。</span><br></pre></td></tr></table></figure>
+<p>至此，Table Section中的每一个table我们都了解了它们的结构:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">String Table: </span><br><span class="line">一个stringDataOff表示StringData在Data Section中的偏移量，StringData中包含了一个dex文件中的所有字符串资源，比如类名，方法名等等。这个table也将被后面几个table反复的用到。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Type Table: </span><br><span class="line">一个descriptor_idx，用来索引String Table，得到一个字符串资源用来表示一个类型，比如方法的返回类型，类类型等等。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Field Table: </span><br><span class="line">一个classIdx用来索引Type Table，进而得到一个Type Item来索引String Table，得到一个字符串资源用来表示该field所属的类；</span><br><span class="line">一个typeIdx用来索引Type Table，进而得到一个Type Item来索引String Table，得到一个字符串资源用来表示该field的类型；</span><br><span class="line">一个nameIdx用来索引String Table，得到一个字符串资源用来表示该field的名称。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Method Table: </span><br><span class="line">一个classIdx用来索引Type Table，进而得到一个Type Item来索引String Table，得到一个字符串资源用来表示该method所属的类；</span><br><span class="line">一个protoIdx用来索引Proto Table，进而得到一个Proto Item，其中包含了一个method的原型，返回类型和入参类型；</span><br><span class="line">一个nameIdx用来索引String Table，得到一个字符串资源用来表示该method的名称。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Proto Table:</span><br><span class="line">一个shortyIdx用来索引String Table，得到一个字符串资源用来表示该method的原型；</span><br><span class="line">一个returnTypeIdx用来索引Type Table，进而得到一个Type Item来索引String Table，得到一个字符串资源用来表示该method的返回类型；</span><br><span class="line">一个parametersOff用来表示TypeList(Type Item的集合)在Data Section中的偏移量，TypeList中包含了一个方法的所有入参类型。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Proto Table:</span><br><span class="line">一个shortyIdx用来索引String Table，得到一个字符串资源用来表示该method的原型；</span><br><span class="line">一个returnTypeIdx用来索引Type Table，进而得到一个Type Item来索引String Table，得到一个字符串资源用来表示该method的返回类型；</span><br><span class="line">一个parametersOff用来表示TypeList在Data Section中的偏移量，TypeList中包含了一个方法的所有入参类型。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">ClassDefs Table:</span><br><span class="line">一个classIdx用来索引Type Table，进而得到一个Type Item来索引String Table，得到一个字符串资源用来表示该类；</span><br><span class="line">一个accessFlags用来表示该类的访问权限，如public，private等；</span><br><span class="line">一个superclassIdx用来索引Type Table，进而得到一个Type Item来索引String Table，得到一个字符串资源用来表示该类的父类；</span><br><span class="line">一个interfacesOff用来表示TypeList(Type Item的集合)在Data Section中的偏移量，TypeList中包含了一个类所实现的所有接口；</span><br><span class="line">一个sourceFileIdx用来索引String Table，得到一个字符串资源用来表示该类的文件名；</span><br><span class="line">一个annotationsOff用来表示annotations_directory_item在Data Section中的偏移量，annotations_directory_item中包含了该类所有的注解；</span><br><span class="line">一个classDataOff用来表示class_data_item在Data Section中的偏移量，class_data_item用来表示该类的所有类数据；</span><br><span class="line">一个staticValuesOff用来表示DexEncodedArray在Data Section中的偏移量，DexEncodedArray用来表示该类的所有静态数据。</span><br></pre></td></tr></table></figure>
+<p>一句话总结Table Section中所有table之间的关系就是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String Table中的item可以获取到StringData在Data Section中的偏移量，从而获取String Data。而其他table中的item的结构中的值分成两类：第一类直接或者间接的索引String Table从而获取String Data；第二类直接获取到Data Section中的偏移量，从而获取Data。</span><br></pre></td></tr></table></figure>
+<p>最后，我们来做总体的一个总结：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">首先Header Section中的size和off可以用来得到Table Section中每一个Table的位置。然后Table Section中每一个table都有它自己的内部结构，通过id索引的方法，获取到Data Section中的数据。这样一个dex文件中的三个Section就有机的结合在了一起。</span><br></pre></td></tr></table></figure>
+<h1 id="虚拟机是如何利用dex文件结构的"><a href="#虚拟机是如何利用dex文件结构的" class="headerlink" title="虚拟机是如何利用dex文件结构的"></a>虚拟机是如何利用dex文件结构的</h1><p>了解完了dex的文件结构，让我们看看Android虚拟机是如何利用这样的结构的。</p>
+<p>在虚拟机中，查找一个类是通过ClassLinker的resolveType来做的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">mirror::Class* ClassLinker::ResolveType(<span class="keyword">const</span> DexFile&amp; dex_file, <span class="keyword">uint16_t</span> type_idx,</span><br><span class="line">                                        Handle&lt;mirror::DexCache&gt; dex_cache,</span><br><span class="line">                                        Handle&lt;mirror::ClassLoader&gt; class_loader) &#123;</span><br><span class="line">  DCHECK(dex_cache.Get() != <span class="literal">nullptr</span>);</span><br><span class="line">  mirror::Class* resolved = dex_cache-&gt;GetResolvedType(type_idx);</span><br><span class="line">  <span class="keyword">if</span> (resolved == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">    Thread* self = Thread::Current();</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span>* descriptor = dex_file.StringByTypeIdx(type_idx);</span><br><span class="line">    resolved = FindClass(self, descriptor, class_loader);</span><br><span class="line">    <span class="keyword">if</span> (resolved != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">      <span class="comment">// <span class="doctag">TODO:</span> we used to throw here if resolved's class loader was not the</span></span><br><span class="line">      <span class="comment">//       boot class loader. This was to permit different classes with the</span></span><br><span class="line">      <span class="comment">//       same name to be loaded simultaneously by different loaders</span></span><br><span class="line">      dex_cache-&gt;SetResolvedType(type_idx, resolved);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      CHECK(self-&gt;IsExceptionPending())</span><br><span class="line">          &lt;&lt; <span class="string">"Expected pending exception for failed resolution of: "</span> &lt;&lt; descriptor;</span><br><span class="line">      <span class="comment">// Convert a ClassNotFoundException to a NoClassDefFoundError.</span></span><br><span class="line">      StackHandleScope&lt;<span class="number">1</span>&gt; hs(self);</span><br><span class="line">      Handle&lt;mirror::Throwable&gt; cause(hs.NewHandle(self-&gt;GetException()));</span><br><span class="line">      <span class="keyword">if</span> (cause-&gt;InstanceOf(GetClassRoot(kJavaLangClassNotFoundException))) &#123;</span><br><span class="line">        DCHECK(resolved == <span class="literal">nullptr</span>);  <span class="comment">// No Handle needed to preserve resolved.</span></span><br><span class="line">        self-&gt;ClearException();</span><br><span class="line">        ThrowNoClassDefFoundError(<span class="string">"Failed resolution of: %s"</span>, descriptor);</span><br><span class="line">        self-&gt;GetException()-&gt;SetCause(cause.Get());</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  DCHECK((resolved == <span class="literal">nullptr</span>) || resolved-&gt;IsResolved() || resolved-&gt;IsErroneous())</span><br><span class="line">      &lt;&lt; PrettyDescriptor(resolved) &lt;&lt; <span class="string">" "</span> &lt;&lt; resolved-&gt;GetStatus();</span><br><span class="line">  <span class="keyword">return</span> resolved;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中下面这句话是最关键的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* descriptor = dex_file.StringByTypeIdx(type_idx);</span><br></pre></td></tr></table></figure>
+<p>通过type_idx去获取这个类的描述：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">const</span> <span class="keyword">char</span>* <span class="title">StringByTypeIdx</span><span class="params">(uint32_t idx)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> TypeId&amp; type_id = GetTypeId(idx);</span><br><span class="line">  <span class="keyword">return</span> StringDataByIdx(type_id.descriptor_idx_);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">const</span> TypeId&amp; <span class="title">GetTypeId</span><span class="params">(uint32_t idx)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    DCHECK_LT(idx, NumTypeIds()) &lt;&lt; GetLocation();</span><br><span class="line">    <span class="keyword">return</span> type_ids_[idx];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">const</span> <span class="keyword">char</span>* <span class="title">StringDataByIdx</span><span class="params">(uint32_t idx)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">uint32_t</span> unicode_length;</span><br><span class="line">    <span class="keyword">return</span> StringDataAndUtf16LengthByIdx(idx, &amp;unicode_length);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">const</span> <span class="keyword">char</span>* <span class="title">StringDataAndUtf16LengthByIdx</span><span class="params">(uint32_t idx, uint32_t* utf16_length)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (idx == kDexNoIndex) &#123;</span><br><span class="line">      *utf16_length = <span class="number">0</span>;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> StringId&amp; string_id = GetStringId(idx);</span><br><span class="line">    <span class="keyword">return</span> GetStringDataAndUtf16Length(string_id, utf16_length);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">const</span> StringId&amp; <span class="title">GetStringId</span><span class="params">(uint32_t idx)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    DCHECK_LT(idx, NumStringIds()) &lt;&lt; GetLocation();</span><br><span class="line">    <span class="keyword">return</span> string_ids_[idx];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，就是通过type_idx去索引type_ids这个数组，得到一个type item然后去索引string_ids这个数组。和我上面提到的过程是一样的。</p>
+<p>下面在让我们看看查找方法的过程，具体的方法在ClassLinker的resolveMethod。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">ArtMethod* ClassLinker::ResolveMethod(<span class="keyword">const</span> DexFile&amp; dex_file, <span class="keyword">uint32_t</span> method_idx,</span><br><span class="line">                                      Handle&lt;mirror::DexCache&gt; dex_cache,</span><br><span class="line">                                      Handle&lt;mirror::ClassLoader&gt; class_loader,</span><br><span class="line">                                      ArtMethod* referrer, InvokeType type) &#123;</span><br><span class="line">  DCHECK(dex_cache.Get() != <span class="literal">nullptr</span>);</span><br><span class="line"></span><br><span class="line">  ........</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> DexFile::MethodId&amp; method_id = dex_file.GetMethodId(method_idx);</span><br><span class="line">  mirror::Class* klass = ResolveType(dex_file, method_id.class_idx_, dex_cache, class_loader);</span><br><span class="line"></span><br><span class="line">  ........</span><br><span class="line"></span><br><span class="line">  <span class="keyword">switch</span> (type) &#123;</span><br><span class="line">    <span class="keyword">case</span> kDirect:  <span class="comment">// Fall-through.</span></span><br><span class="line">    <span class="keyword">case</span> kStatic:</span><br><span class="line">      resolved = klass-&gt;FindDirectMethod(dex_cache.Get(), method_idx, image_pointer_size_);</span><br><span class="line">      DCHECK(resolved == <span class="literal">nullptr</span> || resolved-&gt;GetDeclaringClassUnchecked() != <span class="literal">nullptr</span>);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> kInterface:</span><br><span class="line">      resolved = klass-&gt;FindInterfaceMethod(dex_cache.Get(), method_idx, image_pointer_size_);</span><br><span class="line">      DCHECK(resolved == <span class="literal">nullptr</span> || resolved-&gt;GetDeclaringClass()-&gt;IsInterface());</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> kSuper:  <span class="comment">// Fall-through.</span></span><br><span class="line">    <span class="keyword">case</span> kVirtual:</span><br><span class="line">      resolved = klass-&gt;FindVirtualMethod(dex_cache.Get(), method_idx, image_pointer_size_);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      LOG(FATAL) &lt;&lt; <span class="string">"Unreachable - invocation type: "</span> &lt;&lt; type;</span><br><span class="line">      UNREACHABLE();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (resolved == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">    <span class="comment">// Search by name, which works across dex files.</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span>* name = dex_file.StringDataByIdx(method_id.name_idx_);</span><br><span class="line">    <span class="keyword">const</span> Signature signature = dex_file.GetMethodSignature(method_id);</span><br><span class="line">    <span class="keyword">switch</span> (type) &#123;</span><br><span class="line">      <span class="keyword">case</span> kDirect:  <span class="comment">// Fall-through.</span></span><br><span class="line">      <span class="keyword">case</span> kStatic:</span><br><span class="line">        resolved = klass-&gt;FindDirectMethod(name, signature, image_pointer_size_);</span><br><span class="line">        DCHECK(resolved == <span class="literal">nullptr</span> || resolved-&gt;GetDeclaringClassUnchecked() != <span class="literal">nullptr</span>);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> kInterface:</span><br><span class="line">        resolved = klass-&gt;FindInterfaceMethod(name, signature, image_pointer_size_);</span><br><span class="line">        DCHECK(resolved == <span class="literal">nullptr</span> || resolved-&gt;GetDeclaringClass()-&gt;IsInterface());</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> kSuper:  <span class="comment">// Fall-through.</span></span><br><span class="line">      <span class="keyword">case</span> kVirtual:</span><br><span class="line">        resolved = klass-&gt;FindVirtualMethod(name, signature, image_pointer_size_);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  .........</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先通过dex_file的GetMethodId去获取对应的method id：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">const</span> MethodId&amp; <span class="title">GetMethodId</span><span class="params">(uint32_t idx)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">  DCHECK_LT(idx, NumMethodIds()) &lt;&lt; GetLocation();</span><br><span class="line">  <span class="keyword">return</span> method_ids_[idx];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>和上面说的一样，索引method_ids数组。</p>
+<p>下面的一个调用很有意思：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mirror::Class* klass = ResolveType(dex_file, method_id.class_idx_, dex_cache, class_loader);</span><br></pre></td></tr></table></figure>
+<p>可以看到，通过method_id的class_idx去找对应method所属的类。这一点我在上面也有提到，field_id和method_id的结构中都有一个class_idx用来索引它所属的那个类。</p>
+<p>接着，就是通过class的方法找寻method了，需要注意的是，如果通过method_idx的方式找寻不到对应的method，会先获取该method的name和signature，再通过这两个属性去查找method：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* name = dex_file.StringDataByIdx(method_id.name_idx_);</span><br><span class="line"><span class="keyword">const</span> Signature signature = dex_file.GetMethodSignature(method_id);</span><br><span class="line"><span class="keyword">switch</span> (type) &#123;</span><br><span class="line">  <span class="keyword">case</span> kDirect:  <span class="comment">// Fall-through.</span></span><br><span class="line">  <span class="keyword">case</span> kStatic:</span><br><span class="line">    resolved = klass-&gt;FindDirectMethod(name, signature, image_pointer_size_);</span><br><span class="line">    DCHECK(resolved == <span class="literal">nullptr</span> || resolved-&gt;GetDeclaringClassUnchecked() != <span class="literal">nullptr</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> kInterface:</span><br><span class="line">    resolved = klass-&gt;FindInterfaceMethod(name, signature, image_pointer_size_);</span><br><span class="line">    DCHECK(resolved == <span class="literal">nullptr</span> || resolved-&gt;GetDeclaringClass()-&gt;IsInterface());</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> kSuper:  <span class="comment">// Fall-through.</span></span><br><span class="line">  <span class="keyword">case</span> kVirtual:</span><br><span class="line">    resolved = klass-&gt;FindVirtualMethod(name, signature, image_pointer_size_);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而这个name和signature也是通过上面提到的方式去获取的。name通过name_idx去索引String Table，而signature则是通过parameters_off去获取TypeList。</p>
+<p>从resolveType和resolveMethod中我们就可以知道，Android虚拟机在查找class，method和field的过程中，充分的利用了dex文件的结构。通过结合对应的代码，大家对这一方面应该也会有一个具体的认知。</p>
+<h1 id="利用dex文件结构可以做的事"><a href="#利用dex文件结构可以做的事" class="headerlink" title="利用dex文件结构可以做的事"></a>利用dex文件结构可以做的事</h1><p>在全面的了解了dex的文件结构之后，我们可以做什么呢？</p>
+<p>首先想得到的就是dexdiff，微信的hotpatch框架tinker就是用了这个算法去算出两个dex文件之间的差量。下面让我们看看具体的实现吧。</p>
+<p>首先，我们先看一个tinker工程里的algorithm包：</p>
+<p> <img src="/images/dex文件结构及其应用/dexdiff_algorithm.png" alt="dexdiff_algorithm"></p>
+<p>可以看到它下面有非常多的算法，但是我们仔细看一下，这些算法的前缀好像都是我们熟悉的，有FieldIdSection，MethodIdSection等等，从这我们可以知道，dexdiff最大的一个特点就是充分利用了dex文件结构，对每一个Section(注意，这里所说的Section并不是前文中讲到的那三个大Section，而是每一块块细分后的Section，例如ProtoId，FieldId和MethodId)进行差量，然后再整合，得到一个diff文件。而普通的bsdiff是对整个dex文件进行的差量，在差量粒度上来说，比改进后的dexdiff要大的多。这里不得不佩服tinker的开发，收下我的膝盖吧！</p>
+<p>具体的算法在DexPatchGenerator类的executeAndSaveTo方法中:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">executeAndSaveTo</span><span class="params">(OutputStream out)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// Firstly, collect information of items we want to remove additionally</span></span><br><span class="line">    <span class="comment">// in new dex and set them to corresponding diff algorithm implementations.</span></span><br><span class="line">    Pattern[] classNamePatterns = <span class="keyword">new</span> Pattern[<span class="keyword">this</span>.additionalRemovingClassPatternSet.size()];</span><br><span class="line">    <span class="keyword">int</span> classNamePatternCount = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (String regExStr : <span class="keyword">this</span>.additionalRemovingClassPatternSet) &#123;</span><br><span class="line">        classNamePatterns[classNamePatternCount++] = Pattern.compile(regExStr);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    List&lt;Integer&gt; typeIdOfClassDefsToRemove = <span class="keyword">new</span> ArrayList&lt;&gt;(classNamePatternCount);</span><br><span class="line">    List&lt;Integer&gt; offsetOfClassDatasToRemove = <span class="keyword">new</span> ArrayList&lt;&gt;(classNamePatternCount);</span><br><span class="line">    <span class="keyword">for</span> (ClassDef classDef : <span class="keyword">this</span>.newDex.classDefs()) &#123;</span><br><span class="line">        String typeName = <span class="keyword">this</span>.newDex.typeNames().get(classDef.typeIndex);</span><br><span class="line">        <span class="keyword">for</span> (Pattern pattern : classNamePatterns) &#123;</span><br><span class="line">            <span class="keyword">if</span> (pattern.matcher(typeName).matches()) &#123;</span><br><span class="line">                typeIdOfClassDefsToRemove.add(classDef.typeIndex);</span><br><span class="line">                offsetOfClassDatasToRemove.add(classDef.classDataOffset);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ((ClassDefSectionDiffAlgorithm) <span class="keyword">this</span>.classDefSectionDiffAlg)</span><br><span class="line">            .setTypeIdOfClassDefsToRemove(typeIdOfClassDefsToRemove);</span><br><span class="line">    ((ClassDataSectionDiffAlgorithm) <span class="keyword">this</span>.classDataSectionDiffAlg)</span><br><span class="line">            .setOffsetOfClassDatasToRemove(offsetOfClassDatasToRemove);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Then, run diff algorithms according to sections' dependencies.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Use size calculated by algorithms above or from dex file definition to</span></span><br><span class="line">    <span class="comment">// calculate sections' offset and patched dex size.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Calculate header and id sections size, so that we can work out</span></span><br><span class="line">    <span class="comment">// the base offset of typeLists Section.</span></span><br><span class="line">    <span class="keyword">int</span> patchedheaderSize = SizeOf.HEADER_ITEM;</span><br><span class="line">    <span class="keyword">int</span> patchedStringIdsSize = newDex.getTableOfContents().stringIds.size * SizeOf.STRING_ID_ITEM;</span><br><span class="line">    <span class="keyword">int</span> patchedTypeIdsSize = newDex.getTableOfContents().typeIds.size * SizeOf.TYPE_ID_ITEM;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Although simulatePatchOperation can calculate this value, since protoIds section</span></span><br><span class="line">    <span class="comment">// depends on typeLists section, we can't run protoIds Section's simulatePatchOperation</span></span><br><span class="line">    <span class="comment">// method so far. Instead we calculate protoIds section's size using information in newDex</span></span><br><span class="line">    <span class="comment">// directly.</span></span><br><span class="line">    <span class="keyword">int</span> patchedProtoIdsSize = newDex.getTableOfContents().protoIds.size * SizeOf.PROTO_ID_ITEM;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> patchedFieldIdsSize = newDex.getTableOfContents().fieldIds.size * SizeOf.MEMBER_ID_ITEM;</span><br><span class="line">    <span class="keyword">int</span> patchedMethodIdsSize = newDex.getTableOfContents().methodIds.size * SizeOf.MEMBER_ID_ITEM;</span><br><span class="line">    <span class="keyword">int</span> patchedClassDefsSize = newDex.getTableOfContents().classDefs.size * SizeOf.CLASS_DEF_ITEM;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> patchedIdSectionSize =</span><br><span class="line">            patchedStringIdsSize</span><br><span class="line">                    + patchedTypeIdsSize</span><br><span class="line">                    + patchedProtoIdsSize</span><br><span class="line">                    + patchedFieldIdsSize</span><br><span class="line">                    + patchedMethodIdsSize</span><br><span class="line">                    + patchedClassDefsSize;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.patchedHeaderOffset = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The diff works on each sections obey such procedure:</span></span><br><span class="line">    <span class="comment">//  1. Execute diff algorithms to calculate indices of items we need to add, del and replace.</span></span><br><span class="line">    <span class="comment">//  2. Execute patch algorithm simulation to calculate indices and offsets mappings that is</span></span><br><span class="line">    <span class="comment">//  necessary to next section's diff works.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Immediately do the patch simulation so that we can know:</span></span><br><span class="line">    <span class="comment">//  1. Indices and offsets mapping between old dex and patched dex.</span></span><br><span class="line">    <span class="comment">//  2. Indices and offsets mapping between new dex and patched dex.</span></span><br><span class="line">    <span class="comment">// These information will be used to do next diff works.</span></span><br><span class="line">    <span class="keyword">this</span>.patchedStringIdsOffset = patchedHeaderOffset + patchedheaderSize;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().stringIds.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedStringIdsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedStringIdsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.stringDataSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedStringDataItemsOffset = patchedheaderSize + patchedIdSectionSize;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().stringDatas.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedStringDataItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedStringDataItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.stringDataSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedStringDataItemsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.typeIdSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedTypeIdsOffset = <span class="keyword">this</span>.patchedStringIdsOffset + patchedStringIdsSize;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().typeIds.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedTypeIdsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedTypeIdsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.typeIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedTypeIdsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.typeListSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedTypeListsOffset</span><br><span class="line">            = patchedheaderSize</span><br><span class="line">            + patchedIdSectionSize</span><br><span class="line">            + <span class="keyword">this</span>.stringDataSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().typeLists.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedTypeListsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedTypeListsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.typeListSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedTypeListsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.protoIdSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedProtoIdsOffset = <span class="keyword">this</span>.patchedTypeIdsOffset + patchedTypeIdsSize;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().protoIds.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedProtoIdsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedProtoIdsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.protoIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedProtoIdsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.fieldIdSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedFieldIdsOffset = <span class="keyword">this</span>.patchedProtoIdsOffset + patchedProtoIdsSize;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().fieldIds.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedFieldIdsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedFieldIdsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.fieldIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedFieldIdsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.methodIdSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedMethodIdsOffset = <span class="keyword">this</span>.patchedFieldIdsOffset + patchedFieldIdsSize;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().methodIds.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedMethodIdsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedMethodIdsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.methodIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedMethodIdsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.annotationSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedTypeListsOffset</span><br><span class="line">            + <span class="keyword">this</span>.typeListSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotations.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedAnnotationItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.annotationSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedAnnotationItemsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.annotationSetSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedAnnotationItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.annotationSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotationSets.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationSetItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.annotationSetSectionDiffAlg.simulatePatchOperation(</span><br><span class="line">            <span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.annotationSetRefListSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.annotationSetSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotationSetRefLists.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.annotationSetRefListSectionDiffAlg.simulatePatchOperation(</span><br><span class="line">            <span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.annotationsDirectorySectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.annotationSetRefListSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotationsDirectories.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.annotationsDirectorySectionDiffAlg.simulatePatchOperation(</span><br><span class="line">            <span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.debugInfoSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedDebugInfoItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.annotationsDirectorySectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().debugInfos.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedDebugInfoItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedDebugInfoItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.debugInfoSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedDebugInfoItemsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.codeSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedCodeItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedDebugInfoItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.debugInfoSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().codes.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedCodeItemsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedCodeItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.codeSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedCodeItemsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.classDataSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedClassDataItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedCodeItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.codeSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().classDatas.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedClassDataItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedClassDataItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.classDataSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedClassDataItemsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.encodedArraySectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedEncodedArrayItemsOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedClassDataItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.classDataSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().encodedArrays.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedEncodedArrayItemsOffset</span><br><span class="line">                = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedEncodedArrayItemsOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.encodedArraySectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedEncodedArrayItemsOffset);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.classDefSectionDiffAlg.execute();</span><br><span class="line">    <span class="keyword">this</span>.patchedClassDefsOffset = <span class="keyword">this</span>.patchedMethodIdsOffset + patchedMethodIdsSize;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().classDefs.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedClassDefsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedClassDefsOffset);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Calculate any values we still know nothing about them.</span></span><br><span class="line">    <span class="keyword">this</span>.patchedMapListOffset</span><br><span class="line">            = <span class="keyword">this</span>.patchedEncodedArrayItemsOffset</span><br><span class="line">            + <span class="keyword">this</span>.encodedArraySectionDiffAlg.getPatchedSectionSize();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().mapList.isElementFourByteAligned) &#123;</span><br><span class="line">        <span class="keyword">this</span>.patchedMapListOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedMapListOffset);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> patchedMapListSize = newDex.getTableOfContents().mapList.byteCount;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.patchedDexSize</span><br><span class="line">            = <span class="keyword">this</span>.patchedMapListOffset</span><br><span class="line">            + patchedMapListSize;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Finally, write results to patch file.</span></span><br><span class="line">    writeResultToStream(out);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码非常的多，但是只要你一步一步分析下去，就会发现其实逻辑是很清晰的。</p>
+<p>第一步，把一些额外添加进来需要删除的数据删除：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">Pattern[] classNamePatterns = <span class="keyword">new</span> Pattern[<span class="keyword">this</span>.additionalRemovingClassPatternSet.size()];</span><br><span class="line"><span class="keyword">int</span> classNamePatternCount = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">for</span> (String regExStr : <span class="keyword">this</span>.additionalRemovingClassPatternSet) &#123;</span><br><span class="line">    classNamePatterns[classNamePatternCount++] = Pattern.compile(regExStr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">List&lt;Integer&gt; typeIdOfClassDefsToRemove = <span class="keyword">new</span> ArrayList&lt;&gt;(classNamePatternCount);</span><br><span class="line">List&lt;Integer&gt; offsetOfClassDatasToRemove = <span class="keyword">new</span> ArrayList&lt;&gt;(classNamePatternCount);</span><br><span class="line"><span class="keyword">for</span> (ClassDef classDef : <span class="keyword">this</span>.newDex.classDefs()) &#123;</span><br><span class="line">    String typeName = <span class="keyword">this</span>.newDex.typeNames().get(classDef.typeIndex);</span><br><span class="line">    <span class="keyword">for</span> (Pattern pattern : classNamePatterns) &#123;</span><br><span class="line">        <span class="keyword">if</span> (pattern.matcher(typeName).matches()) &#123;</span><br><span class="line">            typeIdOfClassDefsToRemove.add(classDef.typeIndex);</span><br><span class="line">            offsetOfClassDatasToRemove.add(classDef.classDataOffset);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">((ClassDefSectionDiffAlgorithm) <span class="keyword">this</span>.classDefSectionDiffAlg)</span><br><span class="line">        .setTypeIdOfClassDefsToRemove(typeIdOfClassDefsToRemove);</span><br><span class="line">((ClassDataSectionDiffAlgorithm) <span class="keyword">this</span>.classDataSectionDiffAlg)</span><br><span class="line">        .setOffsetOfClassDatasToRemove(offsetOfClassDatasToRemove);</span><br></pre></td></tr></table></figure>
+<p>第二步，计算出Header Section的大小和Table Section中每一个table的大小以及Table Section的总大小：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> patchedheaderSize = SizeOf.HEADER_ITEM;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> patchedStringIdsSize = newDex.getTableOfContents().stringIds.size * SizeOf.STRING_ID_ITEM;</span><br><span class="line"><span class="keyword">int</span> patchedTypeIdsSize = newDex.getTableOfContents().typeIds.size * SizeOf.TYPE_ID_ITEM;</span><br><span class="line"><span class="keyword">int</span> patchedProtoIdsSize = newDex.getTableOfContents().protoIds.size * SizeOf.PROTO_ID_ITEM;</span><br><span class="line"><span class="keyword">int</span> patchedFieldIdsSize = newDex.getTableOfContents().fieldIds.size * SizeOf.MEMBER_ID_ITEM;</span><br><span class="line"><span class="keyword">int</span> patchedMethodIdsSize = newDex.getTableOfContents().methodIds.size * SizeOf.MEMBER_ID_ITEM;</span><br><span class="line"><span class="keyword">int</span> patchedClassDefsSize = newDex.getTableOfContents().classDefs.size * SizeOf.CLASS_DEF_ITEM;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> patchedIdSectionSize =</span><br><span class="line">        patchedStringIdsSize</span><br><span class="line">                + patchedTypeIdsSize</span><br><span class="line">                + patchedProtoIdsSize</span><br><span class="line">                + patchedFieldIdsSize</span><br><span class="line">                + patchedMethodIdsSize</span><br><span class="line">                + patchedClassDefsSize;</span><br></pre></td></tr></table></figure>
+<p>它是怎么计算的呢？非常简单，先看patchedheaderSize，它的大小直接就是SizeOf.HEADER_ITEM：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * magic ubyte[8]</span><br><span class="line"> * checksum uint</span><br><span class="line"> * signature ubyte[20]</span><br><span class="line"> * file_size uint</span><br><span class="line"> * header_size uint</span><br><span class="line"> * endian_tag uint</span><br><span class="line"> * link_size uint</span><br><span class="line"> * link_off uint</span><br><span class="line"> * map_off uint</span><br><span class="line"> * string_ids_size uint</span><br><span class="line"> * string_ids_off uint</span><br><span class="line"> * type_ids_size uint</span><br><span class="line"> * type_ids_off uint</span><br><span class="line"> * proto_ids_size uint</span><br><span class="line"> * proto_ids_off uint</span><br><span class="line"> * field_ids_size uint</span><br><span class="line"> * field_ids_off uint</span><br><span class="line"> * method_ids_size uint</span><br><span class="line"> * method_ids_off uint</span><br><span class="line"> * class_defs_size uint</span><br><span class="line"> * class_defs_off uint</span><br><span class="line"> * data_size uint</span><br><span class="line"> * data_off uint</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> HEADER_ITEM = (<span class="number">8</span> * UBYTE) + UINT + SIGNATURE + (<span class="number">20</span> * UINT); <span class="comment">// 0x70</span></span><br></pre></td></tr></table></figure>
+<p>就是把Header Section中的每一个item的大小相加而已。这点我在前面已经提到了，也就是Header Section的内部结构。</p>
+<p>至于Table Section中的每一个table的大小就是table中的item大小和table_size的乘积，我们以methodIds这个table为例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> patchedMethodIdsSize = newDex.getTableOfContents().methodIds.size * SizeOf.MEMBER_ID_ITEM;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line">  * class_idx ushort</span><br><span class="line">  * type_idx/proto_idx ushort</span><br><span class="line">  * name_idx uint</span><br><span class="line">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MEMBER_ID_ITEM = USHORT + USHORT + UINT;</span><br></pre></td></tr></table></figure>
+<p>其实也就是文章上面提到的Method Table的内部结构了～</p>
+<p>第三步，进行真正的diff计算：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.patchedStringIdsOffset = patchedHeaderOffset + patchedheaderSize;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().stringIds.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedStringIdsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedStringIdsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.stringDataSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedStringDataItemsOffset = patchedheaderSize + patchedIdSectionSize;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().stringDatas.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedStringDataItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedStringDataItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.stringDataSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedStringDataItemsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.typeIdSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedTypeIdsOffset = <span class="keyword">this</span>.patchedStringIdsOffset + patchedStringIdsSize;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().typeIds.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedTypeIdsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedTypeIdsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.typeIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedTypeIdsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.typeListSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedTypeListsOffset</span><br><span class="line">        = patchedheaderSize</span><br><span class="line">        + patchedIdSectionSize</span><br><span class="line">        + <span class="keyword">this</span>.stringDataSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().typeLists.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedTypeListsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedTypeListsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.typeListSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedTypeListsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.protoIdSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedProtoIdsOffset = <span class="keyword">this</span>.patchedTypeIdsOffset + patchedTypeIdsSize;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().protoIds.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedProtoIdsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedProtoIdsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.protoIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedProtoIdsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.fieldIdSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedFieldIdsOffset = <span class="keyword">this</span>.patchedProtoIdsOffset + patchedProtoIdsSize;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().fieldIds.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedFieldIdsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedFieldIdsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.fieldIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedFieldIdsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.methodIdSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedMethodIdsOffset = <span class="keyword">this</span>.patchedFieldIdsOffset + patchedFieldIdsSize;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().methodIds.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedMethodIdsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedMethodIdsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.methodIdSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedMethodIdsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.annotationSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedAnnotationItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedTypeListsOffset</span><br><span class="line">        + <span class="keyword">this</span>.typeListSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotations.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.annotationSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedAnnotationItemsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.annotationSetSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedAnnotationItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.annotationSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotationSets.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationSetItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.annotationSetSectionDiffAlg.simulatePatchOperation(</span><br><span class="line">        <span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.annotationSetRefListSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedAnnotationSetItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.annotationSetSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotationSetRefLists.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.annotationSetRefListSectionDiffAlg.simulatePatchOperation(</span><br><span class="line">        <span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.annotationsDirectorySectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedAnnotationSetRefListItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.annotationSetRefListSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().annotationsDirectories.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.annotationsDirectorySectionDiffAlg.simulatePatchOperation(</span><br><span class="line">        <span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.debugInfoSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedDebugInfoItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedAnnotationsDirectoryItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.annotationsDirectorySectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().debugInfos.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedDebugInfoItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedDebugInfoItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.debugInfoSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedDebugInfoItemsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.codeSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedCodeItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedDebugInfoItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.debugInfoSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().codes.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedCodeItemsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedCodeItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.codeSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedCodeItemsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.classDataSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedClassDataItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedCodeItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.codeSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().classDatas.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedClassDataItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedClassDataItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.classDataSectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedClassDataItemsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.encodedArraySectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedEncodedArrayItemsOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedClassDataItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.classDataSectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().encodedArrays.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedEncodedArrayItemsOffset</span><br><span class="line">            = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedEncodedArrayItemsOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">this</span>.encodedArraySectionDiffAlg.simulatePatchOperation(<span class="keyword">this</span>.patchedEncodedArrayItemsOffset);</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.classDefSectionDiffAlg.execute();</span><br><span class="line"><span class="keyword">this</span>.patchedClassDefsOffset = <span class="keyword">this</span>.patchedMethodIdsOffset + patchedMethodIdsSize;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().classDefs.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedClassDefsOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedClassDefsOffset);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Calculate any values we still know nothing about them.</span></span><br><span class="line"><span class="keyword">this</span>.patchedMapListOffset</span><br><span class="line">        = <span class="keyword">this</span>.patchedEncodedArrayItemsOffset</span><br><span class="line">        + <span class="keyword">this</span>.encodedArraySectionDiffAlg.getPatchedSectionSize();</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.oldDex.getTableOfContents().mapList.isElementFourByteAligned) &#123;</span><br><span class="line">    <span class="keyword">this</span>.patchedMapListOffset = SizeOf.roundToTimesOfFour(<span class="keyword">this</span>.patchedMapListOffset);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">int</span> patchedMapListSize = newDex.getTableOfContents().mapList.byteCount;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.patchedDexSize</span><br><span class="line">        = <span class="keyword">this</span>.patchedMapListOffset</span><br><span class="line">        + patchedMapListSize;</span><br></pre></td></tr></table></figure>
+<p>这一步是整个dexdiff算法的核心，别看代码这么多，其实内容都是重复的，就是通过前面提到的每一个Section(MethodId，FieldId等等)的algorithm去进行两个dex中相应部分的差量，具体的差量算法这里不说了，不是这篇文章的重点。看到这里你应该可以明白前面说的，为什么dexdiff的差量粒度比bsdiff小了。</p>
+<p>第四步，把数据写入patch文件：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Finally, write results to patch file.</span></span><br><span class="line">writeResultToStream(out);</span><br></pre></td></tr></table></figure>
+<p>具体的写入规则大家有兴趣的可以去看看，就是按照dex文件格式来操作的。</p>
+<p>除了dexdiff，我们能做的事情还有很多，比如你可以手动去分析每一个Section，从而去做一个dex的文件分析器，这里我已经写了<a href="https://github.com/zjutkz/Dexer" target="_blank" rel="external">一个小的demo</a>，大家可以对比着上面的文章去看代码，这样会有一个更好的认知。另外，大名鼎鼎的<a href="https://github.com/pxb1988/dex2jar" target="_blank" rel="external">dex2jar</a>，其实也是运用了这方面的知识。由此可见，掌握这样的知识还是很有必要的。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>这篇文章的长度有点长了，但是已经是我一再精简之后的版本了，像LEB128格式，MapList和最重要的DexClassDef我都跳过了，希望大家看完之后会有收获，最主要的还是要结合代码来看，才会有收获啊～</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/dex/" rel="tag">#dex</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/18/Weex日记——3/" rel="next" title="Weex日记——3">
+                <i class="fa fa-chevron-left"></i> Weex日记——3
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/10/27/dex文件结构及其应用/"
+           data-title="dex文件结构及其应用" data-url="http://yoursite.com/2016/10/27/dex文件结构及其应用/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#dex文件结构解析"><span class="nav-number">2.</span> <span class="nav-text">dex文件结构解析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#虚拟机是如何利用dex文件结构的"><span class="nav-number">3.</span> <span class="nav-text">虚拟机是如何利用dex文件结构的</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#利用dex文件结构可以做的事"><span class="nav-number">4.</span> <span class="nav-text">利用dex文件结构可以做的事</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">5.</span> <span class="nav-text">后记</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
