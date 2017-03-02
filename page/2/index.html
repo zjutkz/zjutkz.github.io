@@ -293,6 +293,113 @@ $(function() {
             
               
                 
+                <a class="post-title-link" href="/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/" itemprop="url">
+                  Android中的类加载-查找和在hotpatch上的问题
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-06T12:35:32+08:00" content="2016-08-06">
+              2016-08-06
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/08/06/Android中的类加载-查找和在hotpatch上的问题/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/" class="leancloud_visitors" data-flag-title="Android中的类加载-查找和在hotpatch上的问题">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>最近Android社区里关于hotpatch的好文章非常多，看了其中的几篇，发现它们都提到了一个问题，就是［现有的hotpatch方案在ART虚拟机上会出现内存移位］，随着Android5.0以上机器的不断普及，这个问题也会被越来越多的遇到，所以这篇文章就带大家看看和这个问题相关的Android中的几个知识，希望大家看完会有收获～</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/07/22/热修复中的资源修复/" itemprop="url">
                   热修复中的资源修复
                 </a>
@@ -1247,114 +1354,6 @@ $(function() {
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/23/为分析agera做准备！带你了解Android的handler机制/" itemprop="url">
-                  为分析agera做准备！带你了解Android的handler机制
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-04-23T16:46:57+08:00" content="2016-04-23">
-              2016-04-23
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/04/23/为分析agera做准备！带你了解Android的handler机制/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/23/为分析agera做准备！带你了解Android的handler机制/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-             <span id="/2016/04/23/为分析agera做准备！带你了解Android的handler机制/" class="leancloud_visitors" data-flag-title="为分析agera做准备！带你了解Android的handler机制">
-               &nbsp; | &nbsp;
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               <span class="post-meta-item-text">阅读次数 </span>
-               <span class="leancloud-visitors-count"></span>
-              </span>
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>Google最近在Github上开源了一个响应式框架——agera，我个人对这样的技术是比较感兴趣的，在这之前也学习过RxJava，所以想着给大家带来有关于这两者分析的博文。</p>
-<p>在我翻阅agera的源码的时候，发现里面整个event事件驱动都是靠Android的handler机制，并且使用了ThreadLocal进行线程隔离，所以在分析agera之前，我们要先了解handler机制，为之后打下基础。</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2016/04/23/为分析agera做准备！带你了解Android的handler机制/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1400,7 +1399,7 @@ $(function() {
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-count">25</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1410,7 +1409,7 @@ $(function() {
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-count">21</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
