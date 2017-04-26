@@ -1,0 +1,946 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="RxJava," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="上一篇文章研究了一下RxJava中的多线程并发问题，并且在实际项目中运用了其中的知识，这次让我们来谈一谈另外一个牵扯到线程的问题——那就是RxJava中的线程管理。
+之所以写这篇文章，还是因为在项目中使用RxJava的时候遇到了一些线程管理上的问题，经过网上查阅资料并且翻阅源码之后才把问题解决，于是就决定把所感所得记录下来，希望大家看完之后会有收获吧。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅谈RxJava中的线程管理">
+<meta property="og:url" content="http://yoursite.com/2017/04/26/浅谈RxJava中的线程管理/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="上一篇文章研究了一下RxJava中的多线程并发问题，并且在实际项目中运用了其中的知识，这次让我们来谈一谈另外一个牵扯到线程的问题——那就是RxJava中的线程管理。
+之所以写这篇文章，还是因为在项目中使用RxJava的时候遇到了一些线程管理上的问题，经过网上查阅资料并且翻阅源码之后才把问题解决，于是就决定把所感所得记录下来，希望大家看完之后会有收获吧。">
+<meta property="og:image" content="http://yoursite.com/images/浅谈RxJava中的线程管理/subscribeOn.png">
+<meta property="og:image" content="http://yoursite.com/images/浅谈RxJava中的线程管理/observeOn.png">
+<meta property="og:updated_time" content="2017-04-26T06:59:18.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="浅谈RxJava中的线程管理">
+<meta name="twitter:description" content="上一篇文章研究了一下RxJava中的多线程并发问题，并且在实际项目中运用了其中的知识，这次让我们来谈一谈另外一个牵扯到线程的问题——那就是RxJava中的线程管理。
+之所以写这篇文章，还是因为在项目中使用RxJava的时候遇到了一些线程管理上的问题，经过网上查阅资料并且翻阅源码之后才把问题解决，于是就决定把所感所得记录下来，希望大家看完之后会有收获吧。">
+<meta name="twitter:image" content="http://yoursite.com/images/浅谈RxJava中的线程管理/subscribeOn.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 浅谈RxJava中的线程管理 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                浅谈RxJava中的线程管理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-26T14:58:56+08:00" content="2017-04-26">
+              2017-04-26
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/26/浅谈RxJava中的线程管理/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/26/浅谈RxJava中的线程管理/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/04/26/浅谈RxJava中的线程管理/" class="leancloud_visitors" data-flag-title="浅谈RxJava中的线程管理">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上一篇文章研究了一下RxJava中的多线程并发问题，并且在实际项目中运用了其中的知识，这次让我们来谈一谈另外一个牵扯到线程的问题——那就是RxJava中的线程管理。</p>
+<p>之所以写这篇文章，还是因为在项目中使用RxJava的时候遇到了一些线程管理上的问题，经过网上查阅资料并且翻阅源码之后才把问题解决，于是就决定把所感所得记录下来，希望大家看完之后会有收获吧。</p>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>首先要说明一点的是，这个不是什么RxJava入门指南，所以不会有很基础的引导代码，如果大家想了解本文中设计的线程切换和管理和操作符转换，请移步到<a href="http://gank.io/post/560e15be2dca930e00da1083" target="_blank" rel="external">给 Android 开发者的 RxJava 详解</a>这篇文章。</p>
+<p>本文将会围绕两个具体的函数：SubscribOn和ObserveOn来进行展开。</p>
+<h1 id="SubscribOn"><a href="#SubscribOn" class="headerlink" title="SubscribOn"></a>SubscribOn</h1><p>让我们直奔主题，来看看SubscribOn的源码长什么样子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Observable&lt;T&gt; <span class="title">subscribeOn</span><span class="params">(Scheduler scheduler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span> <span class="keyword">instanceof</span> ScalarSynchronousObservable) &#123;</span><br><span class="line">        <span class="keyword">return</span> ((ScalarSynchronousObservable&lt;T&gt;)<span class="keyword">this</span>).scalarScheduleOn(scheduler);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> create(<span class="keyword">new</span> OperatorSubscribeOn&lt;T&gt;(<span class="keyword">this</span>, scheduler));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的if判断我们暂且不管，直接看最后的return，可以看到，其实SubscribOn是重新create出了一个Observable，并且传入了自定义的OperatorSubscribeOn作为Observable中的成员变量onSubscribe。所以具体的实现逻辑就是在onSubscribe中了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(<span class="keyword">final</span> Subscriber&lt;? <span class="keyword">super</span> T&gt; subscriber)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> Worker inner = scheduler.createWorker();</span><br><span class="line">    subscriber.add(inner);</span><br><span class="line"></span><br><span class="line">    inner.schedule(<span class="keyword">new</span> Action0() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">final</span> Thread t = Thread.currentThread();</span><br><span class="line"></span><br><span class="line">            Subscriber&lt;T&gt; s = <span class="keyword">new</span> Subscriber&lt;T&gt;(subscriber) &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">                    subscriber.onNext(t);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">(Throwable e)</span> </span>&#123;</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        subscriber.onError(e);</span><br><span class="line">                    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                        inner.unsubscribe();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCompleted</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        subscriber.onCompleted();</span><br><span class="line">                    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                        inner.unsubscribe();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setProducer</span><span class="params">(<span class="keyword">final</span> Producer p)</span> </span>&#123;</span><br><span class="line">                    subscriber.setProducer(<span class="keyword">new</span> Producer() &#123;</span><br><span class="line">                        <span class="meta">@Override</span></span><br><span class="line">                        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">(<span class="keyword">final</span> <span class="keyword">long</span> n)</span> </span>&#123;</span><br><span class="line">                            <span class="keyword">if</span> (t == Thread.currentThread()) &#123;</span><br><span class="line">                                p.request(n);</span><br><span class="line">                            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                                inner.schedule(<span class="keyword">new</span> Action0() &#123;</span><br><span class="line">                                    <span class="meta">@Override</span></span><br><span class="line">                                    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                                        p.request(n);</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125;);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;;</span><br><span class="line"></span><br><span class="line">            source.unsafeSubscribe(s);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面是OperatorSubscribeOn中的核心函数call()方法的源码，其中的逻辑还是挺简单的。</p>
+<p>首先，通过scheduler创建出一个worker，这个scheduler就是我们在调用subscribOn的时候传入的，基本上我们用到的就是Schedulers.io()，Schedulers.newThread()和Schedulers.computation()三种，分别对应io型，新建型和计算密集型三种类型。</p>
+<p>之后的逻辑都是在worker中执行的，相当就是在不同的线程环境中执行了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">NewThreadWorker</span><span class="params">(ThreadFactory threadFactory)</span> </span>&#123;</span><br><span class="line">    ScheduledExecutorService exec = Executors.newScheduledThreadPool(<span class="number">1</span>, threadFactory);</span><br><span class="line">    <span class="comment">// Java 7+: cancelled future tasks can be removed from the executor thus avoiding memory leak</span></span><br><span class="line">    <span class="keyword">boolean</span> cancelSupported = tryEnableCancelPolicy(exec);</span><br><span class="line">    <span class="keyword">if</span> (!cancelSupported &amp;&amp; exec <span class="keyword">instanceof</span> ScheduledThreadPoolExecutor) &#123;</span><br><span class="line">        registerExecutor((ScheduledThreadPoolExecutor)exec);</span><br><span class="line">    &#125;</span><br><span class="line">    schedulersHook = RxJavaPlugins.getInstance().getSchedulersHook();</span><br><span class="line">    executor = exec;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们以NewThreadWorker为例，其中就是通过Executors创建出一个线程池的。</p>
+<p>然后让我们来看一下call函数中最核心的一句代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source.unsafeSubscribe(s);</span><br></pre></td></tr></table></figure>
+<p>source表示的是在调用subscribeOn之前的Observable链，在unsafeSubscribe方法中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Subscription <span class="title">unsafeSubscribe</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> T&gt; subscriber)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// new Subscriber so onStart it</span></span><br><span class="line">        subscriber.onStart();</span><br><span class="line">        <span class="comment">// allow the hook to intercept and/or decorate</span></span><br><span class="line">        hook.onSubscribeStart(<span class="keyword">this</span>, onSubscribe).call(subscriber);</span><br><span class="line">        <span class="keyword">return</span> hook.onSubscribeReturn(subscriber);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">        <span class="comment">// special handling for certain Throwable/Error/Exception types</span></span><br><span class="line">        Exceptions.throwIfFatal(e);</span><br><span class="line">        <span class="comment">// if an unhandled error occurs executing the onSubscribe we will propagate it</span></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            subscriber.onError(hook.onSubscribeError(e));</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable e2) &#123;</span><br><span class="line">            Exceptions.throwIfFatal(e2);</span><br><span class="line">            <span class="comment">// if this happens it means the onError itself failed (perhaps an invalid function implementation)</span></span><br><span class="line">            <span class="comment">// so we are unable to propagate the error correctly and will just throw</span></span><br><span class="line">            RuntimeException r = <span class="keyword">new</span> RuntimeException(<span class="string">"Error occurred attempting to subscribe ["</span> + e.getMessage() + <span class="string">"] and then again while trying to pass to onError."</span>, e2);</span><br><span class="line">            <span class="comment">// TODO could the hook be the cause of the error in the on error handling.</span></span><br><span class="line">            hook.onSubscribeError(r);</span><br><span class="line">            <span class="comment">// TODO why aren't we throwing the hook's return value.</span></span><br><span class="line">            <span class="keyword">throw</span> r;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> Subscriptions.unsubscribed();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其实就是去执行了Observable成员变量onSubscribe的call方法。</p>
+<p>下面让我们以一个例子来辅助说明。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Observable.create(<span class="keyword">new</span> Observable.OnSubscribe&lt;Integer&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> Integer&gt; subscriber)</span> </span>&#123;</span><br><span class="line">        subscriber.onNext(createInt());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br><span class="line">        .subscribeOn(Schedulers.io())</span><br><span class="line">        .subscribe(<span class="keyword">new</span> Action1&lt;Integer&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Integer i)</span> </span>&#123;</span><br><span class="line">                Log.d(<span class="string">"TAG"</span>, <span class="string">"onNext: "</span> + Thread.currentThread());</span><br><span class="line">            &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">createInt</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Log.d(<span class="string">"TAG"</span>, <span class="string">"createInt: "</span> + Thread.currentThread());</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，例子中为了方便，我直接使用了Observable.create方法。上之前的文章中我也说过，这是一个不好的习惯，请大家不要模仿，尽可能的不要自己使用Observable.create方法。</p>
+<p>上面的代码，log输出的线程都是RxJava的io线程。</p>
+<p>我们做一个总结，调用了subscribeOn之后会返回一个新的Observable，我们称之为newObservable，newObservable会有一个OperatorSubscribeOn的成员变量，我们称之为newSubscribeOn。例子中调用链的最后一个方法subscribe就是用的newObservable，从而会走到newSubscribeOn的call方法。而newSubscribeOn中通过source保存了subscribeOn之前的Observable链，我们称之为oldObservable，于是在newSubscribeOn中通过worker，将oldObservable放置到对应的线程中执行(调用unsafeSubscribe方法)，从而调用oldObservable中的成员变量onSubscribe，我们称之为oldSubscribeOn的call方法。</p>
+<p>也许文字说明太过繁琐，让我们用一张图来展示subscribeOn的原理：</p>
+<p> <img src="/images/浅谈RxJava中的线程管理/subscribeOn.png" alt="subscribeOn"></p>
+<h1 id="observeOn"><a href="#observeOn" class="headerlink" title="observeOn"></a>observeOn</h1><p>说完了subscribeOn，下面让我们来说一说observeOn。如果你认为两者的差距不大，仅仅是字面上的差异，那你就大错特错了，它们两个操作符有着本质上的区别。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Observable&lt;T&gt; <span class="title">observeOn</span><span class="params">(Scheduler scheduler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> observeOn(scheduler, RxRingBuffer.SIZE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Observable&lt;T&gt; <span class="title">observeOn</span><span class="params">(Scheduler scheduler, <span class="keyword">int</span> bufferSize)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> observeOn(scheduler, <span class="keyword">false</span>, bufferSize);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Observable&lt;T&gt; <span class="title">observeOn</span><span class="params">(Scheduler scheduler, <span class="keyword">boolean</span> delayError, <span class="keyword">int</span> bufferSize)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span> <span class="keyword">instanceof</span> ScalarSynchronousObservable) &#123;</span><br><span class="line">        <span class="keyword">return</span> ((ScalarSynchronousObservable&lt;T&gt;)<span class="keyword">this</span>).scalarScheduleOn(scheduler);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> lift(<span class="keyword">new</span> OperatorObserveOn&lt;T&gt;(scheduler, delayError, bufferSize));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面是observeOn的源码，可以看到最终调用了lift。看到这里就知道为什么subscribeOn和observeOn有着本质上的差别了：subscribeOn是通过创建新的Observable来做到切换线程的，而observeOn则是通过operator，操作符的进行来实现的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Subscriber&lt;? <span class="keyword">super</span> T&gt; call(Subscriber&lt;? <span class="keyword">super</span> T&gt; child) &#123;</span><br><span class="line">    <span class="keyword">if</span> (scheduler <span class="keyword">instanceof</span> ImmediateScheduler) &#123;</span><br><span class="line">        <span class="comment">// avoid overhead, execute directly</span></span><br><span class="line">        <span class="keyword">return</span> child;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (scheduler <span class="keyword">instanceof</span> TrampolineScheduler) &#123;</span><br><span class="line">        <span class="comment">// avoid overhead, execute directly</span></span><br><span class="line">        <span class="keyword">return</span> child;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ObserveOnSubscriber&lt;T&gt; parent = <span class="keyword">new</span> ObserveOnSubscriber&lt;T&gt;(scheduler, child, delayError, bufferSize);</span><br><span class="line">        parent.init();</span><br><span class="line">        <span class="keyword">return</span> parent;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面是OperatorObserveOn的核心函数call()方法。我们关注最后的else分支，和一般的operator一样，OperatorObserveOn通过创建新的subscriber来包裹旧的subscriber。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(<span class="keyword">final</span> T t)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (isUnsubscribed() || finished) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!queue.offer(on.next(t))) &#123;</span><br><span class="line">        onError(<span class="keyword">new</span> MissingBackpressureException());</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    schedule();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// only execute this from schedule()</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> missed = <span class="number">1L</span>;</span><br><span class="line">    <span class="keyword">long</span> currentEmission = emitted;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// these are accessed in a tight loop around atomics so</span></span><br><span class="line">    <span class="comment">// loading them into local variables avoids the mandatory re-reading</span></span><br><span class="line">    <span class="comment">// of the constant fields</span></span><br><span class="line">    <span class="keyword">final</span> Queue&lt;Object&gt; q = <span class="keyword">this</span>.queue;</span><br><span class="line">    <span class="keyword">final</span> Subscriber&lt;? <span class="keyword">super</span> T&gt; localChild = <span class="keyword">this</span>.child;</span><br><span class="line">    <span class="keyword">final</span> NotificationLite&lt;T&gt; localOn = <span class="keyword">this</span>.on;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// requested and counter are not included to avoid JIT issues with register spilling</span></span><br><span class="line">    <span class="comment">// and their access is is amortized because they are part of the outer loop which runs</span></span><br><span class="line">    <span class="comment">// less frequently (usually after each bufferSize elements)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="keyword">long</span> requestAmount = requested.get();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (requestAmount != currentEmission) &#123;</span><br><span class="line">            <span class="keyword">boolean</span> done = finished;</span><br><span class="line">            Object v = q.poll();</span><br><span class="line">            <span class="keyword">boolean</span> empty = v == <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (checkTerminated(done, empty, localChild, q)) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (empty) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            localChild.onNext(localOn.getValue(v));</span><br><span class="line"></span><br><span class="line">            currentEmission++;</span><br><span class="line">            <span class="keyword">if</span> (currentEmission == limit) &#123;</span><br><span class="line">                requestAmount = BackpressureUtils.produced(requested, currentEmission);</span><br><span class="line">                request(currentEmission);</span><br><span class="line">                currentEmission = <span class="number">0L</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (requestAmount == currentEmission) &#123;</span><br><span class="line">            <span class="keyword">if</span> (checkTerminated(finished, q.isEmpty(), localChild, q)) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        emitted = currentEmission;</span><br><span class="line">        missed = counter.addAndGet(-missed);</span><br><span class="line">        <span class="keyword">if</span> (missed == <span class="number">0L</span>) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面是ObserveOnSubscriber的核心函数onNext()和call()方法。首先判断生命周期和背压，一切正常的情况下调用了schedule()方法，之后再通过call()方法调用被其包裹的子subscriber，并辅以scheduler的线程操作。</p>
+<p>下面还是用图的方式来理解一下observeOn的过程：</p>
+<p> <img src="/images/浅谈RxJava中的线程管理/observeOn.png" alt="observeOn"></p>
+<h1 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h1><p>根据上面的源码加图的分析我们可以知道，subscribeOn是通过新建Observable的方式，使用OnSubscribe类的方式去做到线程切换的，相当于是层层包裹，层层回调，所以当你在一个调用链中调用多次subscribeOn是无效的，因为层层回调之后，只有最终的那一个(也就是第一个subscribeOn)才会生效：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Observable.create(<span class="keyword">new</span> Observable.OnSubscribe&lt;Integer&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> Integer&gt; subscriber)</span> </span>&#123;</span><br><span class="line">        subscriber.onNext(createInt());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br><span class="line">        .subscribeOn(Schedulers.io())</span><br><span class="line">        .subscribeOn(Schedulers.computation())</span><br><span class="line">        .subscribeOn(Schedulers.newThread())</span><br><span class="line">        .subscribeOn(AndroidSchedulers.mainThread())</span><br><span class="line">        .subscribe(<span class="keyword">new</span> Action1&lt;Integer&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Integer i)</span> </span>&#123;</span><br><span class="line">                Log.d(<span class="string">"TAG"</span>, <span class="string">"onNext: "</span> + Thread.currentThread());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br></pre></td></tr></table></figure>
+<p>上面的这个调用链，函数的执行都是在io线程中发生的，也就是只有第一个subscribeOn生效。</p>
+<p>这里还要一点需要注意，那就是RxJava中的线程切换都是手动切换的的，不存在自动一说，所以当然调用了subscribeOn或者observeOn之后，它的影响是整条链路，如果你之后不再进行手动切换，线程环境是不会改变的。</p>
+<p>下面我们再说observeOn。observeOn是通过operator操作符的形式去完成线程切换的，所以它的作用域和其他操作符一样，是调用observeOn之后的链路，并且由于是通过操作符的形式，所以observeOn是可以多次调用的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Observable.create(<span class="keyword">new</span> Observable.OnSubscribe&lt;Integer&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> Integer&gt; subscriber)</span> </span>&#123;</span><br><span class="line">        subscriber.onNext(createInt());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br><span class="line">        .observeOn(Schedulers.io())</span><br><span class="line">        .observeOn(Schedulers.computation())</span><br><span class="line">        .observeOn(Schedulers.newThread())</span><br><span class="line">        .subscribe(<span class="keyword">new</span> Action1&lt;Integer&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Integer i)</span> </span>&#123;</span><br><span class="line">                Log.d(<span class="string">"TAG"</span>, <span class="string">"onNext: "</span> + Thread.currentThread());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br></pre></td></tr></table></figure>
+<p>上面的代码，Action1中的call方法是在新创建出的线程中执行的，这证实了上面说的那一点：observeOn是可以多次调用的。但是createInt函数确实在主线程中执行的，那是因为observeOn本质上是一个operator，它没有能力去影响它上游的链路。</p>
+<h1 id="结合使用场景"><a href="#结合使用场景" class="headerlink" title="结合使用场景"></a>结合使用场景</h1><p>最后，我们来看一下这两个操作符结合使用的情况：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">createInt</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Log.d(<span class="string">"TAG"</span>, <span class="string">"createInt: "</span> + Thread.currentThread());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Observable.create(<span class="keyword">new</span> Observable.OnSubscribe&lt;Integer&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> Integer&gt; subscriber)</span> </span>&#123;</span><br><span class="line">        subscriber.onNext(createInt());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br><span class="line">        .map(<span class="keyword">new</span> Func1&lt;Integer, Integer&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> Integer <span class="title">call</span><span class="params">(Integer integer)</span> </span>&#123;</span><br><span class="line">                Log.d(<span class="string">"TAG"</span>, <span class="string">"map: "</span> + Thread.currentThread());</span><br><span class="line">                <span class="keyword">return</span> integer + <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">        .observeOn(AndroidSchedulers.mainThread())</span><br><span class="line">        .subscribeOn(Schedulers.io())</span><br><span class="line">        .subscribe(<span class="keyword">new</span> Action1&lt;Integer&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Integer i)</span> </span>&#123;</span><br><span class="line">                Log.d(<span class="string">"TAG"</span>, <span class="string">"onNext: "</span> + Thread.currentThread());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br></pre></td></tr></table></figure>
+<p>首先是最简单的一个例子，上面的代码中，createInt和map操作符的call是在io线程中执行的，而subscribe的Action1的call是在主线程中执行的。</p>
+<p>结合我们上面一个单元所说的内容，subscribeOn影响的是全链路，所以createInt和map操作符的call被其影响，在io线程中执行，而执行完了map操作符之后，调用了observeOn，由于observeOn的本质是操作符，它会影响下游的链路，所以Action1的call会在主线程中执行。</p>
+<p>上面的这个例子我们可以总结出以下几点：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1.subscribeOn影响是整条RxJava链路</span><br><span class="line">2.observeOn只影响它下游的链路</span><br><span class="line">3.连续调用subscribeOn是没有用的,只有第一次会生效</span><br><span class="line">4.连续调用observeOn是有用的,会不断的切换线程。</span><br><span class="line">5.在observeOn调用之后,subscribeOn的影响就会被observeOn抵消。换句话说,observeOn就是subscribeOn的&quot;拦路虎&quot;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/RxJava/" rel="tag">#RxJava</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/02/09/浅谈RxJava与多线程并发/" rel="next" title="浅谈RxJava与多线程并发">
+                <i class="fa fa-chevron-left"></i> 浅谈RxJava与多线程并发
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/04/26/浅谈RxJava中的线程管理/"
+           data-title="浅谈RxJava中的线程管理" data-url="http://yoursite.com/2017/04/26/浅谈RxJava中的线程管理/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">21</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SubscribOn"><span class="nav-number">2.</span> <span class="nav-text">SubscribOn</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#observeOn"><span class="nav-number">3.</span> <span class="nav-text">observeOn</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#对比"><span class="nav-number">4.</span> <span class="nav-text">对比</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#结合使用场景"><span class="nav-number">5.</span> <span class="nav-text">结合使用场景</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
