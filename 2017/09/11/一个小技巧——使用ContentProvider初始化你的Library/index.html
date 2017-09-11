@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="ContentProvider," />
 
 
 
@@ -59,16 +59,19 @@
 
 
 
-<meta name="description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。
+这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecyc">
 <meta property="og:type" content="article">
-<meta property="og:title" content="zjutkz's blog">
-<meta property="og:url" content="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/index.html">
+<meta property="og:title" content="一个小技巧——使用ContentProvider初始化你的Library">
+<meta property="og:url" content="http://zjutkz.net/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
-<meta property="og:updated_time" content="2016-10-27T10:32:50.000Z">
+<meta property="og:description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。
+这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecyc">
+<meta property="og:updated_time" content="2017-09-11T11:42:00.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="zjutkz's blog">
-<meta name="twitter:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="twitter:title" content="一个小技巧——使用ContentProvider初始化你的Library">
+<meta name="twitter:description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。
+这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecyc">
 
 
 
@@ -86,7 +89,7 @@
   };
 </script>
 
-  <title>  | zjutkz's blog </title>
+  <title> 一个小技巧——使用ContentProvider初始化你的Library | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +294,7 @@ $(function() {
             
             
               
-                
+                一个小技巧——使用ContentProvider初始化你的Library
               
             
           </h1>
@@ -303,8 +306,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-05-10T16:43:31+08:00" content="2016-05-10">
-              2016-05-10
+            <time itemprop="dateCreated" datetime="2017-09-11T19:13:19+08:00" content="2017-09-11">
+              2017-09-11
             </time>
           </span>
 
@@ -314,8 +317,8 @@ $(function() {
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" itemprop="commentsCount"></span>
+                <a href="/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -325,7 +328,7 @@ $(function() {
 
           
           
-             <span id="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" class="leancloud_visitors" data-flag-title="">
+             <span id="/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/" class="leancloud_visitors" data-flag-title="一个小技巧——使用ContentProvider初始化你的Library">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -346,7 +349,30 @@ $(function() {
       
 
       
-        <p>由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到<a href="http://gold.xitu.io/entry/5731f50ef38c840067dcce48" target="_blank" rel="external">稀土掘金上的转载文章</a>，谢谢大家！</p>
+        <p>好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。</p>
+<p>这两天项目里用到了Google新开源的<a href="https://developer.android.google.cn/reference/android/arch/lifecycle/package-summary.html" target="_blank" rel="external">Lifecycle组件</a>，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecycle有一个值得我们学习的优点——就是我题目中说的，使用ContentProvider初始化某一个Library，碰巧今晚有一点多于的时间，就决定写博客记录一下。</p>
+<a id="more"></a>
+<h1 id="现状"><a href="#现状" class="headerlink" title="现状"></a>现状</h1><p>我们做项目的时候会用到很多库，不论是三方库还是二方库，又或者是自己写的，不可避免的会要去初始化它们，一方面是因为库中会需要使用Context进行一些操作，比如startActivity，又或者getResource；另一方面在初始化的时候我们可以传递一些缺省值给对应的库。如果你的库在初始化的时候只需要传递一个Context(例如前面提到的Lifecycle又或者是Firebase)，那么我们现在会在Application里这么写：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>.onCreate();</span><br><span class="line">    MyLib.init(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过init方法传递一个Application进去并持有它。</p>
+<p>这样做没什么错，但是在我看来是不太好的。一方面如果使用者忘记初始化它了，很可能会出现NPE(我之前就犯过这种错误，简直想撞墙)；另一方面，当你需要初始化十几二十个库的时候，代码就会变得比较庞大了。</p>
+<p>#其他方式</p>
+<p>但是如果你使用过Lifecycle或者Firebase，你会发现你根本不用写哪怕一行的初始化代码就可以使用它，那么它们是怎么做的呢？</p>
+<p>以Lifecycle为例：</p>
+<p>我们去看Lifecycle的Manifest，其中会注册一个ContentProvider：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">provider</span></span><br><span class="line">    <span class="attr">android:name</span>=<span class="string">"android.arch.lifecycle.LifecycleRuntimeTrojanProvider"</span></span><br><span class="line">    <span class="attr">android:authorities</span>=<span class="string">"com.vdian.tuwen.lifecycle-trojan"</span></span><br><span class="line">    <span class="attr">android:exported</span>=<span class="string">"false"</span></span><br><span class="line">    <span class="attr">android:multiprocess</span>=<span class="string">"true"</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+<p>而这个Provider的实现非常的简单：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LifecycleRuntimeTrojanProvider</span> <span class="keyword">extends</span> <span class="title">ContentProvider</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        LifecycleDispatcher.init(getContext());</span><br><span class="line">        ProcessLifecycleOwner.init(getContext());</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Cursor <span class="title">query</span><span class="params">(@NonNull Uri uri, String[] strings, String s, String[] strings1,</span><br><span class="line">            String s1)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getType</span><span class="params">(@NonNull Uri uri)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Uri <span class="title">insert</span><span class="params">(@NonNull Uri uri, ContentValues contentValues)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">delete</span><span class="params">(@NonNull Uri uri, String s, String[] strings)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">update</span><span class="params">(@NonNull Uri uri, ContentValues contentValues, String s, String[] strings)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到除了onCreate，其他的方法都没有逻辑，而onCreate里的逻辑也十分简单，就是去进行Lifecycle的初始化：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    LifecycleDispatcher.init(getContext());</span><br><span class="line">    ProcessLifecycleOwner.init(getContext());</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们都知道ContentProvider的onCreate的调用时机介于Application的attachBaseContext和onCreate之间，Lifecycle这么做，把init的逻辑放到库内部，让调用方完全不需要在Application里去进行初始化了，十分方便。</p>
+<h1 id="注意点"><a href="#注意点" class="headerlink" title="注意点"></a>注意点</h1><p>使用ContentProvider初始化的方式，我们需要注意一下几点：</p>
+<p>首先，在Manifest里设置ContentProvider的时候要设置一个authorities，这个authorities相当于ContentProvider的标识，是不能重复的，为了保证不重复，我们再设置这个值的时候最好不要硬编码，而是使用以下的这种方式：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">provider</span></span><br><span class="line">    <span class="attr">android:authorities</span>=<span class="string">"$&#123;applicationId&#125;.cp"</span></span><br><span class="line">    <span class="attr">android:name</span>=<span class="string">".MyLibRuntimeProvider"</span></span><br><span class="line">    <span class="attr">android:exported</span>=<span class="string">"false"</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+<p>使用gradle的placeholder，可以比较有效的避免重复，Lifecycle就是这么做的。</p>
+<p>其次，如果你的App的多进程架构的，可以将multiprocess设置成true，以保证每一个进程都会初始化该ContentProvider：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">provider</span></span><br><span class="line">    <span class="attr">android:authorities</span>=<span class="string">"$&#123;applicationId&#125;.cp"</span></span><br><span class="line">    <span class="attr">android:name</span>=<span class="string">".MyLibRuntimeProvider"</span></span><br><span class="line">    <span class="attr">android:exported</span>=<span class="string">"false"</span></span><br><span class="line">    <span class="attr">android:multiprocess</span>=<span class="string">"true"</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+<p>最后，如果你的App使用到了Application替换技术，可能是hotpatch，也可能是dex加壳等等，需要注意你的ProxyApplication的代码，因为这个时候在ContentProvider中getContext()获得的是你的ProxyApplication，而不是App真正的Application。</p>
 
       
     </div>
@@ -359,22 +385,24 @@ $(function() {
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/ContentProvider/" rel="tag">#ContentProvider</a>
+          
+        </div>
+      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/05/06/让我们来聊一聊插件化吧/" rel="next" title="让我们来聊一聊插件化吧">
-                <i class="fa fa-chevron-left"></i> 让我们来聊一聊插件化吧
+              <a href="/2017/04/26/浅谈RxJava中的线程管理/" rel="next" title="浅谈RxJava中的线程管理">
+                <i class="fa fa-chevron-left"></i> 浅谈RxJava中的线程管理
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/05/15/记一次苦逼的资源逆向分析/" rel="prev" title="记一次苦逼的资源逆向分析">
-                记一次苦逼的资源逆向分析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -400,8 +428,8 @@ $(function() {
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2016/05/10/从Instant-Run出发，谈谈Android上的热修复/"
-           data-title="" data-url="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/">
+      <div class="ds-thread" data-thread-key="2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/"
+           data-title="一个小技巧——使用ContentProvider初始化你的Library" data-url="http://zjutkz.net/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/">
       </div>
     
   </div>
@@ -497,7 +525,7 @@ $(function() {
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#现状"><span class="nav-number">1.</span> <span class="nav-text">现状</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#注意点"><span class="nav-number">2.</span> <span class="nav-text">注意点</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">

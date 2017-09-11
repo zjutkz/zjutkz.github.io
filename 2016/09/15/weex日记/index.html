@@ -62,16 +62,16 @@
 <meta name="description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="weex日记">
-<meta property="og:url" content="http://yoursite.com/2016/09/15/weex日记/index.html">
+<meta property="og:url" content="http://zjutkz.net/2016/09/15/weex日记/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
-<meta property="og:image" content="http://yoursite.com/images/weex日记/weex.png">
-<meta property="og:image" content="http://yoursite.com/images/weex日记/weex_communication.png">
+<meta property="og:image" content="http://zjutkz.net/images/weex日记/weex.png">
+<meta property="og:image" content="http://zjutkz.net/images/weex日记/weex_communication.png">
 <meta property="og:updated_time" content="2016-09-15T03:53:05.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="weex日记">
 <meta name="twitter:description" content="weex在开源以后获得了广泛的关注，也有很多人深入研究，并且把它和react native进行了对比，总之它在社区的活跃度十分之高，最近的一个星期我也入了这个坑，看了看源码，上了上手，在这里写一篇文章记录一下所感所得。">
-<meta name="twitter:image" content="http://yoursite.com/images/weex日记/weex.png">
+<meta name="twitter:image" content="http://zjutkz.net/images/weex日记/weex.png">
 
 
 
@@ -364,7 +364,7 @@ $(function() {
 <p>更多和Weex Toolkit相关的使用大家可以去它的<a href="https://github.com/weexteam/weex-toolkit" target="_blank" rel="external">GitHub</a>上查看。需要注意的是，如果你在使用该工具的时候控制台报出了错误，请根据错误的提示安装相关的依赖，或者将Weex Toolkit版本升级。</p>
 <p>以上就是所有weex的初始化配置，如果你有过开发rn的经验，你会发现它比rn的配置要简单很多。</p>
 <h1 id="weex的工作原理"><a href="#weex的工作原理" class="headerlink" title="weex的工作原理"></a>weex的工作原理</h1><p>在第一章节中简单的说了一下weex是什么，在这一章节中，会从源码角度去看看，weex是如何工作的。</p>
-<p>对于工作原理，主要要了解的就是weex的js端和native端是如何通信的。在看这里之前，你最好已经看过了我另外一篇文章<a href="http://zjutkz.net/2016/05/03/其实没那么复杂！探究react-native通信机制/" target="_blank" rel="external">其实没那么复杂！探究react-native通信机制</a>。因为我前面说过，weex在原理机制上其实是借鉴了rn的，所以在通信模块上它们有很多相似的地方，在理解rn通信机制的文章里我已经讲的非常详细了，所以这里我会比较简单的讲一下。</p>
+<p>对于工作原理，主要要了解的就是weex的js端和native端是如何通信的。在看这里之前，你最好已经看过了我另外一篇文章<a href="http://zjutkz.net/2016/05/03/其实没那么复杂！探究react-native通信机制/">其实没那么复杂！探究react-native通信机制</a>。因为我前面说过，weex在原理机制上其实是借鉴了rn的，所以在通信模块上它们有很多相似的地方，在理解rn通信机制的文章里我已经讲的非常详细了，所以这里我会比较简单的讲一下。</p>
 <p>首先，在weex官方的playground源码里，在application中进行了weex初始化。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">WXSDKEngine.initialize(<span class="keyword">this</span>,<span class="keyword">new</span> InitConfig.Builder().setImgAdapter(<span class="keyword">new</span> ImageAdapter()).setDebugAdapter(<span class="keyword">new</span> PlayDebugAdapter()).build());</span><br></pre></td></tr></table></figure>
 <p>在WXSDKEngine的initialize方法中会调用doInitInternal去进行真正的初始化操作。</p>
@@ -469,7 +469,7 @@ $(function() {
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2016/09/15/weex日记/"
-           data-title="weex日记" data-url="http://yoursite.com/2016/09/15/weex日记/">
+           data-title="weex日记" data-url="http://zjutkz.net/2016/09/15/weex日记/">
       </div>
     
   </div>
@@ -514,7 +514,7 @@ $(function() {
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -524,7 +524,7 @@ $(function() {
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">21</span>
+                <span class="site-state-item-count">22</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>

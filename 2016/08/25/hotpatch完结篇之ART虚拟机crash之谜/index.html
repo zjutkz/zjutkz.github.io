@@ -62,18 +62,18 @@
 <meta name="description" content="最近几个月博客里的文章除了两篇和相关的，其他都或多或少涉及到了hotpatch，写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="hotpatch完结篇之ART虚拟机crash之谜">
-<meta property="og:url" content="http://yoursite.com/2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/index.html">
+<meta property="og:url" content="http://zjutkz.net/2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="最近几个月博客里的文章除了两篇和相关的，其他都或多或少涉及到了hotpatch，写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。">
-<meta property="og:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机crash之谜/oat_dump.png">
-<meta property="og:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机crash之谜/dex_oat_code.png">
-<meta property="og:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机crash之谜/trampoline.png">
-<meta property="og:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机crash之谜/static_trampoline.png">
+<meta property="og:image" content="http://zjutkz.net/images/hotpatch完结篇之ART虚拟机crash之谜/oat_dump.png">
+<meta property="og:image" content="http://zjutkz.net/images/hotpatch完结篇之ART虚拟机crash之谜/dex_oat_code.png">
+<meta property="og:image" content="http://zjutkz.net/images/hotpatch完结篇之ART虚拟机crash之谜/trampoline.png">
+<meta property="og:image" content="http://zjutkz.net/images/hotpatch完结篇之ART虚拟机crash之谜/static_trampoline.png">
 <meta property="og:updated_time" content="2016-08-25T09:25:56.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="hotpatch完结篇之ART虚拟机crash之谜">
 <meta name="twitter:description" content="最近几个月博客里的文章除了两篇和相关的，其他都或多或少涉及到了hotpatch，写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。">
-<meta name="twitter:image" content="http://yoursite.com/images/hotpatch完结篇之ART虚拟机crash之谜/oat_dump.png">
+<meta name="twitter:image" content="http://zjutkz.net/images/hotpatch完结篇之ART虚拟机crash之谜/oat_dump.png">
 
 
 
@@ -354,12 +354,12 @@ $(function() {
         <p>最近几个月博客里的文章除了两篇和相关的，其他都或多或少涉及到了hotpatch，写了很多字了，这也算是最后一篇和hotpatch相关的博客，让我们解决上一篇文章中提出的问题吧，hotpatch在ART虚拟机上crash的问题。</p>
 <a id="more"></a>
 <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在看这篇文章之前，如果你对hotpatch的了解不是很多，可以先看我之前写的几篇文章：</p>
-<p><a href="http://zjutkz.net/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/" target="_blank" rel="external">Android中的类加载-查找和在hotpatch上的问题</a></p>
-<p><a href="http://zjutkz.net/2016/07/22/热修复中的资源修复/" target="_blank" rel="external">热修复中的资源修复</a></p>
-<p><a href="http://zjutkz.net/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/" target="_blank" rel="external">当你准备开发一个热修复框架的时候，你需要了解的一切</a></p>
-<p><a href="http://zjutkz.net/2016/05/15/记一次苦逼的资源逆向分析/" target="_blank" rel="external">记一次苦逼的资源逆向分析</a></p>
-<p><a href="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" target="_blank" rel="external">从Instant-Run出发，谈谈Android上的热修复</a></p>
-<p><a href="http://zjutkz.net/2016/05/06/让我们来聊一聊插件化吧/" target="_blank" rel="external">让我们来聊一聊插件化吧</a></p>
+<p><a href="http://zjutkz.net/2016/08/06/Android中的类加载-查找和在hotpatch上的问题/">Android中的类加载-查找和在hotpatch上的问题</a></p>
+<p><a href="http://zjutkz.net/2016/07/22/热修复中的资源修复/">热修复中的资源修复</a></p>
+<p><a href="http://zjutkz.net/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/">当你准备开发一个热修复框架的时候，你需要了解的一切</a></p>
+<p><a href="http://zjutkz.net/2016/05/15/记一次苦逼的资源逆向分析/">记一次苦逼的资源逆向分析</a></p>
+<p><a href="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/">从Instant-Run出发，谈谈Android上的热修复</a></p>
+<p><a href="http://zjutkz.net/2016/05/06/让我们来聊一聊插件化吧/">让我们来聊一聊插件化吧</a></p>
 <h1 id="OAT文件解析"><a href="#OAT文件解析" class="headerlink" title="OAT文件解析"></a>OAT文件解析</h1><p>我们知道，在ART虚拟机上，当应用首次安装，或者动态的通过ClassLoader加载一个dex的时候，都会去做一个AOT(Ahead Of Time)操作，在这个操作中，Android系统会使用dex2oat去生成一个oat文件，如果没有指定路径的话(基本都是没有指定的，除非手动加载dex的情况)，那么这个oat文件存放的路径是/data/dalvik-cache 目录下，如果你的手机是ARM的话，就应该在/data/dalvik-cache/arm下，会有一个data@app@[package name]-1@base.apk@classes.dex的文件，虽然这个文件的后缀是.dex，这个它确实就是我们要找的oat文件。我们可以使用dump命令去把它dump出来，具体的命令如下：</p>
 <p>oatdump －－file－name=data@app@[package name]-1@base.apk@classes.dex －－output=dump.txt</p>
 <p>然后就可以愉快的使用adb pull把对应的dump.txt拉取到你想到存放的路径下了。</p>
@@ -482,7 +482,7 @@ $(function() {
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/"
-           data-title="hotpatch完结篇之ART虚拟机crash之谜" data-url="http://yoursite.com/2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/">
+           data-title="hotpatch完结篇之ART虚拟机crash之谜" data-url="http://zjutkz.net/2016/08/25/hotpatch完结篇之ART虚拟机crash之谜/">
       </div>
     
   </div>
@@ -527,7 +527,7 @@ $(function() {
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -537,7 +537,7 @@ $(function() {
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">21</span>
+                <span class="site-state-item-count">22</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
