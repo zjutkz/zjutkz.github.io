@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zjutkz.net/"/>
-  <updated>2017-09-11T11:42:00.000Z</updated>
+  <updated>2017-09-11T11:46:35.000Z</updated>
   <id>http://zjutkz.net/</id>
   
   <author>
@@ -19,8 +19,8 @@
     <title>一个小技巧——使用ContentProvider初始化你的Library</title>
     <link href="http://zjutkz.net/2017/09/11/%E4%B8%80%E4%B8%AA%E5%B0%8F%E6%8A%80%E5%B7%A7%E2%80%94%E2%80%94%E4%BD%BF%E7%94%A8ContentProvider%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BD%A0%E7%9A%84Library/"/>
     <id>http://zjutkz.net/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/</id>
-    <published>2017-09-11T11:13:19.000Z</published>
-    <updated>2017-09-11T11:42:00.000Z</updated>
+    <published>2017-09-11T11:45:33.000Z</published>
+    <updated>2017-09-11T11:46:35.000Z</updated>
     
     <content type="html">&lt;p&gt;好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。&lt;/p&gt;
 &lt;p&gt;这两天项目里用到了Google新开源的&lt;a href=&quot;https://developer.android.google.cn/reference/android/arch/lifecycle/package-summary.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Lifecycle组件&lt;/a&gt;，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecycle有一个值得我们学习的优点——就是我题目中说的，使用ContentProvider初始化某一个Library，碰巧今晚有一点多于的时间，就决定写博客记录一下。&lt;/p&gt;
@@ -29,8 +29,7 @@
 &lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onCreate&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onCreate();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    MyLib.init(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
 &lt;p&gt;通过init方法传递一个Application进去并持有它。&lt;/p&gt;
 &lt;p&gt;这样做没什么错，但是在我看来是不太好的。一方面如果使用者忘记初始化它了，很可能会出现NPE(我之前就犯过这种错误，简直想撞墙)；另一方面，当你需要初始化十几二十个库的时候，代码就会变得比较庞大了。&lt;/p&gt;
-&lt;p&gt;#其他方式&lt;/p&gt;
-&lt;p&gt;但是如果你使用过Lifecycle或者Firebase，你会发现你根本不用写哪怕一行的初始化代码就可以使用它，那么它们是怎么做的呢？&lt;/p&gt;
+&lt;h1 id=&quot;其他方式&quot;&gt;&lt;a href=&quot;#其他方式&quot; class=&quot;headerlink&quot; title=&quot;其他方式&quot;&gt;&lt;/a&gt;其他方式&lt;/h1&gt;&lt;p&gt;但是如果你使用过Lifecycle或者Firebase，你会发现你根本不用写哪怕一行的初始化代码就可以使用它，那么它们是怎么做的呢？&lt;/p&gt;
 &lt;p&gt;以Lifecycle为例：&lt;/p&gt;
 &lt;p&gt;我们去看Lifecycle的Manifest，其中会注册一个ContentProvider：&lt;/p&gt;
 &lt;figure class=&quot;highlight xml&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;provider&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;attr&quot;&gt;android:name&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;android.arch.lifecycle.LifecycleRuntimeTrojanProvider&quot;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;attr&quot;&gt;android:authorities&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;com.vdian.tuwen.lifecycle-trojan&quot;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;attr&quot;&gt;android:exported&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;false&quot;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;attr&quot;&gt;android:multiprocess&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;true&quot;&lt;/span&gt; /&amp;gt;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
