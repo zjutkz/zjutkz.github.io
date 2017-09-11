@@ -59,19 +59,19 @@
 
 
 
-<meta name="description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。
-这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecyc">
+<meta name="description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章，不想重复造轮子
+这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecycl">
 <meta property="og:type" content="article">
 <meta property="og:title" content="一个小技巧——使用ContentProvider初始化你的Library">
 <meta property="og:url" content="http://zjutkz.net/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。
-这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecyc">
-<meta property="og:updated_time" content="2017-09-11T11:46:35.000Z">
+<meta property="og:description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章，不想重复造轮子
+这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecycl">
+<meta property="og:updated_time" content="2017-09-11T12:03:48.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一个小技巧——使用ContentProvider初始化你的Library">
-<meta name="twitter:description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。
-这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecyc">
+<meta name="twitter:description" content="好久好久好久没有写博客了，一来是是因为最近比较忙，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章，不想重复造轮子
+这两天项目里用到了Google新开源的Lifecycle组件，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecycl">
 
 
 
@@ -349,8 +349,8 @@ $(function() {
       
 
       
-        <p>好久好久好久没有写博客了，一来是是因为最近比较忙，不想重复造轮子，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章。</p>
-<p>这两天项目里用到了Google新开源的<a href="https://developer.android.google.cn/reference/android/arch/lifecycle/package-summary.html" target="_blank" rel="external">Lifecycle组件</a>，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecycle有一个值得我们学习的优点——就是我题目中说的，使用ContentProvider初始化某一个Library，碰巧今晚有一点多于的时间，就决定写博客记录一下。</p>
+        <p>好久好久好久没有写博客了，一来是是因为最近比较忙，二来也是因为这段时间一直在半学习半做服务端的东西，学到的东西都已经有了很不错的文章，不想重复造轮子</p>
+<p>这两天项目里用到了Google新开源的<a href="https://developer.android.google.cn/reference/android/arch/lifecycle/package-summary.html" target="_blank" rel="external">Lifecycle组件</a>，用之前粗粗的看了一下源码了解了它的工作原理，感觉确实是一个有用的库就毫不犹豫的引了进来，今天在测试的时候发现了一个bug，于是详细的看了其中的源码，把bug解决掉之后，觉得Lifecycle有一个值得我们学习的优点——就是我题目中说的，使用ContentProvider初始化某一个Library，碰巧今晚有一点多余的时间，就决定写博客记录一下。</p>
 <a id="more"></a>
 <h1 id="现状"><a href="#现状" class="headerlink" title="现状"></a>现状</h1><p>我们做项目的时候会用到很多库，不论是三方库还是二方库，又或者是自己写的，不可避免的会要去初始化它们，一方面是因为库中会需要使用Context进行一些操作，比如startActivity，又或者getResource；另一方面在初始化的时候我们可以传递一些缺省值给对应的库。如果你的库在初始化的时候只需要传递一个Context(例如前面提到的Lifecycle又或者是Firebase)，那么我们现在会在Application里这么写：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>.onCreate();</span><br><span class="line">    MyLib.init(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
