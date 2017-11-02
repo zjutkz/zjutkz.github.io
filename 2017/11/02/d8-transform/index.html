@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="d8," />
 
 
 
@@ -59,16 +59,18 @@
 
 
 
-<meta name="description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="description" content="AS3.0正式版发布了，随之而来的android gradle plugin3.0.0和gradle4.1也进入了大家的视野，网上目前也有很多关于新功能的讲解和适配，其中我觉得以这篇讲的最好。不过这些新功能中最吸引我的还是aapt2和d8这两个打包编译工具，其中aapt2区长已经写过了，这是传送门，我这边也不再细说。既然如此，就来讲一讲d8吧。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="zjutkz's blog">
-<meta property="og:url" content="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/index.html">
+<meta property="og:title" content="d8&transform">
+<meta property="og:url" content="http://zjutkz.net/2017/11/02/d8-transform/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
-<meta property="og:updated_time" content="2016-10-27T10:32:50.000Z">
+<meta property="og:description" content="AS3.0正式版发布了，随之而来的android gradle plugin3.0.0和gradle4.1也进入了大家的视野，网上目前也有很多关于新功能的讲解和适配，其中我觉得以这篇讲的最好。不过这些新功能中最吸引我的还是aapt2和d8这两个打包编译工具，其中aapt2区长已经写过了，这是传送门，我这边也不再细说。既然如此，就来讲一讲d8吧。">
+<meta property="og:image" content="http://zjutkz.net/images/d8&transform/enabled8.png">
+<meta property="og:updated_time" content="2017-11-02T08:22:03.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="zjutkz's blog">
-<meta name="twitter:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="twitter:title" content="d8&transform">
+<meta name="twitter:description" content="AS3.0正式版发布了，随之而来的android gradle plugin3.0.0和gradle4.1也进入了大家的视野，网上目前也有很多关于新功能的讲解和适配，其中我觉得以这篇讲的最好。不过这些新功能中最吸引我的还是aapt2和d8这两个打包编译工具，其中aapt2区长已经写过了，这是传送门，我这边也不再细说。既然如此，就来讲一讲d8吧。">
+<meta name="twitter:image" content="http://zjutkz.net/images/d8&transform/enabled8.png">
 
 
 
@@ -86,7 +88,7 @@
   };
 </script>
 
-  <title>  | zjutkz's blog </title>
+  <title> d8&transform | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +293,7 @@ $(function() {
             
             
               
-                
+                d8&transform
               
             
           </h1>
@@ -303,8 +305,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-05-10T16:43:31+08:00" content="2016-05-10">
-              2016-05-10
+            <time itemprop="dateCreated" datetime="2017-11-02T16:21:42+08:00" content="2017-11-02">
+              2017-11-02
             </time>
           </span>
 
@@ -314,8 +316,8 @@ $(function() {
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" itemprop="commentsCount"></span>
+                <a href="/2017/11/02/d8-transform/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/11/02/d8-transform/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -325,7 +327,7 @@ $(function() {
 
           
           
-             <span id="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" class="leancloud_visitors" data-flag-title="">
+             <span id="/2017/11/02/d8-transform/" class="leancloud_visitors" data-flag-title="d8&transform">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -346,7 +348,37 @@ $(function() {
       
 
       
-        <p>由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到<a href="http://gold.xitu.io/entry/5731f50ef38c840067dcce48" target="_blank" rel="external">稀土掘金上的转载文章</a>，谢谢大家！</p>
+        <p>AS3.0正式版发布了，随之而来的android gradle plugin3.0.0和gradle4.1也进入了大家的视野，网上目前也有很多关于新功能的讲解和适配，其中我觉得以<a href="http://drakeet.me/android-studio-and-gradle-3-0-guide/" target="_blank" rel="external">这篇讲的最好</a>。不过这些新功能中最吸引我的还是aapt2和d8这两个打包编译工具，其中aapt2区长已经写过了，<a href="http://fucknmb.com/2017/10/31/aapt2%E8%B5%84%E6%BA%90compile%E8%BF%87%E7%A8%8B/?from=timeline" target="_blank" rel="external">这是传送门</a>，我这边也不再细说。既然如此，就来讲一讲d8吧。</p>
+<a id="more"></a>
+<h1 id="d8是什么"><a href="#d8是什么" class="headerlink" title="d8是什么"></a>d8是什么</h1><p>对于d8是什么，官网上已经有了很好的叙述，<a href="https://android-developers.googleblog.com/2017/08/next-generation-dex-compiler-now-in.html" target="_blank" rel="external">传送门在这</a>，简单来说，就是一个google官方提供的新一代dex编译器，用来代替之前的dx工具。google这样做的目的就是为了减少编译时间，降低最终apk包的大小，和之前的jack的设想是一样的。</p>
+<h1 id="d8怎么用"><a href="#d8怎么用" class="headerlink" title="d8怎么用"></a>d8怎么用</h1><p>首先，需要将AS升级到3.0，android gradle plugin升级到3.0.0，以及gradle wrapper中将gradle升级到4.1。</p>
+<p>然后在工程下的gradle.properties文件中加上android.enableD8=true这句话。<img src="/images/d8&amp;transform/enabled8.png" alt="enabled8"></p>
+<p>然后你会发现原来的DexTransform就不见了，取而代之的是DexArchiveBuilderTransform这个transform(DesugarTransform等不在这次的讨论范围之列)。然后你就可以用d8直接构建你的app了。</p>
+<h1 id="d8-amp-transform"><a href="#d8-amp-transform" class="headerlink" title="d8&amp;transform"></a>d8&amp;transform</h1><p>这篇文章的标题是d8&amp;transform，讲完了d8，我们来说一说transform，这个目前被运用最广的gradle plugin api。</p>
+<p>众所周知，目前很多字节码注入的gradle插件都是基于transform api的，具体的操作就是获取input数据(各种class文件)，然后通过字节码操作工具(asm,javassist等)修改字节码，然后放到指定的output目录下，具体的案例可以参考<a href="http://blog.csdn.net/sbsujjbcy/article/details/50839263" target="_blank" rel="external">这篇文章</a>。</p>
+<p>但是大家有没有想过，我们自定义的transform是怎么注册的？和系统的transform注册的时机又有什么不同呢？</p>
+<p>这部分带来在TaskManager类的createPostCompilationTasks中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">createPostCompilationTasks</span><span class="params">(TaskFactory tasks, VariantScope variantScope)</span> </span>&#123;</span><br><span class="line">        </span><br><span class="line">  		......</span><br><span class="line">          </span><br><span class="line">        List&lt;Transform&gt; customTransforms = extension.getTransforms();</span><br><span class="line">        List&lt;List&lt;Object&gt;&gt; customTransformsDependencies = extension.getTransformsDependencies();</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> count = customTransforms.size(); i &lt; count; ++i) &#123;</span><br><span class="line">            Transform transform = (Transform)customTransforms.get(i);</span><br><span class="line">            List&lt;Object&gt; deps = (List)customTransformsDependencies.get(i);</span><br><span class="line">            transformManager.addTransform(tasks, variantScope, transform).ifPresent((t) -&gt; 		   &#123;</span><br><span class="line">                <span class="keyword">if</span>(!deps.isEmpty()) &#123;</span><br><span class="line">                    t.dependsOn(tasks, deps);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span>(transform.getScopes().isEmpty()) &#123;</span><br><span class="line">                    variantScope.getAssembleTask().dependsOn(tasks, t);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">  </span><br><span class="line">  		......</span><br><span class="line">          </span><br><span class="line">        <span class="keyword">this</span>.maybeCreateJavaCodeShrinkerTransform(tasks, variantScope);</span><br><span class="line">        <span class="keyword">this</span>.maybeCreateResourcesShrinkerTransform(tasks, variantScope);</span><br><span class="line">        </span><br><span class="line">  		......</span><br><span class="line">  </span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">this</span>.usingIncrementalDexing(variantScope)) &#123;</span><br><span class="line">            <span class="keyword">this</span>.createNewDexTasks(tasks, variantScope, (AndroidTask)multiDexClassListTask.orElse((Object)<span class="keyword">null</span>), dexingType);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.createDexTasks(tasks, variantScope, (AndroidTask)multiDexClassListTask.orElse((Object)<span class="keyword">null</span>), dexingType);</span><br><span class="line">        &#125;</span><br><span class="line">  </span><br><span class="line">  		......</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法的调用时机是在javaCompile，也就是javac之后，所以我们拿到的所有input类型都是class文件，具体步骤就是：</p>
+<p>(1)获取我们所有的自定义transform和对应的依赖关系，注册到TransformManager中，可以看到这里是遍历了列表，所以我们在apply对应的插件的时候的顺序就是这里添加的顺序。</p>
+<p>其中TransformManager的注册方法中做了一下操作：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//根据tranform生成对应的name</span></span><br><span class="line">String taskName = scope.getTaskName(getTaskNamePrefix(transform));</span><br><span class="line"></span><br><span class="line"><span class="comment">//将transform包装成AndroidTask</span></span><br><span class="line">AndroidTask&lt;TransformTask&gt; task = <span class="keyword">this</span>.taskRegistry.create(taskFactory, <span class="keyword">new</span> ConfigAction(scope.getFullVariantName(), taskName, transform, inputStreams, referencedStreams, outputStream, <span class="keyword">this</span>.recorder, callback));</span><br></pre></td></tr></table></figure>
+<p>(2)做混淆相关的操作，也就是注册ProGuardTransform和ShrinkResourcesTransform。</p>
+<p>(3)做dex的相关操作。</p>
+<p>第三步里面我们重点来看第三步。</p>
+<p>首先看下判断条件：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">usingIncrementalDexing</span><span class="params">(VariantScope variantScope)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> !<span class="keyword">this</span>.projectOptions.get(BooleanOption.ENABLE_DEX_ARCHIVE)?<span class="keyword">false</span>:(((CoreBuildType)variantScope.getVariantConfiguration().getBuildType()).isDebuggable()?<span class="keyword">true</span>:<span class="keyword">this</span>.projectOptions.get(BooleanOption.ENABLE_D8));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">ENABLE_DEX_ARCHIVE(<span class="string">"android.useDexArchive"</span>, <span class="keyword">true</span>),</span><br><span class="line">......</span><br><span class="line">ENABLE_D8(<span class="string">"android.enableD8"</span>, <span class="keyword">false</span>),</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<p>上面两个值就是可以通过gradle.properties来修改的，其中useDexArchive默认为true，enableD8默认为false。</p>
+<p>当然如果我们的debuggable是true，这个条件一样是true。</p>
+<p>而createNewDexTasks方法和createDexTasks方法做的就是生成DexArchiveBuilderTransform和DexTransform然后进行注册。</p>
+<p>而在DexArchiveBuilderTransform中会判断dexer的类型去创建D8DexBuilder或者DxDexBuilder</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> DexArchiveBuilder <span class="title">getDexArchiveBuilder</span><span class="params">(<span class="keyword">int</span> minSdkVersion, List&lt;String&gt; dexAdditionalParameters, <span class="keyword">int</span> inBufferSize, <span class="keyword">int</span> outBufferSize, DexerTool dexer, <span class="keyword">boolean</span> isDebuggable, OutputStream outStream, OutputStream errStream)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    DexArchiveBuilder dexArchiveBuilder;</span><br><span class="line">    <span class="keyword">switch</span>(<span class="keyword">null</span>.$SwitchMap$com$android$builder$dexing$DexerTool[dexer.ordinal()]) &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">        <span class="keyword">boolean</span> optimizedDex = !dexAdditionalParameters.contains(<span class="string">"--no-optimize"</span>);</span><br><span class="line">        DxContext dxContext = <span class="keyword">new</span> DxContext(outStream, errStream);</span><br><span class="line">        DexArchiveBuilderConfig config = <span class="keyword">new</span> DexArchiveBuilderConfig(dxContext, optimizedDex, inBufferSize, minSdkVersion, DexerTool.DX, outBufferSize, DexArchiveBuilderCacheHandler.isJumboModeEnabledForDx());</span><br><span class="line">        dexArchiveBuilder = DexArchiveBuilder.createDxDexBuilder(config);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">        dexArchiveBuilder = DexArchiveBuilder.createD8DexBuilder(minSdkVersion, isDebuggable);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> AssertionError(<span class="string">"Unknown dexer type: "</span> + dexer.name());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> dexArchiveBuilder;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个dexer是通过构造函数传进去的，也就是在TaskManager中的createNewDexTasks方法中生成的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DexArchiveBuilderTransform preDexTransform = <span class="keyword">new</span> DexArchiveBuilderTransform((DexOptions)dexOptions, variantScope.getGlobalScope().getAndroidBuilder().getErrorReporter(), userLevelCache, variantScope.getMinSdkVersion().getFeatureLevel(), variantScope.getDexer(), <span class="keyword">this</span>.projectOptions.get(BooleanOption.ENABLE_GRADLE_WORKERS), <span class="keyword">this</span>.projectOptions.get(IntegerOption.DEXING_READ_BUFFER_SIZE), <span class="keyword">this</span>.projectOptions.get(IntegerOption.DEXING_WRITE_BUFFER_SIZE), ((CoreBuildType)variantScope.getVariantConfiguration().getBuildType()).isDebuggable());</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> DexerTool <span class="title">getDexer</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.globalScope.getProjectOptions().get(BooleanOption.ENABLE_D8)?DexerTool.D8:DexerTool.DX;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很清楚，就是通过gradleProperties中的android.enabled8来判断是d8模式还是dx模式。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>这篇文章之后简单的了解完了d8是什么，怎么用以及整体的注册流程，具体的实现流程会放在之后讲，因为我也才刚刚开始学习= =</p>
 
       
     </div>
@@ -359,22 +391,24 @@ $(function() {
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/d8/" rel="tag">#d8</a>
+          
+        </div>
+      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/05/06/让我们来聊一聊插件化吧/" rel="next" title="让我们来聊一聊插件化吧">
-                <i class="fa fa-chevron-left"></i> 让我们来聊一聊插件化吧
+              <a href="/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/" rel="next" title="一个小技巧——使用ContentProvider初始化你的Library">
+                <i class="fa fa-chevron-left"></i> 一个小技巧——使用ContentProvider初始化你的Library
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/05/15/记一次苦逼的资源逆向分析/" rel="prev" title="记一次苦逼的资源逆向分析">
-                记一次苦逼的资源逆向分析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -400,8 +434,8 @@ $(function() {
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2016/05/10/从Instant-Run出发，谈谈Android上的热修复/"
-           data-title="" data-url="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/">
+      <div class="ds-thread" data-thread-key="2017/11/02/d8-transform/"
+           data-title="d8&transform" data-url="http://zjutkz.net/2017/11/02/d8-transform/">
       </div>
     
   </div>
@@ -497,7 +531,7 @@ $(function() {
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#d8是什么"><span class="nav-number">1.</span> <span class="nav-text">d8是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#d8怎么用"><span class="nav-number">2.</span> <span class="nav-text">d8怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#d8-amp-transform"><span class="nav-number">3.</span> <span class="nav-text">d8&transform</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">4.</span> <span class="nav-text">后记</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
