@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zjutkz.net/"/>
-  <updated>2017-11-02T14:35:52.000Z</updated>
+  <updated>2017-12-31T17:17:36.000Z</updated>
   <id>http://zjutkz.net/</id>
   
   <author>
@@ -14,6 +14,54 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>you say it best,when you say nothing at all</title>
+    <link href="http://zjutkz.net/2018/01/01/you-say-it-best-when-you-say-nothing-at-all/"/>
+    <id>http://zjutkz.net/2018/01/01/you-say-it-best-when-you-say-nothing-at-all/</id>
+    <published>2017-12-31T16:11:30.000Z</published>
+    <updated>2017-12-31T17:17:36.000Z</updated>
+    
+    <content type="html">&lt;p&gt;好久好久没写博客了，恰逢2018的到来，于是顺理成章的催生出了这一篇年终总结，也算是我博客里的第一篇非技术性文章的。&lt;/p&gt;
+&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
+&lt;p&gt;回头看看2017年年初给自己定下的目标基本都实现了。这个其实没什么所谓的“惊喜”，因为我这个人啊，睡不着觉的时候就喜欢瞎规划，从规划未来到规划明天做什么，这一年基本都是这么过来的，所以我很清楚我都做了什么，了解自己的感觉挺不错的，实现目标的感觉更是好。&lt;/p&gt;
+&lt;p&gt;#工作上&lt;/p&gt;
+&lt;p&gt;这一年工作上负责了如鱼这个新App的研发，包括一些产品和运营上的决策。虽然之前也负责过其他app，但是从零开始做还是头一次，一开始遇到了非常多的问题，一度产生了自我怀疑，还记得第一次发版的时候，各种乱七八糟的问题都来了，不得不硬着头皮和同事说能不能把这个版本撤下来，但是觉得自己好菜啊，什么都不会，还好撑过来了。目前如鱼也是一步一个脚印正在朝好的方向发展，dau，日均pv等在慢慢上升中，希望新的一年能做得更好。&lt;/p&gt;
+&lt;p&gt;除了如鱼还要就是负责了公司的账号系统，原来是杭州的pm，现在京杭合并之后也算是副组长。真的很感谢这个小组所有同事的付出。楠哥，沙舟，说实话我和他们比就是个菜鸟，很多时候都需要靠他们来带着我走，一开始我知道自己要当pm的时候又激动又担心，说实话账号系统是一个非常严肃的东西，怕自己做不好，慢慢的跟着组里的人做，学着做一个pm该做的事，到现在京杭合并之后的副组长，担心已经渐渐地没有了，更多的是习惯，相信自己可以做的更好。&lt;/p&gt;
+&lt;p&gt;对于工作，这一年就是在自我怀疑，自我否定以及丧气中度过的。有时候觉得自己撞到了墙，不过好在没有倒下就是了。&lt;/p&gt;
+&lt;p&gt;#技术上&lt;/p&gt;
+&lt;p&gt;和去年不同的是，这一年把更多的时间花在了业务上，去年钻研各种东西的时候觉得自己的技术涨的很快，博客也是一周一更甚至两三更，感觉自己找回了最初学android时候的热情，每天可以看代码到半夜1 2点。这一年由于负责了如鱼的缘故，基本每天都在讨论业务的发展，加班也变得多了起来，没那么多时间去钻研了，写博客也少了，不过毕竟一切技术都是服从于业务的，这也没什么好抱怨的。&lt;/p&gt;
+&lt;p&gt;每天中午或者是回到家还是会学点自己想学的东西，python，java-web是今年学的最多的，本来说想着学h5的，不过还是觉得python好玩，java-web则是因为工作的关系，需要接触。另外就是由于负责了团队的发展，学习了很多的优化，git hook，gradle插件，idea插件等等，反正就是怎么让业务迭代舒服怎么来。至于android，很惭愧的这一年真的没怎么学了，相比于去年各种研究插件化，hotpatch，rn/weex等等，今年基本就是温故而知新，偶尔看看新的框架。&lt;/p&gt;
+&lt;p&gt;新的一年，希望自己在java-web上的水平能达到p6的水准，把更多的精力投入到开发流程优化上，另外对于android，每当失去学习的热情的时候，想想当初是怎么因为一个好的idea就敲代码通宵实现的，感觉自己还是可以再战10年的。&lt;/p&gt;
+&lt;p&gt;#个人成长&lt;/p&gt;
+&lt;p&gt;今年比较开心的是升到了p6，也算是对自己一年努力的肯定吧。晋升面试的时候，被几个tl问的比较狼狈，出来坐在位子上回想自己哪里回答的不够好，感觉回到了阿里一面和hr面的那几个晚上，不过好在结果不错。&lt;/p&gt;
+&lt;p&gt;另外就是因为写博客的缘故，认识了很多原来只能仰望的人。也有了教父，晓峰，秋哥，涛哥等人的微信，真的很开心能得到他们的肯定，印象比较深的还是hongyang在邮件里说“你的技术不错”，说实话刚学android的时候就是看他和郭神的博客，能从他嘴里听到这句话，还是挺兴奋的。&lt;/p&gt;
+&lt;p&gt;接下去还是想扩大自己的影响力，目前在Github上java榜里杭州排40，中国排440，希望自己在新一年里能进杭州的前十，中国的前一百。&lt;/p&gt;
+&lt;p&gt;#感谢&lt;/p&gt;
+&lt;p&gt;写博客的时候都会有一个致谢，目的是感谢那些作者和文章，毕竟我是参考了他们才能写出自己的文章的。这里也一样。&lt;/p&gt;
+&lt;p&gt;感谢沙舟，存翰，区长，涛哥等公司里的伙伴，平日里在我犯错的时候提醒我该怎么做。&lt;/p&gt;
+&lt;p&gt;感谢邓总，晓峰，教父等网友，虽然我们没见过面，虽然有时候我问的问题挺蠢的，不过还是谢谢你们的耐心解答了。&lt;/p&gt;
+&lt;p&gt;谢谢我的朋友们，如果没有你们啊，我真的可能会在某次撞墙之后倒下的。&lt;/p&gt;
+&lt;p&gt;谢谢小鹅，当然 I Love U too 啦~&lt;/p&gt;
+&lt;p&gt;谢谢爸妈，虽然你们身体不好，不过有我就够了。嗯…这些话当面就变成了“帮我削个苹果，倒杯水，记得把门关上”。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The smile on your face lets me know that you need me &lt;/p&gt;
+&lt;p&gt;There’s a truth in your eyes saying you’ll never leave me &lt;/p&gt;
+&lt;p&gt;The touch of your hand says you’ll catch me wherever I fall &lt;/p&gt;
+&lt;p&gt;You say it best’ when you say nothing at all &lt;/p&gt;
+&lt;/blockquote&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;好久好久没写博客了，恰逢2018的到来，于是顺理成章的催生出了这一篇年终总结，也算是我博客里的第一篇非技术性文章的。&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="总结" scheme="http://zjutkz.net/tags/%E6%80%BB%E7%BB%93/"/>
+    
+  </entry>
   
   <entry>
     <title>d8&amp;transform</title>
@@ -1428,25 +1476,6 @@
     
     
       <category term="aapt 资源逆向" scheme="http://zjutkz.net/tags/aapt-%E8%B5%84%E6%BA%90%E9%80%86%E5%90%91/"/>
-    
-  </entry>
-  
-  <entry>
-    <title></title>
-    <link href="http://zjutkz.net/2016/05/10/%E4%BB%8EInstant-Run%E5%87%BA%E5%8F%91%EF%BC%8C%E8%B0%88%E8%B0%88Android%E4%B8%8A%E7%9A%84%E7%83%AD%E4%BF%AE%E5%A4%8D/"/>
-    <id>http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/</id>
-    <published>2016-05-10T08:43:31.000Z</published>
-    <updated>2016-10-27T10:32:50.000Z</updated>
-    
-    <content type="html">&lt;p&gt;由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到&lt;a href=&quot;http://gold.xitu.io/entry/5731f50ef38c840067dcce48&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;稀土掘金上的转载文章&lt;/a&gt;，谢谢大家！&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到&lt;a href=&quot;http://gold.xitu.io/entry/5731f50ef38c840067dcce
-    
-    </summary>
-    
     
   </entry>
   
