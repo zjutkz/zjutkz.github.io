@@ -1,0 +1,919 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="ClassLoader," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="ClassLoader对于写Java的同学来说再熟悉不过了，在AndroidO中新增了一种ClassLoader名叫InMemoryDexClassLoader的ClassLoader，从名字上看像是从内存中直接加载class的意思，为了探究其原理，这几天在空余时间翻了翻它的源码，写成文章记录一下。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="InMemoryDexClassLoader探究">
+<meta property="og:url" content="http://zjutkz.net/2018/01/25/InMemoryDexClassLoader源码探究/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="ClassLoader对于写Java的同学来说再熟悉不过了，在AndroidO中新增了一种ClassLoader名叫InMemoryDexClassLoader的ClassLoader，从名字上看像是从内存中直接加载class的意思，为了探究其原理，这几天在空余时间翻了翻它的源码，写成文章记录一下。">
+<meta property="og:updated_time" content="2018-01-25T13:28:02.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="InMemoryDexClassLoader探究">
+<meta name="twitter:description" content="ClassLoader对于写Java的同学来说再熟悉不过了，在AndroidO中新增了一种ClassLoader名叫InMemoryDexClassLoader的ClassLoader，从名字上看像是从内存中直接加载class的意思，为了探究其原理，这几天在空余时间翻了翻它的源码，写成文章记录一下。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> InMemoryDexClassLoader探究 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                InMemoryDexClassLoader探究
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-01-25T20:39:48+08:00" content="2018-01-25">
+              2018-01-25
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/01/25/InMemoryDexClassLoader源码探究/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/01/25/InMemoryDexClassLoader源码探究/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/01/25/InMemoryDexClassLoader源码探究/" class="leancloud_visitors" data-flag-title="InMemoryDexClassLoader探究">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>ClassLoader对于写Java的同学来说再熟悉不过了，在AndroidO中新增了一种ClassLoader名叫InMemoryDexClassLoader的ClassLoader，从名字上看像是从内存中直接加载class的意思，为了探究其原理，这几天在空余时间翻了翻它的源码，写成文章记录一下。</p>
+<a id="more"></a>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><p>首先我们在来看一下这个InMemoryDexClassLoader的源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">InMemoryDexClassLoader</span> <span class="keyword">extends</span> <span class="title">BaseDexClassLoader</span> </span>&#123;</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Create an in-memory DEX class loader with the given dex buffers.</span><br><span class="line">     *</span><br><span class="line">     * <span class="doctag">@param</span> dexBuffers array of buffers containing DEX files between</span><br><span class="line">     *                       &lt;tt&gt;buffer.position()&lt;/tt&gt; and &lt;tt&gt;buffer.limit()&lt;/tt&gt;.</span><br><span class="line">     * <span class="doctag">@param</span> parent the parent class loader for delegation.</span><br><span class="line">     * <span class="doctag">@hide</span></span><br><span class="line">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">InMemoryDexClassLoader</span><span class="params">(ByteBuffer[] dexBuffers, ClassLoader parent)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(dexBuffers, parent);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * Creates a new in-memory DEX class loader.</span><br><span class="line">     *</span><br><span class="line">     * <span class="doctag">@param</span> dexBuffer buffer containing DEX file contents between</span><br><span class="line">     *                       &lt;tt&gt;buffer.position()&lt;/tt&gt; and &lt;tt&gt;buffer.limit()&lt;/tt&gt;.</span><br><span class="line">     * <span class="doctag">@param</span> parent the parent class loader for delegation.</span><br><span class="line">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">InMemoryDexClassLoader</span><span class="params">(ByteBuffer dexBuffer, ClassLoader parent)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(<span class="keyword">new</span> ByteBuffer[] &#123; dexBuffer &#125;, parent);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>非常的简短，它是BaseDexClassLoader的子类，从构造函数中可以看出，它确实是用来加载内存中的dex文件的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">BaseDexClassLoader</span><span class="params">(ByteBuffer[] dexFiles, ClassLoader parent)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// TODO We should support giving this a library search path maybe.</span></span><br><span class="line">    <span class="keyword">super</span>(parent);</span><br><span class="line">    <span class="keyword">this</span>.pathList = <span class="keyword">new</span> DexPathList(<span class="keyword">this</span>, dexFiles);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下去看它的父类的构造函数，其中直接用ByteBuffer数组构造了一个DexPathList。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">DexPathList</span><span class="params">(ClassLoader definingContext, ByteBuffer[] dexFiles)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (definingContext == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"definingContext == null"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (dexFiles == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"dexFiles == null"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (Arrays.stream(dexFiles).anyMatch(v -&gt; v == <span class="keyword">null</span>)) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"dexFiles contains a null Buffer!"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.definingContext = definingContext;</span><br><span class="line">    <span class="comment">// TODO It might be useful to let in-memory dex-paths have native libraries.</span></span><br><span class="line">    <span class="keyword">this</span>.nativeLibraryDirectories = Collections.emptyList();</span><br><span class="line">    <span class="keyword">this</span>.systemNativeLibraryDirectories =</span><br><span class="line">            splitPaths(System.getProperty(<span class="string">"java.library.path"</span>), <span class="keyword">true</span>);</span><br><span class="line">    <span class="keyword">this</span>.nativeLibraryPathElements = makePathElements(<span class="keyword">this</span>.systemNativeLibraryDirectories);</span><br><span class="line"></span><br><span class="line">    ArrayList&lt;IOException&gt; suppressedExceptions = <span class="keyword">new</span> ArrayList&lt;IOException&gt;();</span><br><span class="line">    <span class="keyword">this</span>.dexElements = makeInMemoryDexElements(dexFiles, suppressedExceptions);</span><br><span class="line">    <span class="keyword">if</span> (suppressedExceptions.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.dexElementsSuppressedExceptions =</span><br><span class="line">                suppressedExceptions.toArray(<span class="keyword">new</span> IOException[suppressedExceptions.size()]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        dexElementsSuppressedExceptions = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>DexPathList的构造函数中，调用了makeInMemoryDexElements方法去创建Element数组，这里可以对比看一下DexClassLoader的构造方式。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> Element[] makeInMemoryDexElements(ByteBuffer[] dexFiles,</span><br><span class="line">                                                 List&lt;IOException&gt; suppressedExceptions) &#123;</span><br><span class="line">    Element[] elements = <span class="keyword">new</span> Element[dexFiles.length];</span><br><span class="line">    <span class="keyword">int</span> elementPos = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (ByteBuffer buf : dexFiles) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            DexFile dex = <span class="keyword">new</span> DexFile(buf);</span><br><span class="line">            elements[elementPos++] = <span class="keyword">new</span> Element(dex);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException suppressed) &#123;</span><br><span class="line">            System.logE(<span class="string">"Unable to load dex file: "</span> + buf, suppressed);</span><br><span class="line">            suppressedExceptions.add(suppressed);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (elementPos != elements.length) &#123;</span><br><span class="line">        elements = Arrays.copyOf(elements, elementPos);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> elements;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很简单，直接构造了DexFile，而在DexFile的构造函数中，调用了createCookieWithArray方法，走到了native层。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> jobject <span class="title">DexFile_createCookieWithArray</span><span class="params">(JNIEnv* env,</span><br><span class="line">                                             jclass,</span><br><span class="line">                                             jbyteArray buffer,</span><br><span class="line">                                             jint start,</span><br><span class="line">                                             jint end)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;MemMap&gt; dex_mem_map(AllocateDexMemoryMap(env, start, end));</span><br><span class="line">    <span class="keyword">if</span> (dex_mem_map == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        DCHECK(Thread::Current()-&gt;IsExceptionPending());</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> destination = <span class="keyword">reinterpret_cast</span>&lt;jbyte*&gt;(dex_mem_map.get()-&gt;Begin());</span><br><span class="line">    env-&gt;GetByteArrayRegion(buffer, start, end - start, destination);</span><br><span class="line">    <span class="keyword">return</span> CreateSingleDexFileCookie(env, <span class="built_in">std</span>::move(dex_mem_map));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在该方法中，将java的buffer转成了native层的一个MemoryMap，并且通过CreateSingleDexFileCookie去创建对应的cookie。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> jobject <span class="title">CreateSingleDexFileCookie</span><span class="params">(JNIEnv* env, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;MemMap&gt; data)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;<span class="keyword">const</span> DexFile&gt; dex_file(CreateDexFile(env, <span class="built_in">std</span>::move(data)));</span><br><span class="line">    <span class="keyword">if</span> (dex_file.get() == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        DCHECK(env-&gt;ExceptionCheck());</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;<span class="keyword">const</span> DexFile&gt;&gt; dex_files;</span><br><span class="line">    dex_files.push_back(<span class="built_in">std</span>::move(dex_file));</span><br><span class="line">    <span class="keyword">return</span> ConvertDexFilesToJavaArray(env, <span class="literal">nullptr</span>, dex_files);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法里调用了CreateDexFile去创建一个DexFile，并且调用ConvertDexFilesToJavaArray将其转换成java层需要的cookie。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">const</span> DexFile* <span class="title">CreateDexFile</span><span class="params">(JNIEnv* env, <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;MemMap&gt; dex_mem_map)</span> </span>&#123;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">string</span> location = StringPrintf(<span class="string">"Anonymous-DexFile@%p-%p"</span>,</span><br><span class="line">        dex_mem_map-&gt;Begin(),</span><br><span class="line">        dex_mem_map-&gt;End());</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">string</span> error_message;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;<span class="keyword">const</span> DexFile&gt; dex_file(DexFile::Open(location,<span class="number">0</span>,<span class="built_in">std</span>::move(dex_mem_map),</span><br><span class="line">            <span class="comment">/* verify */</span> <span class="literal">true</span>,</span><br><span class="line">            <span class="comment">/* verify_location */</span> <span class="literal">true</span>,</span><br><span class="line">            &amp;error_message));</span><br><span class="line">        <span class="keyword">if</span> (dex_file == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">            <span class="function">ScopedObjectAccess <span class="title">soa</span><span class="params">(env)</span></span>;</span><br><span class="line">            ThrowWrappedIOException(<span class="string">"%s"</span>, error_message.c_str());</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!dex_file-&gt;DisableWrite()) &#123;</span><br><span class="line">            <span class="function">ScopedObjectAccess <span class="title">soa</span><span class="params">(env)</span></span>;</span><br><span class="line">            ThrowWrappedIOException(<span class="string">"Failed to make dex file read-only"</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> dex_file.release();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在该方法中，调用了DexFile的Open方法，并且传入了MemoryMap。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">std::unique_ptr&lt;const DexFile&gt; DexFile::Open(const std::string&amp; location,</span><br><span class="line">        uint32_t location_checksum,</span><br><span class="line">        std::unique_ptr&lt;MemMap&gt; map,</span><br><span class="line">        bool verify,</span><br><span class="line">        bool verify_checksum,</span><br><span class="line">        std::string* error_msg) &#123;</span><br><span class="line">        ScopedTrace trace(std::string("Open dex file from mapped-memory ") + location);</span><br><span class="line">        CHECK(map.get() != nullptr);</span><br><span class="line"></span><br><span class="line">        if (map-&gt;Size() &lt; sizeof(DexFile::Header)) &#123;</span><br><span class="line">            *error_msg = StringPrintf(</span><br><span class="line">            "DexFile: failed to open dex file '%s' that is too short to have a header",</span><br><span class="line">            location.c_str());</span><br><span class="line">        return nullptr;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        std::unique_ptr&lt;DexFile&gt; dex_file = OpenCommon(map-&gt;Begin(),</span><br><span class="line">        map-&gt;Size(),</span><br><span class="line">        location,</span><br><span class="line">        location_checksum,</span><br><span class="line">        kNoOatDexFile,</span><br><span class="line">        verify,</span><br><span class="line">        verify_checksum,</span><br><span class="line">        error_msg);</span><br><span class="line">        if (dex_file != nullptr) &#123;</span><br><span class="line">            dex_file-&gt;mem_map_.reset(map.release());</span><br><span class="line">        &#125;</span><br><span class="line">        return dex_file;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Open方法里调用了OpenCommon方法，最终会调用DexFile的构造函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">DexFile::DexFile(<span class="keyword">const</span> <span class="keyword">uint8_t</span>* base,</span><br><span class="line">        <span class="keyword">size_t</span> size,</span><br><span class="line">        <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; location,</span><br><span class="line">        <span class="keyword">uint32_t</span> location_checksum,</span><br><span class="line">        <span class="keyword">const</span> OatDexFile* oat_dex_file)</span><br><span class="line">        : begin_(base),</span><br><span class="line">        size_(size),</span><br><span class="line">        location_(location),</span><br><span class="line">        location_checksum_(location_checksum),</span><br><span class="line">        header_(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> Header*&gt;(base)),</span><br><span class="line">        string_ids_(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> StringId*&gt;(base + header_-&gt;string_ids_off_)),</span><br><span class="line">        type_ids_(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> TypeId*&gt;(base + header_-&gt;type_ids_off_)),</span><br><span class="line">        field_ids_(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> FieldId*&gt;(base + header_-&gt;field_ids_off_)),</span><br><span class="line">        method_ids_(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> MethodId*&gt;(base + header_-&gt;method_ids_off_)),</span><br><span class="line">        proto_ids_(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> ProtoId*&gt;(base + header_-&gt;proto_ids_off_)),</span><br><span class="line">        class_defs_(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">const</span> ClassDef*&gt;(base + header_-&gt;class_defs_off_)),</span><br><span class="line">        method_handles_(<span class="literal">nullptr</span>),</span><br><span class="line">        num_method_handles_(<span class="number">0</span>),</span><br><span class="line">        call_site_ids_(<span class="literal">nullptr</span>),</span><br><span class="line">        num_call_site_ids_(<span class="number">0</span>),</span><br><span class="line">        oat_dex_file_(oat_dex_file) &#123;</span><br><span class="line">        CHECK(begin_ != <span class="literal">nullptr</span>) &lt;&lt; GetLocation();</span><br><span class="line">        CHECK_GT(size_, <span class="number">0U</span>) &lt;&lt; GetLocation();</span><br><span class="line">        <span class="comment">// Check base (=header) alignment.</span></span><br><span class="line">        <span class="comment">// Must be 4-byte aligned to avoid undefined behavior when accessing</span></span><br><span class="line">        <span class="comment">// any of the sections via a pointer.</span></span><br><span class="line">        CHECK_ALIGNED(begin_, <span class="keyword">alignof</span>(Header));</span><br><span class="line"></span><br><span class="line">        InitializeSectionsFromMapList();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里可以非常清晰看到，就是通过Dex的文件格式对其进行内存地址的赋值(对Dex文件格式不熟悉的同学可以去看我的<a href="http://zjutkz.net/2016/10/27/dex%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E5%8F%8A%E5%85%B6%E5%BA%94%E7%94%A8/">这篇文章</a>)，这里有一点值得注意，oat_dex_file这个值，在Open中传的就是kNoOatDexFile，也就是空。回到上面的CreateSingleDexFileCookie方法，最终调用ConvertDexFilesToJavaArray时，oat_file里传的也是null。</p>
+<h1 id="对比DexClassLoader"><a href="#对比DexClassLoader" class="headerlink" title="对比DexClassLoader"></a>对比DexClassLoader</h1><p>那么我们对比一下原来的DexClassLoader，DexClassLoader在Native层调用的函数是openDexFileNative。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> jobject <span class="title">DexFile_openDexFileNative</span><span class="params">(JNIEnv* env,</span><br><span class="line">                                           jclass,</span><br><span class="line">                                           jstring javaSourceName,</span><br><span class="line">                                           jstring javaOutputName ATTRIBUTE_UNUSED,</span><br><span class="line">                                           jint flags ATTRIBUTE_UNUSED,</span><br><span class="line">                                           jobject class_loader,</span><br><span class="line">                                           jobjectArray dex_elements)</span> </span>&#123;</span><br><span class="line">      <span class="function">ScopedUtfChars <span class="title">sourceName</span><span class="params">(env, javaSourceName)</span></span>;</span><br><span class="line">      <span class="keyword">if</span> (sourceName.c_str() == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      Runtime* <span class="keyword">const</span> runtime = Runtime::Current();</span><br><span class="line">      ClassLinker* linker = runtime-&gt;GetClassLinker();</span><br><span class="line">      <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;<span class="keyword">const</span> DexFile&gt;&gt; dex_files;</span><br><span class="line">      <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; error_msgs;</span><br><span class="line"><span class="keyword">const</span> OatFile* oat_file = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line">      dex_files = runtime-&gt;GetOatFileManager().OpenDexFilesFromOat(sourceName.c_str(),</span><br><span class="line">              class_loader,</span><br><span class="line">              dex_elements,</span><br><span class="line">                                                             <span class="comment">/*out*/</span> &amp;oat_file,</span><br><span class="line">                                                             <span class="comment">/*out*/</span> &amp;error_msgs);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (!dex_files.empty()) &#123;</span><br><span class="line">          jlongArray <span class="built_in">array</span> = ConvertDexFilesToJavaArray(env, oat_file, dex_files);</span><br><span class="line">          <span class="keyword">if</span> (<span class="built_in">array</span> == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">              <span class="function">ScopedObjectAccess <span class="title">soa</span><span class="params">(env)</span></span>;</span><br><span class="line">              <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; dex_file : dex_files) &#123;</span><br><span class="line">                  <span class="keyword">if</span> (linker-&gt;IsDexFileRegistered(soa.Self(), *dex_file)) &#123;</span><br><span class="line">                      dex_file.release();</span><br><span class="line">                  &#125;</span><br><span class="line">              &#125;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">return</span> <span class="built_in">array</span>;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="function">ScopedObjectAccess <span class="title">soa</span><span class="params">(env)</span></span>;</span><br><span class="line">          CHECK(!error_msgs.empty());</span><br><span class="line">          <span class="comment">// The most important message is at the end. So set up nesting by going forward, which will</span></span><br><span class="line">          <span class="comment">// wrap the existing exception as a cause for the following one.</span></span><br><span class="line">          <span class="keyword">auto</span> it = error_msgs.begin();</span><br><span class="line">          <span class="keyword">auto</span> itEnd = error_msgs.end();</span><br><span class="line">          <span class="keyword">for</span> ( ; it != itEnd; ++it) &#123;</span><br><span class="line">              ThrowWrappedIOException(<span class="string">"%s"</span>, it-&gt;c_str());</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">      &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中通过OatFileManager的OpenDexFilesFromOat去创建DexFie，而在OpenDexFilesFromOat方法中，会通过oat_file_assistant类的dex2oat的方式创建oat文件。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">bool OatFileAssistant::Dex2Oat(const std::vector&lt;std::string&gt;&amp; args,</span><br><span class="line">    std::string* error_msg) &#123;</span><br><span class="line">    Runtime* runtime = Runtime::Current();</span><br><span class="line">    std::string image_location = ImageLocation();</span><br><span class="line">    if (image_location.empty()) &#123;</span><br><span class="line">        *error_msg = "No image location found for Dex2Oat.";</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::vector&lt;std::string&gt; argv;</span><br><span class="line">    argv.push_back(runtime-&gt;GetCompilerExecutable());</span><br><span class="line">    argv.push_back("--runtime-arg");</span><br><span class="line">    argv.push_back("-classpath");</span><br><span class="line">    argv.push_back("--runtime-arg");</span><br><span class="line">    std::string class_path = runtime-&gt;GetClassPathString();</span><br><span class="line">    if (class_path == "") &#123;</span><br><span class="line">        class_path = OatFile::kSpecialSharedLibrary;</span><br><span class="line">    &#125;</span><br><span class="line">    argv.push_back(class_path);</span><br><span class="line">    if (runtime-&gt;IsJavaDebuggable()) &#123;</span><br><span class="line">        argv.push_back("--debuggable");</span><br><span class="line">    &#125;</span><br><span class="line">    runtime-&gt;AddCurrentRuntimeFeaturesAsDex2OatArguments(&amp;argv);</span><br><span class="line"></span><br><span class="line">    if (!runtime-&gt;IsVerificationEnabled()) &#123;</span><br><span class="line">        argv.push_back("--compiler-filter=verify-none");</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (runtime-&gt;MustRelocateIfPossible()) &#123;</span><br><span class="line">        argv.push_back("--runtime-arg");</span><br><span class="line">        argv.push_back("-Xrelocate");</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        argv.push_back("--runtime-arg");</span><br><span class="line">        argv.push_back("-Xnorelocate");</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (!kIsTargetBuild) &#123;</span><br><span class="line">        argv.push_back("--host");</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    argv.push_back("--boot-image=" + image_location);</span><br><span class="line"></span><br><span class="line">    std::vector&lt;std::string&gt; compiler_options = runtime-&gt;GetCompilerOptions();</span><br><span class="line">    argv.insert(argv.end(), compiler_options.begin(), compiler_options.end());</span><br><span class="line"></span><br><span class="line">    argv.insert(argv.end(), args.begin(), args.end());</span><br><span class="line"></span><br><span class="line">    std::string command_line(android::base::Join(argv, ' '));</span><br><span class="line">    return Exec(argv, error_msg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h1><p>当我们需要用到某个类的时候，native层是通过class_linker的defineClass去解决的，而在defineClass中，通过Dex文件结构去获取其class data区的数据，需要一个索引，我们可以在oat_file这个类中找到获取索引的方法：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> DexFile::ClassDef* OatFile::OatDexFile::FindClassDef(<span class="keyword">const</span> DexFile&amp; dex_file,</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span>* descriptor,</span><br><span class="line">        <span class="keyword">size_t</span> hash) &#123;</span><br><span class="line">        <span class="keyword">const</span> OatFile::OatDexFile* oat_dex_file = dex_file.GetOatDexFile();</span><br><span class="line">        DCHECK_EQ(ComputeModifiedUtf8Hash(descriptor), hash);</span><br><span class="line">        <span class="keyword">if</span> (LIKELY((oat_dex_file != <span class="literal">nullptr</span>) &amp;&amp; (oat_dex_file-&gt;GetTypeLookupTable() != <span class="literal">nullptr</span>))) &#123;</span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">uint32_t</span> class_def_idx = oat_dex_file-&gt;GetTypeLookupTable()-&gt;Lookup(descriptor, hash);</span><br><span class="line">            <span class="keyword">return</span> (class_def_idx != DexFile::kDexNoIndex) ? &amp;dex_file.GetClassDef(class_def_idx) : <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Fast path for rare no class defs case.</span></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">uint32_t</span> num_class_defs = dex_file.NumClassDefs();</span><br><span class="line">        <span class="keyword">if</span> (num_class_defs == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">const</span> DexFile::TypeId* type_id = dex_file.FindTypeId(descriptor);</span><br><span class="line">        <span class="keyword">if</span> (type_id != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">            dex::TypeIndex type_idx = dex_file.GetIndexForTypeId(*type_id);</span><br><span class="line">            <span class="keyword">return</span> dex_file.FindClassDef(type_idx);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里可以清楚的看到，如果一个DexFile中有oat_file，则通过oat_file去查，反之直接利用dex的文件结构去查。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>Google为什么要推出这么一个ClassLoader呢？我的猜想是由于插件化，热修复等技术的兴起，大家都在动态的往ClassLoader里做文章，而这难免会设计到DexFile的操作和dex2oat，这些东西Google都是不希望大家去直接使用的，于是就推出了这个直接在内存中操作dex，避免dex2oat的ClassLoader。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ClassLoader/" rel="tag">#ClassLoader</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/01/you-say-it-best-when-you-say-nothing-at-all/" rel="next" title="you say it best,when you say nothing at all">
+                <i class="fa fa-chevron-left"></i> you say it best,when you say nothing at all
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2018/01/25/InMemoryDexClassLoader源码探究/"
+           data-title="InMemoryDexClassLoader探究" data-url="http://zjutkz.net/2018/01/25/InMemoryDexClassLoader源码探究/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">30</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">25</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#源码分析"><span class="nav-number">1.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#对比DexClassLoader"><span class="nav-number">2.</span> <span class="nav-text">对比DexClassLoader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#类加载"><span class="nav-number">3.</span> <span class="nav-text">类加载</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">4.</span> <span class="nav-text">后记</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
