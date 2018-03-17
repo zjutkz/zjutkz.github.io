@@ -1,0 +1,959 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="dubbo," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="做web开发也有小几个月了，基本就是做做业务上的开发，有空的时候看一些源码，如reids，lombok等，前几天我司前端准备搞一个机遇node的dubbo框架，作为对dubbo和node都有一点点了解的人，被他们拉去一起调试问题，调试过程中发生了比较多的问题，由于没有阅读过dubbo的源码，导致一时不知道如何回答，这周末趁着有时间，走读了一遍，记录下来，以防遗忘。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="dubbo源码学习">
+<meta property="og:url" content="http://zjutkz.net/2018/03/17/dubbo源码学习/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="做web开发也有小几个月了，基本就是做做业务上的开发，有空的时候看一些源码，如reids，lombok等，前几天我司前端准备搞一个机遇node的dubbo框架，作为对dubbo和node都有一点点了解的人，被他们拉去一起调试问题，调试过程中发生了比较多的问题，由于没有阅读过dubbo的源码，导致一时不知道如何回答，这周末趁着有时间，走读了一遍，记录下来，以防遗忘。">
+<meta property="og:updated_time" content="2018-03-17T09:01:56.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="dubbo源码学习">
+<meta name="twitter:description" content="做web开发也有小几个月了，基本就是做做业务上的开发，有空的时候看一些源码，如reids，lombok等，前几天我司前端准备搞一个机遇node的dubbo框架，作为对dubbo和node都有一点点了解的人，被他们拉去一起调试问题，调试过程中发生了比较多的问题，由于没有阅读过dubbo的源码，导致一时不知道如何回答，这周末趁着有时间，走读了一遍，记录下来，以防遗忘。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> dubbo源码学习 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                dubbo源码学习
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-17T15:08:58+08:00" content="2018-03-17">
+              2018-03-17
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/03/17/dubbo源码学习/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/17/dubbo源码学习/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/03/17/dubbo源码学习/" class="leancloud_visitors" data-flag-title="dubbo源码学习">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>做web开发也有小几个月了，基本就是做做业务上的开发，有空的时候看一些源码，如reids，lombok等，前几天我司前端准备搞一个机遇node的dubbo框架，作为对dubbo和node都有一点点了解的人，被他们拉去一起调试问题，调试过程中发生了比较多的问题，由于没有阅读过dubbo的源码，导致一时不知道如何回答，这周末趁着有时间，走读了一遍，记录下来，以防遗忘。</p>
+<a id="more"></a>
+<h1 id="感谢"><a href="#感谢" class="headerlink" title="感谢"></a>感谢</h1><p>还是按照我的个人习惯，感谢放在文章的开头。</p>
+<p><a href="https://blog.insanecoder.top/remote-service-provide-and-reference/" target="_blank" rel="external">远程服务的发布与引用</a></p>
+<p><a href="https://www.jianshu.com/p/60a9263f2ee2" target="_blank" rel="external">dubbo源码解析-服务暴露原理</a></p>
+<p><a href="http://cxis.me/2017/03/21/Dubbo中服务消费者和服务提供者之间的请求和响应过程/" target="_blank" rel="external">Dubbo中服务消费者和服务提供者之间的请求和响应过程</a></p>
+<p>其中强烈推荐第二个作者，是一个系列，看完之后收获很大，真心感谢！</p>
+<h1 id="服务注册"><a href="#服务注册" class="headerlink" title="服务注册"></a>服务注册</h1><p>dubbo主要分成2个部分：provider和consumer，服务的提供者和消费者，我们先从提供者开始说起。</p>
+<p>服务的注册首先先看ServiceConfig这个类，调用其export方法，而在export方法中，通过doExport-&gt;doExportUrls-&gt;doExportUrlsFor1Protocol的调用链，最终调用的是doExportUrlsFor1Protocol方法。</p>
+<p>这个方法很长，但是其中有2个部分需要注意，就是会判断这个服务是不是本地服务从而判断是否调用exportLocal。本地服务就相当于是直连，dubbo通过这种方式来提升效率。exportLocal的具体逻辑大家可以去看感谢中的第二个作者的源码解析，比较清楚。</p>
+<p>如果不是直连的，则会走下面这段代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Invoker&lt;?&gt; invoker = proxyFactory.getInvoker(<span class="keyword">this</span>.ref, <span class="keyword">this</span>.interfaceClass, registryURL.addParameterAndEncoded(<span class="string">"export"</span>, url.toFullString()));</span><br><span class="line">Exporter&lt;?&gt; exporter = protocol.export(invoker);</span><br><span class="line"><span class="keyword">this</span>.exporters.add(exporter);</span><br></pre></td></tr></table></figure>
+<p>先获取到一个invoker，然后通过protocol将invoker转化成一个export，其中interfaceClass就是你注册的那个类的类名。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SPI</span>(<span class="string">"javassist"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ProxyFactory</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Adaptive</span>(&#123;<span class="string">"proxy"</span>&#125;)</span><br><span class="line">    &lt;T&gt; <span class="function">T <span class="title">getProxy</span><span class="params">(Invoker&lt;T&gt; var1)</span> <span class="keyword">throws</span> RpcException</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Adaptive</span>(&#123;<span class="string">"proxy"</span>&#125;)</span><br><span class="line">    &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">getInvoker</span><span class="params">(T var1, Class&lt;T&gt; var2, URL var3)</span> <span class="keyword">throws</span> RpcException</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到dubbo中用了SPI，这种模式在dubbo中随处可见，对于做Android的我算是比较新鲜了，就像当初发现ServiceLoader一样。下面我们来看JavassistProxyFactory。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JavassistProxyFactory</span> <span class="keyword">extends</span> <span class="title">AbstractProxyFactory</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">JavassistProxyFactory</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; <span class="function">T <span class="title">getProxy</span><span class="params">(Invoker&lt;T&gt; invoker, Class&lt;?&gt;[] interfaces)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Proxy.getProxy(interfaces).newInstance(<span class="keyword">new</span> InvokerInvocationHandler(invoker));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">getInvoker</span><span class="params">(T proxy, Class&lt;T&gt; type, URL url)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">final</span> Wrapper wrapper = Wrapper.getWrapper(proxy.getClass().getName().indexOf(<span class="number">36</span>) &lt; <span class="number">0</span>?proxy.getClass():type);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> AbstractProxyInvoker&lt;T&gt;(proxy, type, url) &#123;</span><br><span class="line">            <span class="function"><span class="keyword">protected</span> Object <span class="title">doInvoke</span><span class="params">(T proxy, String methodName, Class&lt;?&gt;[] parameterTypes, Object[] arguments)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">                <span class="keyword">return</span> wrapper.invokeMethod(proxy, methodName, parameterTypes, arguments);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>getInvoker方法其实就是通过动态代理的方式去创建一个invoker，动态代理同样在dubbo中应用广泛。</p>
+<p>回到上面，创建完成了这个invoker之后，通过protocol将其转换成exporter。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SPI</span>(<span class="string">"dubbo"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Protocol</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">getDefaultPort</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Adaptive</span></span><br><span class="line">    &lt;T&gt; <span class="function">Exporter&lt;T&gt; <span class="title">export</span><span class="params">(Invoker&lt;T&gt; var1)</span> <span class="keyword">throws</span> RpcException</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Adaptive</span></span><br><span class="line">    &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">refer</span><span class="params">(Class&lt;T&gt; var1, URL var2)</span> <span class="keyword">throws</span> RpcException</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>protocol也是一样通过SPI的方式去处理的，这里我们去看RegistryProtocol。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">Exporter&lt;T&gt; <span class="title">export</span><span class="params">(Invoker&lt;T&gt; originInvoker)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> RegistryProtocol.ExporterChangeableWrapper&lt;T&gt; exporter = <span class="keyword">this</span>.doLocalExport(originInvoker);</span><br><span class="line">    <span class="keyword">final</span> Registry registry = <span class="keyword">this</span>.getRegistry(originInvoker);</span><br><span class="line">    <span class="keyword">final</span> URL registedProviderUrl = <span class="keyword">this</span>.getRegistedProviderUrl(originInvoker);</span><br><span class="line">    registry.register(registedProviderUrl);</span><br><span class="line">    <span class="keyword">final</span> URL overrideSubscribeUrl = <span class="keyword">this</span>.getSubscribedOverrideUrl(registedProviderUrl);</span><br><span class="line">    <span class="keyword">final</span> RegistryProtocol.OverrideListener overrideSubscribeListener = <span class="keyword">new</span> RegistryProtocol.OverrideListener(overrideSubscribeUrl);</span><br><span class="line">    <span class="keyword">this</span>.overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);</span><br><span class="line">    registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Exporter&lt;T&gt;() &#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> Invoker&lt;T&gt; <span class="title">getInvoker</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> exporter.getInvoker();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">unexport</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                exporter.unexport();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable var4) &#123;</span><br><span class="line">                RegistryProtocol.logger.warn(var4.getMessage(), var4);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                registry.unregister(registedProviderUrl);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable var3) &#123;</span><br><span class="line">                RegistryProtocol.logger.warn(var3.getMessage(), var3);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                RegistryProtocol.<span class="keyword">this</span>.overrideListeners.remove(overrideSubscribeUrl);</span><br><span class="line">                registry.unsubscribe(overrideSubscribeUrl, overrideSubscribeListener);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable var2) &#123;</span><br><span class="line">                RegistryProtocol.logger.warn(var2.getMessage(), var2);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码很长，但是我们就看其中关键的一句：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> Registry registry = <span class="keyword">this</span>.getRegistry(originInvoker);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Registry <span class="title">getRegistry</span><span class="params">(Invoker&lt;?&gt; originInvoker)</span> </span>&#123;</span><br><span class="line">    URL registryUrl = originInvoker.getUrl();</span><br><span class="line">    <span class="keyword">if</span>(<span class="string">"registry"</span>.equals(registryUrl.getProtocol())) &#123;</span><br><span class="line">        String protocol = registryUrl.getParameter(<span class="string">"registry"</span>, <span class="string">"dubbo"</span>);</span><br><span class="line">        registryUrl = registryUrl.setProtocol(protocol).removeParameter(<span class="string">"registry"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.registryFactory.getRegistry(registryUrl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们来看AbstractRegistryFactory的getRegistry方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Registry <span class="title">getRegistry</span><span class="params">(URL url)</span> </span>&#123;</span><br><span class="line">    url = url.setPath(RegistryService.class.getName()).addParameter(<span class="string">"interface"</span>, RegistryService.class.getName()).removeParameters(<span class="keyword">new</span> String[]&#123;<span class="string">"export"</span>, <span class="string">"refer"</span>&#125;);</span><br><span class="line">    String key = url.toServiceString();</span><br><span class="line">    LOCK.lock();</span><br><span class="line"></span><br><span class="line">    Registry var4;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Registry registry = (Registry)REGISTRIES.get(key);</span><br><span class="line">        <span class="keyword">if</span>(registry == <span class="keyword">null</span>) &#123;</span><br><span class="line">            registry = <span class="keyword">this</span>.createRegistry(url);</span><br><span class="line">            <span class="keyword">if</span>(registry == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Can not create registry "</span> + url);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            REGISTRIES.put(key, registry);</span><br><span class="line">            var4 = registry;</span><br><span class="line">            <span class="keyword">return</span> var4;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        var4 = registry;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        LOCK.unlock();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> var4;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>核心逻辑在createRegistry中，而这个方法是abstract的，这里由于我们要结合zk，所以来看ZookeeperRegistryFactory。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Registry <span class="title">createRegistry</span><span class="params">(URL url)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ZookeeperRegistry(url, <span class="keyword">this</span>.zookeeperTransporter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建了一个ZookeeperRegistry。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ZookeeperRegistry</span><span class="params">(URL url, ZookeeperTransporter zookeeperTransporter)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(url);</span><br><span class="line">    <span class="keyword">if</span>(url.isAnyHost()) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"registry address == null"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        String group = url.getParameter(<span class="string">"group"</span>, <span class="string">"dubbo"</span>);</span><br><span class="line">        <span class="keyword">if</span>(!group.startsWith(<span class="string">"/"</span>)) &#123;</span><br><span class="line">            group = <span class="string">"/"</span> + group;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>.root = group;</span><br><span class="line">        <span class="keyword">this</span>.zkClient = zookeeperTransporter.connect(url);</span><br><span class="line">        <span class="keyword">this</span>.zkClient.addStateListener(<span class="keyword">new</span> StateListener() &#123;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">stateChanged</span><span class="params">(<span class="keyword">int</span> state)</span> </span>&#123;</span><br><span class="line">                <span class="keyword">if</span>(state == <span class="number">2</span>) &#123;</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        ZookeeperRegistry.<span class="keyword">this</span>.recover();</span><br><span class="line">                    &#125; <span class="keyword">catch</span> (Exception var3) &#123;</span><br><span class="line">                        ZookeeperRegistry.logger.error(var3.getMessage(), var3);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        CommandServer commandServer = CommandServer.getInstance();</span><br><span class="line">        <span class="keyword">this</span>.zkHandler = <span class="keyword">new</span> ZookeeperHandler(<span class="keyword">this</span>);</span><br><span class="line">        commandServer.registerHandler(<span class="string">"dubbo"</span>, <span class="keyword">this</span>.zkHandler);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>构造函数中最重要的一步就是创建zkClient。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.zkClient = zookeeperTransporter.connect(url);</span><br></pre></td></tr></table></figure>
+<p>我们知道zk是dubbo官方推荐的一个注册中心，从代码中我们也可以看出dubbo是如何使用zk的。</p>
+<p>其中有一个小知识点，我们来看ZookeeperRegistry的父类AbstractRegistry的构造函数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">AbstractRegistry</span><span class="params">(URL url)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.setUrl(url);</span><br><span class="line">    <span class="keyword">this</span>.syncSaveFile = url.getParameter(<span class="string">"save.file"</span>, <span class="keyword">false</span>);</span><br><span class="line">    String filename = url.getParameter(<span class="string">"file"</span>, System.getProperty(<span class="string">"user.home"</span>) + <span class="string">"/.dubbo/dubbo-registry-"</span> + url.getHost() + <span class="string">".cache"</span>);</span><br><span class="line">    File file = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">if</span>(ConfigUtils.isNotEmpty(filename)) &#123;</span><br><span class="line">        file = <span class="keyword">new</span> File(filename);</span><br><span class="line">        <span class="keyword">if</span>(!file.exists() &amp;&amp; file.getParentFile() != <span class="keyword">null</span> &amp;&amp; !file.getParentFile().exists() &amp;&amp; !file.getParentFile().mkdirs()) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Invalid registry store file "</span> + file + <span class="string">", cause: Failed to create directory "</span> + file.getParentFile() + <span class="string">"!"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.file = file;</span><br><span class="line">    <span class="keyword">this</span>.loadProperties();</span><br><span class="line">    <span class="keyword">this</span>.notify(url.getBackupUrls());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中有一个步骤是loadProperties。这一步的操作是去做注册的缓存，如果注册中心挂了，则可以走本地缓存，保证服务还是调用的通的。</p>
+<p>到此为止，我们的服务就已经注册到了zk上了，注册完成之后，服务真正的监听是在DubboProtocol中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">Exporter&lt;T&gt; <span class="title">export</span><span class="params">(Invoker&lt;T&gt; invoker)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">    URL url = invoker.getUrl();</span><br><span class="line">    String key = serviceKey(url);</span><br><span class="line">    DubboExporter&lt;T&gt; exporter = <span class="keyword">new</span> DubboExporter(invoker, key, <span class="keyword">this</span>.exporterMap);</span><br><span class="line">    <span class="keyword">this</span>.exporterMap.put(key, exporter);</span><br><span class="line">    Boolean isStubSupportEvent = Boolean.valueOf(url.getParameter(<span class="string">"dubbo.stub.event"</span>, <span class="keyword">false</span>));</span><br><span class="line">    Boolean isCallbackservice = Boolean.valueOf(url.getParameter(<span class="string">"is_callback_service"</span>, <span class="keyword">false</span>));</span><br><span class="line">    <span class="keyword">if</span>(isStubSupportEvent.booleanValue() &amp;&amp; !isCallbackservice.booleanValue()) &#123;</span><br><span class="line">        String stubServiceMethods = url.getParameter(<span class="string">"dubbo.stub.event.methods"</span>);</span><br><span class="line">        <span class="keyword">if</span>(stubServiceMethods != <span class="keyword">null</span> &amp;&amp; stubServiceMethods.length() != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.stubServiceMethodsMap.put(url.getServiceKey(), stubServiceMethods);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(<span class="keyword">this</span>.logger.isWarnEnabled()) &#123;</span><br><span class="line">            <span class="keyword">this</span>.logger.warn(<span class="keyword">new</span> IllegalStateException(<span class="string">"consumer ["</span> + url.getParameter(<span class="string">"interface"</span>) + <span class="string">"], has set stubproxy support event ,but no stub methods founded."</span>));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.openServer(url);</span><br><span class="line">    <span class="keyword">return</span> exporter;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中最重要的就是openServer方法，在openServer中，dubbo通过netty去创建了一个server，用来监听调用方的tcp请求。</p>
+<p>至此，dubbo的服务启动就大致浏览完毕了，其中有几个点需要记住：</p>
+<ol>
+<li>dubbo存在本地直连，通过InjvmExport来实现，和DubboExport做了区分，用以提高效率。</li>
+<li>服务启动的过程就是创建invoker，并且通过protocol将其转换转换成export的过程。</li>
+<li>protocol中采用了zk做为注册中心，netty作为网络层服务。</li>
+<li>protocol中存在缓存，如果注册中心挂了，服务还是可以走通。</li>
+</ol>
+<h1 id="服务调用"><a href="#服务调用" class="headerlink" title="服务调用"></a>服务调用</h1><p>同样的，服务调用通过ReferenceConfig完成，我们来看ReferenceConfig的createProxy方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> T <span class="title">createProxy</span><span class="params">(Map&lt;String, String&gt; map)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">new</span> URL(<span class="string">"temp"</span>, <span class="string">"localhost"</span>, <span class="number">0</span>, map);</span><br><span class="line">    <span class="keyword">boolean</span> isJvmRefer;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>.isInjvm() == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">this</span>.url != <span class="keyword">null</span> &amp;&amp; <span class="keyword">this</span>.url.length() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            isJvmRefer = <span class="keyword">false</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            isJvmRefer = <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        isJvmRefer = <span class="keyword">this</span>.isInjvm().booleanValue();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(isJvmRefer) &#123;</span><br><span class="line">        URL url = (<span class="keyword">new</span> URL(<span class="string">"injvm"</span>, <span class="string">"127.0.0.1"</span>, <span class="number">0</span>, <span class="keyword">this</span>.interfaceClass.getName())).addParameters(map);</span><br><span class="line">        <span class="keyword">this</span>.invoker = refprotocol.refer(<span class="keyword">this</span>.interfaceClass, url);</span><br><span class="line">        <span class="keyword">if</span>(logger.isInfoEnabled()) &#123;</span><br><span class="line">            logger.info(<span class="string">"Using injvm service "</span> + <span class="keyword">this</span>.interfaceClass.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        URL u;</span><br><span class="line">        URL url;</span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">this</span>.url != <span class="keyword">null</span> &amp;&amp; <span class="keyword">this</span>.url.length() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(<span class="keyword">this</span>.url);</span><br><span class="line">            <span class="keyword">if</span>(us != <span class="keyword">null</span> &amp;&amp; us.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                String[] arr$ = us;</span><br><span class="line">                <span class="keyword">int</span> len$ = us.length;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">for</span>(<span class="keyword">int</span> i$ = <span class="number">0</span>; i$ &lt; len$; ++i$) &#123;</span><br><span class="line">                    String u = arr$[i$];</span><br><span class="line">                    URL url = URL.valueOf(u);</span><br><span class="line">                    <span class="keyword">if</span>(url.getPath() == <span class="keyword">null</span> || url.getPath().length() == <span class="number">0</span>) &#123;</span><br><span class="line">                        url = url.setPath(<span class="keyword">this</span>.interfaceName);</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">if</span>(<span class="string">"registry"</span>.equals(url.getProtocol())) &#123;</span><br><span class="line">                        <span class="keyword">this</span>.urls.add(url.addParameterAndEncoded(<span class="string">"refer"</span>, StringUtils.toQueryString(map)));</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        <span class="keyword">this</span>.urls.add(ClusterUtils.mergeUrl(url, map));</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            List&lt;URL&gt; us = <span class="keyword">this</span>.loadRegistries(<span class="keyword">false</span>);</span><br><span class="line">            <span class="keyword">if</span>(us != <span class="keyword">null</span> &amp;&amp; us.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">for</span>(Iterator i$ = us.iterator(); i$.hasNext(); <span class="keyword">this</span>.urls.add(u.addParameterAndEncoded(<span class="string">"refer"</span>, StringUtils.toQueryString(map)))) &#123;</span><br><span class="line">                    u = (URL)i$.next();</span><br><span class="line">                    url = <span class="keyword">this</span>.loadMonitor(u);</span><br><span class="line">                    <span class="keyword">if</span>(url != <span class="keyword">null</span>) &#123;</span><br><span class="line">                        map.put(<span class="string">"monitor"</span>, URL.encode(url.toFullString()));</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span>(<span class="keyword">this</span>.urls == <span class="keyword">null</span> || <span class="keyword">this</span>.urls.size() == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"No such any registry to reference "</span> + <span class="keyword">this</span>.interfaceName + <span class="string">" on the consumer "</span> + NetUtils.getLocalHost() + <span class="string">" use dubbo version "</span> + Version.getVersion() + <span class="string">", please config &lt;dubbo:registry address=\"...\" /&gt; to your spring config."</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">this</span>.urls.size() == <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.invoker = refprotocol.refer(<span class="keyword">this</span>.interfaceClass, (URL)<span class="keyword">this</span>.urls.get(<span class="number">0</span>));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            List&lt;Invoker&lt;?&gt;&gt; invokers = <span class="keyword">new</span> ArrayList();</span><br><span class="line">            URL registryURL = <span class="keyword">null</span>;</span><br><span class="line">            Iterator i$ = <span class="keyword">this</span>.urls.iterator();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span>(i$.hasNext()) &#123;</span><br><span class="line">                url = (URL)i$.next();</span><br><span class="line">                invokers.add(refprotocol.refer(<span class="keyword">this</span>.interfaceClass, url));</span><br><span class="line">                <span class="keyword">if</span>(<span class="string">"registry"</span>.equals(url.getProtocol())) &#123;</span><br><span class="line">                    registryURL = url;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span>(registryURL != <span class="keyword">null</span>) &#123;</span><br><span class="line">                u = registryURL.addParameter(<span class="string">"cluster"</span>, <span class="string">"available"</span>);</span><br><span class="line">                <span class="keyword">this</span>.invoker = cluster.join(<span class="keyword">new</span> StaticDirectory(u, invokers));</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">this</span>.invoker = cluster.join(<span class="keyword">new</span> StaticDirectory(invokers));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Boolean c = <span class="keyword">this</span>.check;</span><br><span class="line">    <span class="keyword">if</span>(c == <span class="keyword">null</span> &amp;&amp; <span class="keyword">this</span>.consumer != <span class="keyword">null</span>) &#123;</span><br><span class="line">        c = <span class="keyword">this</span>.consumer.isCheck();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(c == <span class="keyword">null</span>) &#123;</span><br><span class="line">        c = Boolean.valueOf(<span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(c.booleanValue() &amp;&amp; !<span class="keyword">this</span>.invoker.isAvailable()) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Failed to check the status of the service "</span> + <span class="keyword">this</span>.interfaceName + <span class="string">". No provider available for the service "</span> + (<span class="keyword">this</span>.group == <span class="keyword">null</span>?<span class="string">""</span>:<span class="keyword">this</span>.group + <span class="string">"/"</span>) + <span class="keyword">this</span>.interfaceName + (<span class="keyword">this</span>.version == <span class="keyword">null</span>?<span class="string">""</span>:<span class="string">":"</span> + <span class="keyword">this</span>.version) + <span class="string">" from the url "</span> + <span class="keyword">this</span>.invoker.getUrl() + <span class="string">" to the consumer "</span> + NetUtils.getLocalHost() + <span class="string">" use dubbo version "</span> + Version.getVersion());</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span>(logger.isInfoEnabled()) &#123;</span><br><span class="line">            logger.info(<span class="string">"Refer dubbo service "</span> + <span class="keyword">this</span>.interfaceClass.getName() + <span class="string">" from url "</span> + <span class="keyword">this</span>.invoker.getUrl());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> proxyFactory.getProxy(<span class="keyword">this</span>.invoker);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码非常的长，我们重点关注以下2点(Injvm的直连就不说了)：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.invoker = refprotocol.refer(<span class="keyword">this</span>.interfaceClass, (URL)<span class="keyword">this</span>.urls.get(<span class="number">0</span>));</span><br><span class="line">......</span><br><span class="line"><span class="keyword">return</span> proxyFactory.getProxy(<span class="keyword">this</span>.invoker);</span><br></pre></td></tr></table></figure>
+<p>和服务注册一样，也是通过protol去获取invoker，然后通过ProxyFactory去获取代理，我们来看RegistryProtocol。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">doRefer</span><span class="params">(Cluster cluster, Registry registry, Class&lt;T&gt; type, URL url)</span> </span>&#123;</span><br><span class="line">        RegistryDirectory&lt;T&gt; directory = <span class="keyword">new</span> RegistryDirectory(type, url);</span><br><span class="line">        directory.setRegistry(registry);</span><br><span class="line">        directory.setProtocol(<span class="keyword">this</span>.protocol);</span><br><span class="line">        URL subscribeUrl = <span class="keyword">new</span> URL(<span class="string">"consumer"</span>, NetUtils.getLocalHost(), <span class="number">0</span>, type.getName(), directory.getUrl().getParameters());</span><br><span class="line">        <span class="keyword">if</span>(!<span class="string">"*"</span>.equals(url.getServiceInterface()) &amp;&amp; url.getParameter(<span class="string">"register"</span>, <span class="keyword">true</span>)) &#123;</span><br><span class="line">            registry.register(subscribeUrl.addParameters(<span class="keyword">new</span> String[]&#123;<span class="string">"category"</span>, <span class="string">"consumers"</span>, <span class="string">"check"</span>, String.valueOf(<span class="keyword">false</span>)&#125;));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        directory.subscribe(subscribeUrl.addParameter(<span class="string">"category"</span>, <span class="string">"providers,configurators,routers"</span>));</span><br><span class="line">        <span class="keyword">return</span> cluster.join(directory);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>doRefer中创建了一个RegistryDirectory。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">RegistryDirectory</span><span class="params">(Class&lt;T&gt; serviceType, URL url)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(url);</span><br><span class="line">    <span class="keyword">if</span>(serviceType == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"service type is null."</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span>(url.getServiceKey() != <span class="keyword">null</span> &amp;&amp; url.getServiceKey().length() != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.serviceType = serviceType;</span><br><span class="line">        <span class="keyword">this</span>.serviceKey = url.getServiceKey();</span><br><span class="line">        <span class="keyword">this</span>.queryMap = StringUtils.parseQueryString(url.getParameterAndDecoded(<span class="string">"refer"</span>));</span><br><span class="line">        <span class="keyword">this</span>.overrideDirectoryUrl = <span class="keyword">this</span>.directoryUrl = url.setPath(url.getServiceInterface()).clearParameters().addParameters(<span class="keyword">this</span>.queryMap).removeParameter(<span class="string">"monitor"</span>);</span><br><span class="line">        String group = <span class="keyword">this</span>.directoryUrl.getParameter(<span class="string">"group"</span>, <span class="string">""</span>);</span><br><span class="line">        <span class="keyword">this</span>.multiGroup = group != <span class="keyword">null</span> &amp;&amp; (<span class="string">"*"</span>.equals(group) || group.contains(<span class="string">","</span>));</span><br><span class="line">        String methods = (String)<span class="keyword">this</span>.queryMap.get(<span class="string">"methods"</span>);</span><br><span class="line">        <span class="keyword">this</span>.serviceMethods = methods == <span class="keyword">null</span>?<span class="keyword">null</span>:Constants.COMMA_SPLIT_PATTERN.split(methods);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"registry serviceKey is null."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个RegistryDirectory可以看做对dubbo协议(也就是url)的一个解析，拿到query，method等参数。</p>
+<p>返回去看，最后调用了cluster.join(directory)，感觉和集群相关了，屌屌的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SPI</span>(<span class="string">"failfast"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Cluster</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Adaptive</span></span><br><span class="line">    &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">join</span><span class="params">(Directory&lt;T&gt; var1)</span> <span class="keyword">throws</span> RpcException</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>又见SPI，我们去看MockClusterWrapper。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MockClusterWrapper</span> <span class="keyword">implements</span> <span class="title">Cluster</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Cluster cluster;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MockClusterWrapper</span><span class="params">(Cluster cluster)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.cluster = cluster;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">join</span><span class="params">(Directory&lt;T&gt; directory)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> MockClusterInvoker(directory, <span class="keyword">this</span>.cluster.join(directory));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建了一个MockClusterInvoker。</p>
+<p>回到最开始的地方：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.invoker = refprotocol.refer(<span class="keyword">this</span>.interfaceClass, (URL)<span class="keyword">this</span>.urls.get(<span class="number">0</span>));</span><br><span class="line">......</span><br><span class="line"><span class="keyword">return</span> proxyFactory.getProxy(<span class="keyword">this</span>.invoker);</span><br></pre></td></tr></table></figure>
+<p>拿到了invoker之后，调用了proxyFactory.getProxy(this.invoker)方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">T <span class="title">getProxy</span><span class="params">(Invoker&lt;T&gt; invoker, Class&lt;?&gt;[] interfaces)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> Proxy.getProxy(interfaces).newInstance(<span class="keyword">new</span> InvokerInvocationHandler(invoker));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在InvokerInvocationHandler中，会调用invoker的invoke方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Result <span class="title">invoke</span><span class="params">(Invocation invocation)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">        Result result = <span class="keyword">null</span>;</span><br><span class="line">        String value = <span class="keyword">this</span>.directory.getUrl().getMethodParameter(invocation.getMethodName(), <span class="string">"mock"</span>, Boolean.FALSE.toString()).trim();</span><br><span class="line">        <span class="keyword">if</span>(value.length() != <span class="number">0</span> &amp;&amp; !value.equalsIgnoreCase(<span class="string">"false"</span>)) &#123;</span><br><span class="line">            <span class="keyword">if</span>(value.startsWith(<span class="string">"force"</span>)) &#123;</span><br><span class="line">                <span class="keyword">if</span>(logger.isWarnEnabled()) &#123;</span><br><span class="line">                    logger.info(<span class="string">"force-mock: "</span> + invocation.getMethodName() + <span class="string">" force-mock enabled , url : "</span> + <span class="keyword">this</span>.directory.getUrl());</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                result = <span class="keyword">this</span>.doMockInvoke(invocation, (RpcException)<span class="keyword">null</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    result = <span class="keyword">this</span>.invoker.invoke(invocation);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (RpcException var5) &#123;</span><br><span class="line">                    <span class="keyword">if</span>(var5.isBiz()) &#123;</span><br><span class="line">                        <span class="keyword">throw</span> var5;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">if</span>(logger.isWarnEnabled()) &#123;</span><br><span class="line">                        logger.info(<span class="string">"fail-mock: "</span> + invocation.getMethodName() + <span class="string">" fail-mock enabled , url : "</span> + <span class="keyword">this</span>.directory.getUrl(), var5);</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    result = <span class="keyword">this</span>.doMockInvoke(invocation, var5);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            result = <span class="keyword">this</span>.invoker.invoke(invocation);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到里面通过mock的方式处理了降级的逻辑，最终调用了AbstractClusterInvoker的invoke方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Result <span class="title">doInvoke</span><span class="params">(Invocation invocation, List&lt;Invoker&lt;T&gt;&gt; invokers, LoadBalance loadbalance)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.checkInvokers(invokers, invocation);</span><br><span class="line">    Invoker invoker = <span class="keyword">this</span>.select(loadbalance, invocation, invokers, (List)<span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> invoker.invoke(invocation);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable var6) &#123;</span><br><span class="line">        <span class="keyword">if</span>(var6 <span class="keyword">instanceof</span> RpcException &amp;&amp; ((RpcException)var6).isBiz()) &#123;</span><br><span class="line">            <span class="keyword">throw</span> (RpcException)var6;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RpcException(var6 <span class="keyword">instanceof</span> RpcException?((RpcException)var6).getCode():<span class="number">0</span>, <span class="string">"Failfast invoke providers "</span> + invoker.getUrl() + <span class="string">" "</span> + loadbalance.getClass().getSimpleName() + <span class="string">" select from all providers "</span> + invokers + <span class="string">" for service "</span> + <span class="keyword">this</span>.getInterface().getName() + <span class="string">" method "</span> + invocation.getMethodName() + <span class="string">" on consumer "</span> + NetUtils.getLocalHost() + <span class="string">" use dubbo version "</span> + Version.getVersion() + <span class="string">", but no luck to perform the invocation. Last error is: "</span> + var6.getMessage(), var6.getCause() != <span class="keyword">null</span>?var6.getCause():var6);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中经过负载均衡的一系列算法之后，获取到真正的invoker进行调用，而这个invoker就是DubboInvoker。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> Result <span class="title">doInvoke</span><span class="params">(Invocation invocation)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    RpcInvocation inv = (RpcInvocation)invocation;</span><br><span class="line">    String methodName = RpcUtils.getMethodName(invocation);</span><br><span class="line">    inv.setAttachment(<span class="string">"path"</span>, <span class="keyword">this</span>.getUrl().getPath());</span><br><span class="line">    inv.setAttachment(<span class="string">"version"</span>, <span class="keyword">this</span>.version);</span><br><span class="line">    ExchangeClient currentClient;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>.clients.length == <span class="number">1</span>) &#123;</span><br><span class="line">        currentClient = <span class="keyword">this</span>.clients[<span class="number">0</span>];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        currentClient = <span class="keyword">this</span>.clients[<span class="keyword">this</span>.index.getAndIncrement() % <span class="keyword">this</span>.clients.length];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">boolean</span> isAsync = RpcUtils.isAsync(<span class="keyword">this</span>.getUrl(), invocation);</span><br><span class="line">        <span class="keyword">boolean</span> isOneway = RpcUtils.isOneway(<span class="keyword">this</span>.getUrl(), invocation);</span><br><span class="line">        <span class="keyword">int</span> timeout = <span class="keyword">this</span>.getUrl().getMethodParameter(methodName, <span class="string">"timeout"</span>, <span class="number">1000</span>);</span><br><span class="line">        <span class="keyword">if</span>(isOneway) &#123;</span><br><span class="line">            <span class="keyword">boolean</span> isSent = <span class="keyword">this</span>.getUrl().getMethodParameter(methodName, <span class="string">"sent"</span>, <span class="keyword">false</span>);</span><br><span class="line">            currentClient.send(inv, isSent);</span><br><span class="line">            RpcContext.getContext().setFuture((Future)<span class="keyword">null</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> RpcResult();</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(isAsync) &#123;</span><br><span class="line">            ResponseFuture future = currentClient.request(inv, timeout);</span><br><span class="line">            RpcContext.getContext().setFuture(<span class="keyword">new</span> FutureAdapter(future));</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> RpcResult();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            RpcContext.getContext().setFuture((Future)<span class="keyword">null</span>);</span><br><span class="line">            <span class="keyword">return</span> (Result)currentClient.request(inv, timeout).get();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (TimeoutException var9) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> RpcException(<span class="number">2</span>, <span class="string">"Invoke remote method timeout. method: "</span> + invocation.getMethodName() + <span class="string">", provider: "</span> + <span class="keyword">this</span>.getUrl() + <span class="string">", cause: "</span> + var9.getMessage(), var9);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RemotingException var10) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> RpcException(<span class="number">1</span>, <span class="string">"Failed to invoke remote method: "</span> + invocation.getMethodName() + <span class="string">", provider: "</span> + <span class="keyword">this</span>.getUrl() + <span class="string">", cause: "</span> + var10.getMessage(), var10);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到会去判断这次调用是否是onWay，是否是Async，并且发送tpc请求。</p>
+<p>至此，dubbo的服务调用就大致浏览完毕了，其中有几个点需要记住：</p>
+<ol>
+<li>服务的调用是通过protocol去获取invoker，然后调用invoker的invoke去实现的。</li>
+<li>MockClusterInvoker会去处理降级和负载的逻辑，最终调用DubboInvoker。</li>
+<li>DubboInvoker中会处理oneWay和异步的逻辑，最终发送tcp请求调用。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/dubbo/" rel="tag">#dubbo</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/25/InMemoryDexClassLoader源码探究/" rel="next" title="InMemoryDexClassLoader探究">
+                <i class="fa fa-chevron-left"></i> InMemoryDexClassLoader探究
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          <div class="comments" id="comments">
+  <div id="uyan_frame"></div>
+</div>
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">31</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">26</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#感谢"><span class="nav-number">1.</span> <span class="nav-text">感谢</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#服务注册"><span class="nav-number">2.</span> <span class="nav-text">服务注册</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#服务调用"><span class="nav-number">3.</span> <span class="nav-text">服务调用</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2157722"></script>
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

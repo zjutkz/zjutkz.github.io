@@ -62,7 +62,7 @@
 <meta name="description" content="写下结果因为人们爱追溯，省略过程因为时间爱催促。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="zjutkz's blog">
-<meta property="og:url" content="http://zjutkz.net/archives/2017/index.html">
+<meta property="og:url" content="http://zjutkz.net/page/4/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="写下结果因为人们爱追溯，省略过程因为时间爱催促。">
 <meta name="twitter:card" content="summary">
@@ -85,7 +85,7 @@
   };
 </script>
 
-  <title> 归档 | zjutkz's blog </title>
+  <title> zjutkz's blog </title>
 </head>
 
 
@@ -191,7 +191,9 @@ $(function() {
     
   
 
-  <div class="container one-collumn sidebar-position-left  page-archive  ">
+  <div class="container one-collumn sidebar-position-left 
+   page-home 
+ ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -268,213 +270,123 @@ $(function() {
         <div class="content-wrap">
           <div id="content" class="content">
             
+  <section id="posts" class="posts-expand">
+    
+      
 
-  <section id="posts" class="posts-collapse">
-    <span class="archive-move-on"></span>
+  
+  
 
-    <span class="archive-page-counter">
-      
-      
-       
-      
-      OK! 目前共计 31 篇日志。 继续努力。
-    </span>
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
 
     
+      <header class="post-header">
 
-      
-      
-      
-
-      
         
-        <div class="collection-title">
-          <h2 class="archive-year motion-element" id="archive-year-2017">2017</h2>
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" itemprop="url">
+                  重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-29T16:34:02+08:00" content="2016-03-29">
+              2016-03-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" class="leancloud_visitors" data-flag-title="重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
         </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
       
       
 
       
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
         
-            <a class="post-title-link" href="/2017/11/02/d8-transform/" itemprop="url">
-              
-                <span itemprop="name">d8&transform</span>
-              
+          <p>说起RecyclerView，大家肯定都不陌生，从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比如谷歌并没有封装点击事件给我们调用，也没有像ListView那样有API可以直接生成header和footer。</p>
+<p>如果你要求比较低，直接拿RecyclerView来用是没问题的，大不了点击事件什么的自己写嘛，不过作为一个有追求的程序员，这样显然是满足不了我的，所以我选择了对其进行封装。</p>
+<p>看到这里可能有人会说，github上不是有一个封装的很好的库叫做<a href="https://github.com/cymcsg/UltimateRecyclerView">UltimateRecyclerView</a>了吗，为什么你还要花时间去重复造轮子呢？这里我想说，这样的第三方库直接拿来用确实很方便，但是我觉得你更应该去花时间自己封装一下，因为这期间你能学到的东西是很多的。比如说，你了解android的嵌套滑动机制吗？你知道recyclerView的工作原理吗？你明白adapter和view之间的观察者模式吗？这些如果你不了解没关系，你可以选择和我一样自己去封装一遍recyclerView，相信你会了解的，不过在这儿我会给大家带来我的分析，希望大家看完以后会有收获～</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/#more" rel="contents">
+              阅读全文 &raquo;
             </a>
+          </div>
         
-      </h1>
+      
+    </div>
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-11-02T16:21:42+08:00"
-              content="2017-11-02" >
-          11-02
-        </time>
-      </div>
+    <div>
+      
+    </div>
 
-    </header>
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
   </article>
 
 
-
     
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2017/09/11/一个小技巧——使用ContentProvider初始化你的Library/" itemprop="url">
-              
-                <span itemprop="name">一个小技巧——使用ContentProvider初始化你的Library</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-09-11T19:45:33+08:00"
-              content="2017-09-11" >
-          09-11
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2017/04/26/浅谈RxJava中的线程管理/" itemprop="url">
-              
-                <span itemprop="name">浅谈RxJava中的线程管理</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-04-26T14:58:56+08:00"
-              content="2017-04-26" >
-          04-26
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2017/02/09/浅谈RxJava与多线程并发/" itemprop="url">
-              
-                <span itemprop="name">浅谈RxJava与多线程并发</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-02-09T20:39:58+08:00"
-              content="2017-02-09" >
-          02-09
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2017/01/18/Android下的Jack-Jill初探/" itemprop="url">
-              
-                <span itemprop="name">Android下的Jack-Jill初探</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2017-01-18T21:58:31+08:00"
-              content="2017-01-18" >
-          01-18
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
   </section>
 
   
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/page/3/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span>
+  </nav>
 
 
 
@@ -641,12 +553,6 @@ $(function() {
   
 
   
-  
-    <script type="text/javascript" id="motion.page.archive">
-      $('.archive-year').velocity('transition.slideLeftIn');
-    </script>
-  
-
 
   
 
