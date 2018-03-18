@@ -1,0 +1,924 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="dubbo," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="昨天写完了dubbo源码的一个粗略浏览的笔记，其中有一块个人觉得理解的不是很透彻，就是SPI的部分。由于之前一直做Android的原因，对SPI的了解比较少，只是知道ServiceLoader的存在，并且slf4j用的就是ServiceLoader(还有美团的组件化，哈哈哈)，今天花了点时间看了看dubbo里有关SPI的源码，做一个记录。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="dubbo中的SPI">
+<meta property="og:url" content="http://zjutkz.net/2018/03/18/dubbo中的SPI/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="昨天写完了dubbo源码的一个粗略浏览的笔记，其中有一块个人觉得理解的不是很透彻，就是SPI的部分。由于之前一直做Android的原因，对SPI的了解比较少，只是知道ServiceLoader的存在，并且slf4j用的就是ServiceLoader(还有美团的组件化，哈哈哈)，今天花了点时间看了看dubbo里有关SPI的源码，做一个记录。">
+<meta property="og:updated_time" content="2018-03-18T07:08:11.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="dubbo中的SPI">
+<meta name="twitter:description" content="昨天写完了dubbo源码的一个粗略浏览的笔记，其中有一块个人觉得理解的不是很透彻，就是SPI的部分。由于之前一直做Android的原因，对SPI的了解比较少，只是知道ServiceLoader的存在，并且slf4j用的就是ServiceLoader(还有美团的组件化，哈哈哈)，今天花了点时间看了看dubbo里有关SPI的源码，做一个记录。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> dubbo中的SPI | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                dubbo中的SPI
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-18T14:39:11+08:00" content="2018-03-18">
+              2018-03-18
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/03/18/dubbo中的SPI/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/03/18/dubbo中的SPI/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/03/18/dubbo中的SPI/" class="leancloud_visitors" data-flag-title="dubbo中的SPI">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>昨天写完了dubbo源码的一个粗略浏览的笔记，其中有一块个人觉得理解的不是很透彻，就是SPI的部分。由于之前一直做Android的原因，对SPI的了解比较少，只是知道ServiceLoader的存在，并且slf4j用的就是ServiceLoader(还有美团的组件化，哈哈哈)，今天花了点时间看了看dubbo里有关SPI的源码，做一个记录。</p>
+<a id="more"></a>
+<p>首先我们来看一个dubbo中的具体使用场景，ServiceConfig中的protocol注入：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Protocol protocol = (Protocol)ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();</span><br></pre></td></tr></table></figure>
+<p>可以看到protocol是通过ExtensionLoader去获取的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;T&gt; <span class="function">ExtensionLoader&lt;T&gt; <span class="title">getExtensionLoader</span><span class="params">(Class&lt;T&gt; type)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(type == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Extension type == null"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span>(!type.isInterface()) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Extension type("</span> + type + <span class="string">") is not interface!"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span>(!withExtensionAnnotation(type)) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Extension type("</span> + type + <span class="string">") is not extension, because WITHOUT @"</span> + SPI.class.getSimpleName() + <span class="string">" Annotation!"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ExtensionLoader&lt;T&gt; loader = (ExtensionLoader)EXTENSION_LOADERS.get(type);</span><br><span class="line">        <span class="keyword">if</span>(loader == <span class="keyword">null</span>) &#123;</span><br><span class="line">            EXTENSION_LOADERS.putIfAbsent(type, <span class="keyword">new</span> ExtensionLoader(type));</span><br><span class="line">            loader = (ExtensionLoader)EXTENSION_LOADERS.get(type);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> loader;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到getExtensionLoader这个方法就是去new出来一个ExtensionLoader然后放到缓存的map里。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">ExtensionLoader</span><span class="params">(Class&lt;?&gt; type)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.type = type;</span><br><span class="line">    <span class="keyword">this</span>.objectFactory = type == ExtensionFactory.class?<span class="keyword">null</span>:(ExtensionFactory)getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ExtensionLoader去判断class是不是ExtensionFactory，如果不是则先去创建ExtensionFactory并且赋值给变量objectFactory。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">getAdaptiveExtension</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Object instance = <span class="keyword">this</span>.cachedAdaptiveInstance.get();</span><br><span class="line">    <span class="keyword">if</span>(instance == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span>(<span class="keyword">this</span>.createAdaptiveInstanceError != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"fail to create adaptive instance: "</span> + <span class="keyword">this</span>.createAdaptiveInstanceError.toString(), <span class="keyword">this</span>.createAdaptiveInstanceError);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Holder var2 = <span class="keyword">this</span>.cachedAdaptiveInstance;</span><br><span class="line">        <span class="keyword">synchronized</span>(<span class="keyword">this</span>.cachedAdaptiveInstance) &#123;</span><br><span class="line">            instance = <span class="keyword">this</span>.cachedAdaptiveInstance.get();</span><br><span class="line">            <span class="keyword">if</span>(instance == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    instance = <span class="keyword">this</span>.createAdaptiveExtension();</span><br><span class="line">                    <span class="keyword">this</span>.cachedAdaptiveInstance.set(instance);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (Throwable var5) &#123;</span><br><span class="line">                    <span class="keyword">this</span>.createAdaptiveInstanceError = var5;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"fail to create adaptive instance: "</span> + var5.toString(), var5);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> instance;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>getAdaptiveExtension中最重要的就是通过createAdaptiveExtension去创建一个adaptive的实例并缓存。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> T <span class="title">createAdaptiveExtension</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.injectExtension(<span class="keyword">this</span>.getAdaptiveExtensionClass().newInstance());</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception var2) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Can not create adaptive extenstion "</span> + <span class="keyword">this</span>.type + <span class="string">", cause: "</span> + var2.getMessage(), var2);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>createAdaptiveExtension方法中，先通过getAdaptiveExtensionClass去获取class，然后创建实例并调用injectExtension方法进行注入。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Class&lt;?&gt; getAdaptiveExtensionClass() &#123;</span><br><span class="line">    <span class="keyword">this</span>.getExtensionClasses();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.cachedAdaptiveClass != <span class="keyword">null</span>?<span class="keyword">this</span>.cachedAdaptiveClass:(<span class="keyword">this</span>.cachedAdaptiveClass = <span class="keyword">this</span>.createAdaptiveExtensionClass());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>getAdaptiveExtensionClass这个方法很关键了，一共两行，我们一行一行来看，先看第一个行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Map&lt;String, Class&lt;?&gt;&gt; getExtensionClasses() &#123;</span><br><span class="line">    Map&lt;String, Class&lt;?&gt;&gt; classes = (Map)<span class="keyword">this</span>.cachedClasses.get();</span><br><span class="line">    <span class="keyword">if</span>(classes == <span class="keyword">null</span>) &#123;</span><br><span class="line">        Holder var2 = <span class="keyword">this</span>.cachedClasses;</span><br><span class="line">        <span class="keyword">synchronized</span>(<span class="keyword">this</span>.cachedClasses) &#123;</span><br><span class="line">            classes = (Map)<span class="keyword">this</span>.cachedClasses.get();</span><br><span class="line">            <span class="keyword">if</span>(classes == <span class="keyword">null</span>) &#123;</span><br><span class="line">                classes = <span class="keyword">this</span>.loadExtensionClasses();</span><br><span class="line">                <span class="keyword">this</span>.cachedClasses.set(classes);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> classes;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> Map&lt;String, Class&lt;?&gt;&gt; loadExtensionClasses() &#123;</span><br><span class="line">    SPI defaultAnnotation = (SPI)<span class="keyword">this</span>.type.getAnnotation(SPI.class);</span><br><span class="line">    <span class="keyword">if</span>(defaultAnnotation != <span class="keyword">null</span>) &#123;</span><br><span class="line">        String value = defaultAnnotation.value();</span><br><span class="line">        <span class="keyword">if</span>(value != <span class="keyword">null</span> &amp;&amp; (value = value.trim()).length() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            String[] names = NAME_SEPARATOR.split(value);</span><br><span class="line">            <span class="keyword">if</span>(names.length &gt; <span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"more than 1 default extension name on extension "</span> + <span class="keyword">this</span>.type.getName() + <span class="string">": "</span> + Arrays.toString(names));</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span>(names.length == <span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">this</span>.cachedDefaultName = names[<span class="number">0</span>];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Map&lt;String, Class&lt;?&gt;&gt; extensionClasses = <span class="keyword">new</span> HashMap();</span><br><span class="line">    <span class="keyword">this</span>.loadFile(extensionClasses, <span class="string">"META-INF/dubbo/internal/"</span>);</span><br><span class="line">    <span class="keyword">this</span>.loadFile(extensionClasses, <span class="string">"META-INF/dubbo/"</span>);</span><br><span class="line">    <span class="keyword">this</span>.loadFile(extensionClasses, <span class="string">"META-INF/services/"</span>);</span><br><span class="line">    <span class="keyword">return</span> extensionClasses;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，getExtensionClasses是怎么去获得一个接口(对应文中的Protocol)的实现类的呢？通过阅读loadExtensionClasses方法我们可以知道，是去加载三个文件：    META-INF/dubbo/internal/，META-INF/dubbo/和META-INF/services/。</p>
+<p>我们可以去观察一下META-INF/dubbo/internal/这个文件夹，下面有很多的文件，都是以类名问文件名的，然后我们来看loadFile方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadFile</span><span class="params">(Map&lt;String, Class&lt;?&gt;&gt; extensionClasses, String dir)</span> </span>&#123;</span><br><span class="line">    String fileName = dir + <span class="keyword">this</span>.type.getName();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        ClassLoader classLoader = findClassLoader();</span><br><span class="line">        Enumeration urls;</span><br><span class="line">        <span class="keyword">if</span>(classLoader != <span class="keyword">null</span>) &#123;</span><br><span class="line">            urls = classLoader.getResources(fileName);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            urls = ClassLoader.getSystemResources(fileName);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(urls != <span class="keyword">null</span>) &#123;</span><br><span class="line">            label269:</span><br><span class="line">            <span class="keyword">while</span>(urls.hasMoreElements()) &#123;</span><br><span class="line">                java.net.URL url = (java.net.URL)urls.nextElement();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    BufferedReader reader = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(url.openStream(), <span class="string">"utf-8"</span>));</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        String line = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">                        <span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</span><br><span class="line">                            do &#123;</span><br><span class="line">                                <span class="keyword">if</span>((line = reader.readLine()) == <span class="keyword">null</span>) &#123;</span><br><span class="line">                                    <span class="keyword">continue</span> label269;</span><br><span class="line">                                &#125;</span><br><span class="line"></span><br><span class="line">                                <span class="keyword">int</span> ci = line.indexOf(<span class="number">35</span>);</span><br><span class="line">                                <span class="keyword">if</span>(ci &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">                                    line = line.substring(<span class="number">0</span>, ci);</span><br><span class="line">                                &#125;</span><br><span class="line"></span><br><span class="line">                                line = line.trim();</span><br><span class="line">                            &#125; <span class="keyword">while</span>(line.length() &lt;= <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">                            <span class="keyword">try</span> &#123;</span><br><span class="line">                                String name = <span class="keyword">null</span>;</span><br><span class="line">                                <span class="keyword">int</span> i = line.indexOf(<span class="number">61</span>);</span><br><span class="line">                                <span class="keyword">if</span>(i &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                                    name = line.substring(<span class="number">0</span>, i).trim();</span><br><span class="line">                                    line = line.substring(i + <span class="number">1</span>).trim();</span><br><span class="line">                                &#125;</span><br><span class="line"></span><br><span class="line">                                <span class="keyword">if</span>(line.length() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                                    Class&lt;?&gt; clazz = Class.forName(line, <span class="keyword">true</span>, classLoader);</span><br><span class="line">                                    <span class="keyword">if</span>(!<span class="keyword">this</span>.type.isAssignableFrom(clazz)) &#123;</span><br><span class="line">                                        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Error when load extension class(interface: "</span> + <span class="keyword">this</span>.type + <span class="string">", class line: "</span> + clazz.getName() + <span class="string">"), class "</span> + clazz.getName() + <span class="string">"is not subtype of interface."</span>);</span><br><span class="line">                                    &#125;</span><br><span class="line"></span><br><span class="line">                                    <span class="keyword">if</span>(clazz.isAnnotationPresent(Adaptive.class)) &#123;</span><br><span class="line">                                        <span class="keyword">if</span>(<span class="keyword">this</span>.cachedAdaptiveClass == <span class="keyword">null</span>) &#123;</span><br><span class="line">                                            <span class="keyword">this</span>.cachedAdaptiveClass = clazz;</span><br><span class="line">                                        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(!<span class="keyword">this</span>.cachedAdaptiveClass.equals(clazz)) &#123;</span><br><span class="line">                                            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"More than 1 adaptive class found: "</span> + <span class="keyword">this</span>.cachedAdaptiveClass.getClass().getName() + <span class="string">", "</span> + clazz.getClass().getName());</span><br><span class="line">                                        &#125;</span><br><span class="line">                                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                                        <span class="keyword">try</span> &#123;</span><br><span class="line">                                            clazz.getConstructor(<span class="keyword">new</span> Class[]&#123;<span class="keyword">this</span>.type&#125;);</span><br><span class="line">                                            Set&lt;Class&lt;?&gt;&gt; wrappers = <span class="keyword">this</span>.cachedWrapperClasses;</span><br><span class="line">                                            <span class="keyword">if</span>(wrappers == <span class="keyword">null</span>) &#123;</span><br><span class="line">                                                <span class="keyword">this</span>.cachedWrapperClasses = <span class="keyword">new</span> ConcurrentHashSet();</span><br><span class="line">                                                wrappers = <span class="keyword">this</span>.cachedWrapperClasses;</span><br><span class="line">                                            &#125;</span><br><span class="line"></span><br><span class="line">                                            wrappers.add(clazz);</span><br><span class="line">                                        &#125; <span class="keyword">catch</span> (NoSuchMethodException var27) &#123;</span><br><span class="line">                                            clazz.getConstructor(<span class="keyword">new</span> Class[<span class="number">0</span>]);</span><br><span class="line">                                            <span class="keyword">if</span>(name == <span class="keyword">null</span> || name.length() == <span class="number">0</span>) &#123;</span><br><span class="line">                                                name = <span class="keyword">this</span>.findAnnotationName(clazz);</span><br><span class="line">                                                <span class="keyword">if</span>(name == <span class="keyword">null</span> || name.length() == <span class="number">0</span>) &#123;</span><br><span class="line">                                                    <span class="keyword">if</span>(clazz.getSimpleName().length() &lt;= <span class="keyword">this</span>.type.getSimpleName().length() || !clazz.getSimpleName().endsWith(<span class="keyword">this</span>.type.getSimpleName())) &#123;</span><br><span class="line">                                                        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"No such extension name for the class "</span> + clazz.getName() + <span class="string">" in the config "</span> + url);</span><br><span class="line">                                                    &#125;</span><br><span class="line"></span><br><span class="line">                                                    name = clazz.getSimpleName().substring(<span class="number">0</span>, clazz.getSimpleName().length() - <span class="keyword">this</span>.type.getSimpleName().length()).toLowerCase();</span><br><span class="line">                                                &#125;</span><br><span class="line">                                            &#125;</span><br><span class="line"></span><br><span class="line">                                            String[] names = NAME_SEPARATOR.split(name);</span><br><span class="line">                                            <span class="keyword">if</span>(names != <span class="keyword">null</span> &amp;&amp; names.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                                                Activate activate = (Activate)clazz.getAnnotation(Activate.class);</span><br><span class="line">                                                <span class="keyword">if</span>(activate != <span class="keyword">null</span>) &#123;</span><br><span class="line">                                                    <span class="keyword">this</span>.cachedActivates.put(names[<span class="number">0</span>], activate);</span><br><span class="line">                                                &#125;</span><br><span class="line"></span><br><span class="line">                                                String[] arr$ = names;</span><br><span class="line">                                                <span class="keyword">int</span> len$ = names.length;</span><br><span class="line"></span><br><span class="line">                                                <span class="keyword">for</span>(<span class="keyword">int</span> i$ = <span class="number">0</span>; i$ &lt; len$; ++i$) &#123;</span><br><span class="line">                                                    String n = arr$[i$];</span><br><span class="line">                                                    <span class="keyword">if</span>(!<span class="keyword">this</span>.cachedNames.containsKey(clazz)) &#123;</span><br><span class="line">                                                        <span class="keyword">this</span>.cachedNames.put(clazz, n);</span><br><span class="line">                                                    &#125;</span><br><span class="line"></span><br><span class="line">                                                    Class&lt;?&gt; c = (Class)extensionClasses.get(n);</span><br><span class="line">                                                    <span class="keyword">if</span>(c == <span class="keyword">null</span>) &#123;</span><br><span class="line">                                                        extensionClasses.put(n, clazz);</span><br><span class="line">                                                    &#125; <span class="keyword">else</span> <span class="keyword">if</span>(c != clazz) &#123;</span><br><span class="line">                                                        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Duplicate extension "</span> + <span class="keyword">this</span>.type.getName() + <span class="string">" name "</span> + n + <span class="string">" on "</span> + c.getName() + <span class="string">" and "</span> + clazz.getName());</span><br><span class="line">                                                    &#125;</span><br><span class="line">                                                &#125;</span><br><span class="line">                                            &#125;</span><br><span class="line">                                        &#125;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125;</span><br><span class="line">                            &#125; <span class="keyword">catch</span> (Throwable var28) &#123;</span><br><span class="line">                                IllegalStateException e = <span class="keyword">new</span> IllegalStateException(<span class="string">"Failed to load extension class(interface: "</span> + <span class="keyword">this</span>.type + <span class="string">", class line: "</span> + line + <span class="string">") in "</span> + url + <span class="string">", cause: "</span> + var28.getMessage(), var28);</span><br><span class="line">                                <span class="keyword">this</span>.exceptions.put(line, e);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                        reader.close();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (Throwable var30) &#123;</span><br><span class="line">                    logger.error(<span class="string">"Exception when load extension class(interface: "</span> + <span class="keyword">this</span>.type + <span class="string">", class file: "</span> + url + <span class="string">") in "</span> + url, var30);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable var31) &#123;</span><br><span class="line">        logger.error(<span class="string">"Exception when load extension class(interface: "</span> + <span class="keyword">this</span>.type + <span class="string">", description file: "</span> + fileName + <span class="string">")."</span>, var31);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>方法很长，但是我们先看第一行：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String fileName = dir + <span class="keyword">this</span>.type.getName();</span><br></pre></td></tr></table></figure>
+<p>通过文件夹名字+类名的方式去拼接一下文件名，文中的例子是Protocol，所以这个文件名就是META-INF/dubbo/internal/com.alibaba.dubbo.rpc.Protocol。我们可以在META-INF/dubbo/internal/文件夹下找到这个文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">registry=com.alibaba.dubbo.registry.integration.RegistryProtocol</span><br><span class="line">dubbo=com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol</span><br><span class="line">filter=com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper</span><br><span class="line">listener=com.alibaba.dubbo.rpc.protocol.ProtocolListenerWrapper</span><br><span class="line">mock=com.alibaba.dubbo.rpc.support.MockProtocol</span><br><span class="line">com.alibaba.dubbo.rpc.protocol.http.HttpProtocol</span><br><span class="line">pb=com.alibaba.dubbo.rpc.protocol.pb.PbProtocol</span><br><span class="line">thrift=com.alibaba.dubbo.rpc.protocol.thrift.ThriftProtocol</span><br><span class="line">com.alibaba.dubbo.rpc.protocol.webservice.WebServiceProtocol</span><br><span class="line">injvm=com.alibaba.dubbo.rpc.protocol.injvm.InjvmProtocol</span><br></pre></td></tr></table></figure>
+<p>可以看到这里和我们文章开头提到的ServiceLoader的加载方式很像了。</p>
+<p>我们接着看loadFile方法的这一行：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(clazz.isAnnotationPresent(Adaptive.class)) &#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>.cachedAdaptiveClass == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.cachedAdaptiveClass = clazz;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span>(!<span class="keyword">this</span>.cachedAdaptiveClass.equals(clazz)) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"More than 1 adaptive class found: "</span> + <span class="keyword">this</span>.cachedAdaptiveClass.getClass().getName() + <span class="string">", "</span> + clazz.getClass().getName());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果一个类被打上了Adaptive的注解，则将其赋值给cachedAdaptiveClass缓存。</p>
+<p>好了，loadFile走完之后，我们回到上面关键的getAdaptiveExtensionClass方法的第二行：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="keyword">this</span>.cachedAdaptiveClass != <span class="keyword">null</span>?<span class="keyword">this</span>.cachedAdaptiveClass:(<span class="keyword">this</span>.cachedAdaptiveClass = <span class="keyword">this</span>.createAdaptiveExtensionClass());</span><br></pre></td></tr></table></figure>
+<p>这里就出现了cachedAdaptiveClass这个缓存，如果cachedAdaptiveClass不为空就返回，如果为空，则调用createAdaptiveExtensionClass方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Class&lt;?&gt; createAdaptiveExtensionClass() &#123;</span><br><span class="line">    String code = <span class="keyword">this</span>.createAdaptiveExtensionClassCode();</span><br><span class="line">    ClassLoader classLoader = findClassLoader();</span><br><span class="line">    Compiler compiler = (Compiler)getExtensionLoader(Compiler.class).getAdaptiveExtension();</span><br><span class="line">    <span class="keyword">return</span> compiler.compile(code, classLoader);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>createAdaptiveExtensionClass方法中，通过createAdaptiveExtensionClassCode去生成一个文件，然后调用Compiler去动态创建这个class，这里的Compiler默认是用JavassistCompiler，我们来看生成的这个类具体是什么：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.alibaba.dubbo.rpc;</span><br><span class="line"><span class="keyword">import</span> com.alibaba.dubbo.common.extension.ExtensionLoader;</span><br><span class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Protocol</span>$<span class="title">Adpative</span> <span class="keyword">implements</span> <span class="title">com</span>.<span class="title">alibaba</span>.<span class="title">dubbo</span>.<span class="title">rpc</span>.<span class="title">Protocol</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;<span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"method public abstract void com.alibaba.dubbo.rpc.Protocol.destroy() of interface com.alibaba.dubbo.rpc.Protocol is not adaptive method!"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getDefaultPort</span><span class="params">()</span> </span>&#123;<span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"method public abstract int com.alibaba.dubbo.rpc.Protocol.getDefaultPort() of interface com.alibaba.dubbo.rpc.Protocol is not adaptive method!"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">public</span> com.alibaba.dubbo.rpc.<span class="function">Exporter <span class="title">export</span><span class="params">(com.alibaba.dubbo.rpc.Invoker arg0)</span> <span class="keyword">throws</span> com.alibaba.dubbo.rpc.RpcException </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (arg0 == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"com.alibaba.dubbo.rpc.Invoker argument == null"</span>);</span><br><span class="line">            <span class="keyword">if</span> (arg0.getUrl() == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"com.alibaba.dubbo.rpc.Invoker argument getUrl() == null"</span>);com.alibaba.dubbo.common.URL url = arg0.getUrl();</span><br><span class="line">            String extName = ( url.getProtocol() == <span class="keyword">null</span> ? <span class="string">"dubbo"</span> : url.getProtocol() );</span><br><span class="line">            <span class="keyword">if</span>(extName == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Fail to get extension(com.alibaba.dubbo.rpc.Protocol) name from url("</span> + url.toString() + <span class="string">") use keys([protocol])"</span>);</span><br><span class="line">            com.alibaba.dubbo.rpc.Protocol extension = (com.alibaba.dubbo.rpc.Protocol)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.rpc.Protocol.class).getExtension(extName);</span><br><span class="line">            <span class="keyword">return</span> extension.export(arg0);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">public</span> com.alibaba.dubbo.rpc.<span class="function">Invoker <span class="title">refer</span><span class="params">(java.lang.Class arg0, com.alibaba.dubbo.common.URL arg1)</span> <span class="keyword">throws</span> com.alibaba.dubbo.rpc.RpcException </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (arg1 == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"url == null"</span>);</span><br><span class="line">            com.alibaba.dubbo.common.URL url = arg1;</span><br><span class="line">            String extName = ( url.getProtocol() == <span class="keyword">null</span> ? <span class="string">"dubbo"</span> : url.getProtocol() );</span><br><span class="line">            <span class="keyword">if</span>(extName == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Fail to get extension(com.alibaba.dubbo.rpc.Protocol) name from url("</span> + url.toString() + <span class="string">") use keys([protocol])"</span>);</span><br><span class="line">            com.alibaba.dubbo.rpc.Protocol extension = (com.alibaba.dubbo.rpc.Protocol)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.rpc.Protocol.class).getExtension(extName);</span><br><span class="line">            <span class="keyword">return</span> extension.refer(arg0, arg1);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>这里我直接debug住然后把String code给拷贝了出来，没有格式化过。可以看到基本就是做了一层带来，export方法和refer方法最终都是获取到对应实现的name，然后调用ExtensionLoader的getExtension去获取具体的实现，这个Protocol$Adpative基本就是一个工厂。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">getExtension</span><span class="params">(String name)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(name != <span class="keyword">null</span> &amp;&amp; name.length() != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span>(<span class="string">"true"</span>.equals(name)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">this</span>.getDefaultExtension();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            Holder&lt;Object&gt; holder = (Holder)<span class="keyword">this</span>.cachedInstances.get(name);</span><br><span class="line">            <span class="keyword">if</span>(holder == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">this</span>.cachedInstances.putIfAbsent(name, <span class="keyword">new</span> Holder());</span><br><span class="line">                holder = (Holder)<span class="keyword">this</span>.cachedInstances.get(name);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            Object instance = holder.get();</span><br><span class="line">            <span class="keyword">if</span>(instance == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">synchronized</span>(holder) &#123;</span><br><span class="line">                    instance = holder.get();</span><br><span class="line">                    <span class="keyword">if</span>(instance == <span class="keyword">null</span>) &#123;</span><br><span class="line">                        instance = <span class="keyword">this</span>.createExtension(name);</span><br><span class="line">                        holder.set(instance);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> instance;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Extension name == null"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>getExtension没啥好说的就是去缓存里拿实例，没有的话就新建并放入缓存。</p>
+<p>至此，dubbo的SPI机制就基本快速浏览完了，有以下几点需要注意：</p>
+<ol>
+<li>dubbo的SPI机制可以说是在java传统的SPI上做了一定的扩展，内部做了很多的缓存机制，并且通过holder，concurretHashMap等方式做了线程安全。</li>
+<li>dubbo的SPI中存在一个adaptive注解，用于标注一个工厂类去创建各种具体实现，如果一个接口没有adaptive注解的实现，则通过Javassist的方式去动态创建一个xxx$Adaptive.class。</li>
+<li>dubbo会从三个文件中加载所有的类：META-INF/dubbo/internal/，META-INF/dubbo/和META-INF/services/</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/dubbo/" rel="tag">#dubbo</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/17/dubbo源码学习/" rel="next" title="dubbo源码学习">
+                <i class="fa fa-chevron-left"></i> dubbo源码学习
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          <div class="comments" id="comments">
+  <div id="uyan_frame"></div>
+</div>
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">26</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2157722"></script>
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
