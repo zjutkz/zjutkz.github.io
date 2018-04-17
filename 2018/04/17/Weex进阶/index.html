@@ -1,0 +1,949 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Weex," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="从年前的几天开始负责了公司的Weex项目，前2个月一直在写服务端和前端后台的代码，这个月把这两块内容梳理的七七八八，开始优化客户端的逻辑，发现有几点可优化的地方，记录下来与大家分享。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Weex进阶">
+<meta property="og:url" content="http://zjutkz.net/2018/04/17/Weex进阶/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="从年前的几天开始负责了公司的Weex项目，前2个月一直在写服务端和前端后台的代码，这个月把这两块内容梳理的七七八八，开始优化客户端的逻辑，发现有几点可优化的地方，记录下来与大家分享。">
+<meta property="og:updated_time" content="2018-04-17T13:59:10.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Weex进阶">
+<meta name="twitter:description" content="从年前的几天开始负责了公司的Weex项目，前2个月一直在写服务端和前端后台的代码，这个月把这两块内容梳理的七七八八，开始优化客户端的逻辑，发现有几点可优化的地方，记录下来与大家分享。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> Weex进阶 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Weex进阶
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-04-17T21:58:48+08:00" content="2018-04-17">
+              2018-04-17
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/04/17/Weex进阶/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/04/17/Weex进阶/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/04/17/Weex进阶/" class="leancloud_visitors" data-flag-title="Weex进阶">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>从年前的几天开始负责了公司的Weex项目，前2个月一直在写服务端和前端后台的代码，这个月把这两块内容梳理的七七八八，开始优化客户端的逻辑，发现有几点可优化的地方，记录下来与大家分享。</p>
+<a id="more"></a>
+<h1 id="性能监控"><a href="#性能监控" class="headerlink" title="性能监控"></a>性能监控</h1><p>用Weex代替原有的hybrid开发，最根本的原因就是“性能”，在不丢失h5的灵活性的前提下，将性能不断的提升到native的水准，这是大部分应用选择接入Weex的理由。而性能这个东西，绝不是肉眼看看就可以了的，没有详细的数据统计与分析做支撑，一切都是空中楼阁。</p>
+<p>在翻看Weex的源码之后，发现Weex对性能方面的监控和统计做的是比较到位的，首先我们看看如何获取Weex的一切性能数据。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * Interface for commit log info. This interface works as an adapter for various log library.</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">IWXUserTrackAdapter</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  String MODULE_NAME = <span class="string">"weex"</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//Performance</span></span><br><span class="line">  String LOAD = <span class="string">"load"</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//Alarm</span></span><br><span class="line">  String JS_FRAMEWORK = <span class="string">"jsFramework"</span>;</span><br><span class="line">  String JS_DOWNLOAD = <span class="string">"jsDownload"</span>;</span><br><span class="line">  String DOM_MODULE = <span class="string">"domModule"</span>;</span><br><span class="line">  String JS_BRIDGE = <span class="string">"jsBridge"</span>;</span><br><span class="line">  String STREAM_MODULE = <span class="string">"streamModule"</span>;</span><br><span class="line">  String INVOKE_MODULE = <span class="string">"invokeModule"</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">commit</span><span class="params">(Context context, String eventId, String type, WXPerformance perf, Map&lt;String, Serializable&gt; params)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Weex中有一个adapter叫IWXUserTrackAdapter，看注释就明白是提供了数据输出的能力，方法的参数中有一个入参叫WXPerformance，下面我们来看看这个类里有什么。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WXPerformance</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT = <span class="string">"default"</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Business unit, mandatory. If no business unit can be provided, set the field as default</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> String bizType = <span class="string">"weex"</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * URL used for rendering view, optional</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> String templateUrl;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Time spent for reading, time unit is ms.</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">double</span> localReadTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Name of the page</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> String pageName = DEFAULT;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Size of JavaScript framework, the unit is KB</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">double</span> JSLibSize;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Time of initial JavaScript library</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> JSLibInitTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Size of JavaScript template</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">double</span> JSTemplateSize;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> templateLoadTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Time used for</span><br><span class="line">   * &#123;<span class="doctag">@link</span> com.taobao.weex.bridge.WXBridgeManager#createInstance(String, String, Map, String)&#125;</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> communicateTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> screenRenderTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Call native Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> callNativeTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Create Instance Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> firstScreenJSFExecuteTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Call native Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> batchTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Call native Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> parseJsonTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   *  UpdateDomObj Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> updateDomObjTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   *  ApplyUpdate Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> applyUpdateTime;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   *  CssLayout Time spent when rendering first screen</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">long</span> cssLayoutTime;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * Time spent, the unit is micro second</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">double</span> totalTime;</span><br><span class="line">  </span><br><span class="line">  .........</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，这个类中有能满足我们性能数据统计的大部分数据了，下面我取几个最重要的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * load bundle js time, unite ms</span><br><span class="line">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">long</span> networkTime;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line">  * Time used for</span><br><span class="line">  * &#123;<span class="doctag">@link</span> com.taobao.weex.bridge.WXBridgeManager#createInstance(String, String, Map, String)&#125;</span><br><span class="line">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">long</span> communicateTime;</span><br><span class="line">  </span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * Time spent, the unit is micro second</span><br><span class="line">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">double</span> totalTime;</span><br></pre></td></tr></table></figure>
+<p>networkTime表示下载bundle的时间，communicateTime表示创建instance的时间，而totalTime则表示从渲染开始到渲染完成的时间。所以如果我们要统计用户从打开一个Weex页面到Weex渲染完成的时间，我们就可以用这里的networkTime+totalTime。</p>
+<p>然后就像我前面说的，这些数据只能满足“大部分”的要求。举个例子，比如一个app的购物车页面用了Weex，用networkTime+totalTime就真的能够表示用户“从打开页面到页面首屏展示在用户面前”的时间了吗？显然是不对的。networkTime+totalTime只能表示“Weex渲染完成的时间”，而从渲染完成到首屏的view展示在用户面前，还有一个时间是需要统计的：就是业务接口的rt时间。拿购物车为例，在Weex渲染完成后，还是会存在一定时间的白屏，因为这个时候和购物车相关的业务接口并没有请求完成，还没有数据，而vue是基于data-binding的，所以这个时候的view是无法用数据进行填充的。</p>
+<p>这里有一点需要注意的是，很多开发者会选择在OnRenderSuccess中调用dialog的dismiss方法去将加载框隐藏，这对用户来说是不友好的，因为有接口rt的存在，所以在dismiss只有还会有一定时间的白屏。正确的做法应该是自定义一个Loading的module，让前端的开发在接口成功/失败的回调中手动的调用module的dismiss方法。</p>
+<p>回到前面的性能统计问题上，这个rt的时间不属于Weex的性能，所以Weex没有统计也是正常的，而对于业务方来说，想要还原用户真实的数据，这个时间还是有必要记录的，我们有2种方法进行数据的计算：1.纯粹计算从“Weex渲染完成”到“接口回调”的时间，也就是在onRenderSuccess的时候记录startTime，在LoadingModule的dismiss中计算时间差；2.计算整体的时间，也就是在对应页面的create生命周期中记录startTime，在LoadingModule的dismiss中计算时间差。</p>
+<p>说了这么多，这些性能数据如果获取呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onActivityPause</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  onViewDisappear();</span><br><span class="line">  <span class="keyword">if</span>(!isCommit)&#123;</span><br><span class="line">    Set&lt;String&gt; componentTypes= WXComponentFactory.getComponentTypesByInstanceId(getInstanceId());</span><br><span class="line">    <span class="keyword">if</span>(componentTypes!=<span class="keyword">null</span> &amp;&amp; componentTypes.contains(WXBasicComponentType.SCROLLER))&#123;</span><br><span class="line">      mWXPerformance.useScroller=<span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    mWXPerformance.maxDeepViewLayer=getMaxDeepLayer();</span><br><span class="line"> mWXPerformance.wxDims = mwxDims;</span><br><span class="line"> mWXPerformance.measureTimes = measureTimes;</span><br><span class="line">    <span class="keyword">if</span> (mUserTrackAdapter != <span class="keyword">null</span>) &#123;</span><br><span class="line">      mUserTrackAdapter.commit(mContext, <span class="keyword">null</span>, IWXUserTrackAdapter.LOAD, mWXPerformance, getUserTrackParams());</span><br><span class="line">    &#125;</span><br><span class="line">    isCommit=<span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// module listen Activity onActivityPause</span></span><br><span class="line">  WXModuleManager.onActivityPause(getInstanceId());</span><br><span class="line">  <span class="keyword">if</span>(mRootComp != <span class="keyword">null</span>) &#123;</span><br><span class="line">    mRootComp.onActivityPause();</span><br><span class="line">  &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    WXLogUtils.w(<span class="string">"Warning :Component tree has not build completely,onActivityPause can not be call!"</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  WXLogUtils.i(<span class="string">"Application onActivityPause()"</span>);</span><br><span class="line">  <span class="keyword">if</span> (!mCurrentGround) &#123;</span><br><span class="line">    WXLogUtils.i(<span class="string">"Application to be in the backround"</span>);</span><br><span class="line">    Intent intent = <span class="keyword">new</span> Intent(WXGlobalEventReceiver.EVENT_ACTION);</span><br><span class="line">    intent.putExtra(WXGlobalEventReceiver.EVENT_NAME, Constants.Event.PAUSE_EVENT);</span><br><span class="line">    intent.putExtra(WXGlobalEventReceiver.EVENT_WX_INSTANCEID, getInstanceId());</span><br><span class="line">    mContext.sendBroadcast(intent);</span><br><span class="line">    <span class="keyword">this</span>.mCurrentGround = <span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们来看WXSDKInstance的onActivityPause方法，其中有一段：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(!isCommit)&#123;</span><br><span class="line">   Set&lt;String&gt; componentTypes= WXComponentFactory.getComponentTypesByInstanceId(getInstanceId());</span><br><span class="line">   <span class="keyword">if</span>(componentTypes!=<span class="keyword">null</span> &amp;&amp; componentTypes.contains(WXBasicComponentType.SCROLLER))&#123;</span><br><span class="line">     mWXPerformance.useScroller=<span class="number">1</span>;</span><br><span class="line">   &#125;</span><br><span class="line">   mWXPerformance.maxDeepViewLayer=getMaxDeepLayer();</span><br><span class="line">mWXPerformance.wxDims = mwxDims;</span><br><span class="line">mWXPerformance.measureTimes = measureTimes;</span><br><span class="line">   <span class="keyword">if</span> (mUserTrackAdapter != <span class="keyword">null</span>) &#123;</span><br><span class="line">     mUserTrackAdapter.commit(mContext, <span class="keyword">null</span>, IWXUserTrackAdapter.LOAD, mWXPerformance, getUserTrackParams());</span><br><span class="line">   &#125;</span><br><span class="line">   isCommit=<span class="keyword">true</span>;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>在Activity不在前台的时候，会调用对应adapter的commit方法上报，我们所需要做的就是实现这个adapter并通过对应的方法注入到instance中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">WXSDKEngine.initialize(app, <span class="keyword">new</span> InitConfig.Builder()</span><br><span class="line">        .setImgAdapter(....)</span><br><span class="line">        .setUtAdapter(....)</span><br><span class="line">        .setJSExceptionAdapter(....)</span><br><span class="line">        .build());</span><br></pre></td></tr></table></figure>
+<p>在初始化Weex的时候调用setUtAdapter就可以了。</p>
+<p>除了上面的数据之外，Weex还提供了一个更加直观的GUI查看的方法。</p>
+<p>首先我们需要依赖inspect：</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">debugCompile (<span class="string">'com.taobao.android:weex_inspector:0.13.4'</span>)</span><br><span class="line">debugCompile (<span class="string">'com.taobao.android.weex_inspection:protocol:1.1.4.1'</span>)</span><br></pre></td></tr></table></figure>
+<p>在devTools包下有一个PerformanceActivity，可以很直观的查看一些性能，而这个Activity是如何打开的呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">enableMonitor</span><span class="params">(<span class="keyword">final</span> String instanceId)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">final</span> WXSDKInstance instance = WXSDKManager.getInstance().getSDKInstance(instanceId);</span><br><span class="line">  <span class="keyword">if</span> (instance != <span class="keyword">null</span>) &#123;</span><br><span class="line">    RenderContainer container = (RenderContainer) instance.getContainerView();</span><br><span class="line">    TextView textView = <span class="keyword">new</span> TextView(instance.getUIContext());</span><br><span class="line">    textView.setText(<span class="string">"Weex MNT:"</span> + instanceId);</span><br><span class="line">    textView.setBackgroundColor(Color.parseColor(<span class="string">"#AA1E90FF"</span>));</span><br><span class="line">    textView.setTextColor(Color.WHITE);</span><br><span class="line">    textView.setPadding(<span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>);</span><br><span class="line">    FrameLayout.LayoutParams lp = <span class="keyword">new</span> FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);</span><br><span class="line">    lp.gravity = Gravity.RIGHT | Gravity.CENTER;</span><br><span class="line">    textView.setLayoutParams(lp);</span><br><span class="line"></span><br><span class="line">    container.addView(textView);</span><br><span class="line">    textView.setOnClickListener(<span class="keyword">new</span> View.OnClickListener() &#123;</span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</span><br><span class="line">        PerformanceActivity.start(instance.getUIContext(), Integer.parseInt(instanceId));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在WXTracingAdapter中有一个enableMonitor方法，具体就是通过传入instanceId去获取该instance下面的数据并传入到Activity中，不过在最新的0.18.0版本的sdk中这个方法没有地方调用，不过没关系，我们已经知道如何展示了，可以在自己对应的页面里照葫芦画瓢，通过instanceId去打开Activity就好。(记得在正式上面的时候屏蔽这个入口，所以我上面是debugCompile)</p>
+<p>还有一个问题我们需要考虑，就是数据筛选的问题，有时候我们可能只需要对某一个特定的页面或者是url进行数据的筛选，而上面的数据统计里，显然没有和页面还有url相关的内容，我们如何在上报的时候加上这两条数据呢？还是看WXSDKInstance的源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addUserTrackParameter</span><span class="params">(String key,Serializable value)</span></span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(<span class="keyword">this</span>.mUserTrackParams == <span class="keyword">null</span>)&#123;</span><br><span class="line">    <span class="keyword">this</span>.mUserTrackParams = <span class="keyword">new</span> ConcurrentHashMap&lt;&gt;();</span><br><span class="line">  &#125;</span><br><span class="line">  mUserTrackParams.put(key,value);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，我们可以往一个叫mUserTrackParams的map里添加自定义的数据，而这个map有什么用呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mUserTrackAdapter.commit(mContext, <span class="keyword">null</span>, IWXUserTrackAdapter.LOAD, mWXPerformance, getUserTrackParams());</span><br></pre></td></tr></table></figure>
+<p>在之前的数据上报中，会将这个map作为参数放到commit方法中。所以我们可以调用WXSDKInstance的addUserTrackParameter去添加自定义的数据，包括上面说的那个接口的rt时长。</p>
+<p>最后说一句，大家有兴趣可以看看WXTracingAdapter这个类，你就会知道PerformanceActivity里是如何统计数据的了~</p>
+<h1 id="异常监控"><a href="#异常监控" class="headerlink" title="异常监控"></a>异常监控</h1><p>说完了性能监控，我们再来说说Weex的异常监控。我们知道，Weex中是可能会发生异常的，有可能是Weex sdk本身的异常，也有可能是使用不当造成的异常，还有可能是网络的抖动造成的请求失败，超时等等。对于这些异常我们都需要有一个监控的方法，并在合适的时候进行降级。这里我们主要讨论Weex本身的异常，毕竟一些业务上的异常如请求超时不是Weex该处理的。</p>
+<p>Weex的异常分为2种，渲染异常和js执行异常。有过Weex开发经验的同学都知道，Weex中提供了一个onException的回调，但是如果仅仅使用这一个回调是远远不够的！</p>
+<p>下面我们先看onException的触发时机：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onRenderError</span><span class="params">(<span class="keyword">final</span> String errCode, <span class="keyword">final</span> String msg)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (mRenderListener != <span class="keyword">null</span> &amp;&amp; mContext != <span class="keyword">null</span>) &#123;</span><br><span class="line">    runOnUiThread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (mRenderListener != <span class="keyword">null</span> &amp;&amp; mContext != <span class="keyword">null</span>) &#123;</span><br><span class="line">          mRenderListener.onException(WXSDKInstance.<span class="keyword">this</span>, errCode, msg);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onJSException</span><span class="params">(<span class="keyword">final</span> String errCode, <span class="keyword">final</span> String function, <span class="keyword">final</span> String exception)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (mRenderListener != <span class="keyword">null</span> &amp;&amp; mContext != <span class="keyword">null</span>) &#123;</span><br><span class="line">    runOnUiThread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (mRenderListener != <span class="keyword">null</span> &amp;&amp; mContext != <span class="keyword">null</span>) &#123;</span><br><span class="line">          StringBuilder builder = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">          builder.append(function);</span><br><span class="line">          builder.append(exception);</span><br><span class="line">          mRenderListener.onException(WXSDKInstance.<span class="keyword">this</span>, errCode, builder.toString());</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在WXSDKInstance中有onRenderError和onJSException，最终都会调用onException方法，乍一看很完美，既有渲染异常，也有js异常，其实不然，在阅读Weex源码的时候我发现了一些猫腻：</p>
+<p>有一个类叫WXExceptionUtil，其中有一个方法叫commitCriticalExceptionRT：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">commitCriticalExceptionRT</span><span class="params">(@Nullable <span class="keyword">final</span> String instanceId,</span><br><span class="line">                                 @Nullable <span class="keyword">final</span> String errCode,</span><br><span class="line">                                 @Nullable <span class="keyword">final</span> String function,</span><br><span class="line">                                 @Nullable <span class="keyword">final</span> String exception,</span><br><span class="line">                                 @Nullable <span class="keyword">final</span> Map&lt;String,String&gt; extParams )</span> </span>&#123;</span><br><span class="line">	IWXJSExceptionAdapter adapter = WXSDKManager.getInstance().getIWXJSExceptionAdapter();</span><br><span class="line">    ....</span><br><span class="line">    <span class="keyword">if</span> (adapter != <span class="keyword">null</span>) &#123;</span><br><span class="line">	  exceptionCommit = <span class="keyword">new</span> WXJSExceptionInfo(instanceIdCommit, bundleUrlCommit, errCode, function, exceptionMsgCommit, commitMap);</span><br><span class="line">	  adapter.onJSException(exceptionCommit);</span><br><span class="line">	  WXLogUtils.e(exceptionCommit.toString());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个方法中会获取IWXJSExceptionAdapter并通过这个adapter上报异常，并没有走我们熟悉的onException。</p>
+<p>那么这个方法在什么时候调用呢？不看不知道一看吓一跳，很多地方都用到了这个方法，我们来看其中的一处：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">callNativeModule</span><span class="params">(String instanceId, String module, String method, JSONArray arguments, Object options)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (WXEnvironment.isOpenDebugLog()) &#123;</span><br><span class="line">    mLodBuilder.append(<span class="string">"[WXBridgeManager] callNativeModule &gt;&gt;&gt;&gt; instanceId:"</span>).append(instanceId)</span><br><span class="line">        .append(<span class="string">", module:"</span>).append(module).append(<span class="string">", method:"</span>).append(method).append(<span class="string">", arguments:"</span>).append(arguments);</span><br><span class="line">    WXLogUtils.d(mLodBuilder.substring(<span class="number">0</span>));</span><br><span class="line">    mLodBuilder.setLength(<span class="number">0</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (WXDomModule.WXDOM.equals(module)) &#123;</span><br><span class="line">      WXDomModule dom = getDomModule(instanceId);</span><br><span class="line">      <span class="keyword">return</span> dom.callDomMethod(method, arguments);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> callModuleMethod(instanceId, module,</span><br><span class="line">          method, arguments);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line"> String err = <span class="string">"[WXBridgeManager] callNative exception: "</span> + WXLogUtils.getStackTrace(e);</span><br><span class="line">    WXLogUtils.e(err);</span><br><span class="line"> WXExceptionUtils.commitCriticalExceptionRT(instanceId,</span><br><span class="line">     WXErrorCode.WX_KEY_EXCEPTION_INVOKE.getErrorCode(), <span class="string">"callNativeModule"</span>,</span><br><span class="line">     err, <span class="keyword">null</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>WXBridgeManager的callNativeModule方法，js调用native的module会走到这里，在catch中就调用了commitCriticalExceptionRT，可以看到的是，这种异常上报在Weex中处处可见，如果我们遗漏了这一处，很多异常我们就没办法捕获了。</p>
+<p>所以我们要做的就是在Weex初始化的时候初始化这个adapter：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">WXSDKEngine.initialize(app, <span class="keyword">new</span> InitConfig.Builder()</span><br><span class="line">        .setImgAdapter(...)</span><br><span class="line">        .setUtAdapter(...)</span><br><span class="line">        .setJSExceptionAdapter(...)</span><br><span class="line">        .build());</span><br></pre></td></tr></table></figure>
+<p>调用setJSExceptionAdapter就可以，自己去实现IWXJSExceptionAdapter。</p>
+<p>最后，我们在onException和IWXJSExceptionAdapter的onJSException里去统计我们的异常并处理降级逻辑。</p>
+<h1 id="长列表性能优化"><a href="#长列表性能优化" class="headerlink" title="长列表性能优化"></a>长列表性能优化</h1><p>我们知道，在Weex中长列表的显示我们一般会采用list标签配合cell标签使用，但是不得不说一句，list标签在性能上实在是太差了，官方提供的文档说可以在cell中增加一个scope属性用以cell的复用，也就是说相同scope的cell会复用，这确实不假，但是复用的调用时“cell必须要任何时刻都保证相同”，也就是说如果你在cell中使用了v-if这样的条件判断，复用就会让整个列表错乱。我们从源码角度看看这是为什么：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onBindViewHolder</span><span class="params">(<span class="keyword">final</span> ListBaseViewHolder holder, <span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (holder == <span class="keyword">null</span>) <span class="keyword">return</span>;</span><br><span class="line">  holder.setComponentUsing(<span class="keyword">true</span>);</span><br><span class="line">  WXComponent component = getChild(position);</span><br><span class="line">  <span class="keyword">if</span> (component == <span class="keyword">null</span></span><br><span class="line">      || (component <span class="keyword">instanceof</span> WXRefresh)</span><br><span class="line">      || (component <span class="keyword">instanceof</span> WXLoading)</span><br><span class="line">      || (component.getDomObject() != <span class="keyword">null</span> &amp;&amp; component.getDomObject().isFixed())</span><br><span class="line">      ) &#123;</span><br><span class="line">    <span class="keyword">if</span> (WXEnvironment.isApkDebugable()) &#123;</span><br><span class="line">      WXLogUtils.d(TAG, <span class="string">"Bind WXRefresh &amp; WXLoading "</span> + holder);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(component <span class="keyword">instanceof</span>  WXBaseRefresh</span><br><span class="line">            &amp;&amp; holder.getView() != <span class="keyword">null</span></span><br><span class="line">            &amp;&amp; component.getDomObject() != <span class="keyword">null</span></span><br><span class="line">            &amp;&amp; (component.getDomObject().getAttrs().get(<span class="string">"holderBackground"</span>) != <span class="keyword">null</span>))&#123;</span><br><span class="line">       Object holderBackground = component.getDomObject().getAttrs().get(<span class="string">"holderBackground"</span>);</span><br><span class="line">      <span class="keyword">int</span> color = WXResourceUtils.getColor(holderBackground.toString(), Color.WHITE);</span><br><span class="line">       holder.getView().setBackgroundColor(color);</span><br><span class="line">       holder.getView().setVisibility(View.VISIBLE);</span><br><span class="line">       holder.getView().postInvalidate();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们之前看onBindViewHolder方法，如果你的holder是复用的，并且其中使用了if的条件判断，那就出大事了，我们可以看到onBindViewHolder没有任何数据的判断，回想我们自己使用RecyclerView的时候，在adapter是不是会写很多if-else去做数据的判断以保证复用不会错乱呢？</p>
+<p>针对这个问题，官方在最新的0.18.0版本的sdk中进行了优化。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">registerComponent(WXRecyclerTemplateList.class, <span class="keyword">false</span>,WXBasicComponentType.RECYCLE_LIST);</span><br></pre></td></tr></table></figure>
+<p>我们可以看到多了一个WXRecyclerTemplateList，对于的标签是recycle-list。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onBindViewHolder</span><span class="params">(<span class="keyword">final</span> TemplateViewHolder templateViewHolder, <span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(templateViewHolder == <span class="keyword">null</span>)&#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    WXCell component = templateViewHolder.getTemplate();</span><br><span class="line">    <span class="keyword">if</span>(component == <span class="keyword">null</span>)&#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">    templateViewHolder.setHolderPosition(position);</span><br><span class="line">    Object data = cellDataManager.listData.get(position);</span><br><span class="line">    CellRenderState cellRenderState = cellDataManager.getRenderState(position);</span><br><span class="line">    <span class="keyword">if</span>(component.getRenderData() == data &amp;&amp; (cellRenderState == <span class="keyword">null</span> || !cellRenderState.isDirty()))&#123;</span><br><span class="line">        <span class="keyword">if</span>(WXEnvironment.isOpenDebugLog() &amp;&amp; ENABLE_TRACE_LOG)&#123;</span><br><span class="line">            WXLogUtils.d(TAG,  position + <span class="string">" position "</span>+ getTemplateKey(position) + <span class="string">" onBindViewHolder none data update "</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span>;  <span class="comment">//none update just return</span></span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        List&lt;WXComponent&gt; updates = doRenderTemplate(component, position);</span><br><span class="line">        Statements.doInitCompontent(updates);</span><br><span class="line">        component.setRenderData(data);</span><br><span class="line">        Layouts.doLayoutAsync(templateViewHolder, <span class="keyword">true</span>);</span><br><span class="line">        <span class="keyword">if</span>(WXEnvironment.isOpenDebugLog() &amp;&amp; ENABLE_TRACE_LOG)&#123;</span><br><span class="line">            WXLogUtils.d(TAG,  position + <span class="string">" position "</span>+ getTemplateKey(position) + <span class="string">" onBindViewHolder used "</span> + (System.currentTimeMillis() - start));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个组件的onBindViewHolder中就厉害了，判断了当前position的data和holder的data，如果不一致就会重新绑定一遍数据和dom。</p>
+<p>recycle-list的具体使用方法大家可以去看<a href="http://weex-project.io/cn/references/components/recycle-list.html" target="_blank" rel="external">官网的介绍</a>。</p>
+<h1 id="bundle缓存"><a href="#bundle缓存" class="headerlink" title="bundle缓存"></a>bundle缓存</h1><p>为了节省用户流程并提升Weex的秒开率，bundle的缓存是势在必行的，而实现一个有效的缓存逻辑在Weex中也很简单。</p>
+<p>首先我们可以继承WXSDKInstance并重写renderByUrl方法，在该方法中获取到bundle的url，这个时候我们就可以根据这个url去获取缓存了，如果有缓存就加载缓存，如果没有缓存则调用WXSDKInstance本身的renderByUrl。而renderByUrl最终会去下载该bundle文件，并通过render方法渲染，我们要做的就是重写render方法，其中会有一个template入参，就是bundle文件，将其进行保存就ok。</p>
+<p>这里我们需要注意的是：1.保存的文件要和url进行关联，可以是md5或其他方法，保证缓存和url的可关联性；2.在加载本地缓存的时候要做md5校验，防止恶意篡改；3.在发生异常的时候，可对具体的场景进行缓存的删除；4.由于缓存和url是关联的，所以该url必须具体独立性，并且在每一次的线上发布之后需要带有版本号或者时间戳以保证缓存不会误用。</p>
+<h1 id="断点调试"><a href="#断点调试" class="headerlink" title="断点调试"></a>断点调试</h1><p>这次所讨论的断点是针对于前端代码的断点，我们可以使用Weex官方的dev-tool去进行debug，<a href="http://weex-project.io/cn/guide/integrate-devtool-to-android.html" target="_blank" rel="external">使用方法的传送门在这</a>。继承之后，我们可以在chrome里查看对应bundle的源码并进行断点调试，以后Weex页面出现问题再也不用求前端的开发一起联调排查了，自己对前端代码和客户端代码进行断点，so easy~</p>
+<p>不过如果你的项目中okhttp的版本比较高，需要自定义一个WebSocketClient才行，具体的实现我已经写好并放在<a href="https://github.com/zjutkz/WeexDebugWSClient" target="_blank" rel="external">我的Github上了</a>。</p>
+<h1 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h1><p>最后我想说的是，Weex现在越来越多的被运用到了各大项目中，很多同学都在摩拳擦掌的准备使用它，但是在使用的过程中，有以下几点必须要注意：</p>
+<ol>
+<li>一切用数据说话。Weex带来的改变绝不是用肉眼看看就行了的，一切都要用数据做支撑，改造之前和改造之后的数据对比才是使用Weex的原因。</li>
+<li>准备接受挑战。Weex和RN这种动态化项目的出现是非常符合“大前端”这样的概念的，也许你是客户端开发，但是如果你使用了Weex，请让自己具备一定的前端开发能力，就像我在最后一个单元“断点调试”里说的，遇到问题可以自己debug，甚至在日常开发中可以自己开发一些前端组件，模块都是必须的。</li>
+<li>全局考虑问题。Weex不仅仅是一个客户端sdk这么简单，背后的构建，发布，降级等逻辑都是需要考虑的，如何做到构建友好，一键发布，快速灰度，安全降级等等，这些都是需要仔细斟酌的，一个完整的Weex产品绝对不是做好一个sdk这么简单。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Weex/" rel="tag">#Weex</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/03/dubbo中的SpringMVC依赖注入/" rel="next" title="dubbo中的SpringMVC依赖注入">
+                <i class="fa fa-chevron-left"></i> dubbo中的SpringMVC依赖注入
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          <div class="comments" id="comments">
+  <div id="uyan_frame"></div>
+</div>
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">35</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">26</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#性能监控"><span class="nav-number">1.</span> <span class="nav-text">性能监控</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#异常监控"><span class="nav-number">2.</span> <span class="nav-text">异常监控</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#长列表性能优化"><span class="nav-number">3.</span> <span class="nav-text">长列表性能优化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bundle缓存"><span class="nav-number">4.</span> <span class="nav-text">bundle缓存</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#断点调试"><span class="nav-number">5.</span> <span class="nav-text">断点调试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#写在最后"><span class="nav-number">6.</span> <span class="nav-text">写在最后</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zjutkz"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2157722"></script>
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
