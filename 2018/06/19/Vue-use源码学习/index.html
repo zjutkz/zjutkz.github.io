@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="Vue," />
 
 
 
@@ -59,16 +59,16 @@
 
 
 
-<meta name="description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="description" content="由于最近在做一些前端的项目，并且接手了Weex的项目，所以难免和Vue打起了交道，js也是从入门到学习中。项目里用到了Vue的插件机制，所以看了看Vue.use的源码，还是比较简单的，适合新手阅读，所以记录下来以免遗忘。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="zjutkz's blog">
-<meta property="og:url" content="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/index.html">
+<meta property="og:title" content="Vue.use源码学习">
+<meta property="og:url" content="http://zjutkz.net/2018/06/19/Vue-use源码学习/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
-<meta property="og:updated_time" content="2016-10-27T10:32:50.000Z">
+<meta property="og:description" content="由于最近在做一些前端的项目，并且接手了Weex的项目，所以难免和Vue打起了交道，js也是从入门到学习中。项目里用到了Vue的插件机制，所以看了看Vue.use的源码，还是比较简单的，适合新手阅读，所以记录下来以免遗忘。">
+<meta property="og:updated_time" content="2018-06-19T09:50:00.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="zjutkz's blog">
-<meta name="twitter:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="twitter:title" content="Vue.use源码学习">
+<meta name="twitter:description" content="由于最近在做一些前端的项目，并且接手了Weex的项目，所以难免和Vue打起了交道，js也是从入门到学习中。项目里用到了Vue的插件机制，所以看了看Vue.use的源码，还是比较简单的，适合新手阅读，所以记录下来以免遗忘。">
 
 
 
@@ -86,7 +86,7 @@
   };
 </script>
 
-  <title>  | zjutkz's blog </title>
+  <title> Vue.use源码学习 | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +291,7 @@ $(function() {
             
             
               
-                
+                Vue.use源码学习
               
             
           </h1>
@@ -303,8 +303,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-05-10T16:43:31+08:00" content="2016-05-10">
-              2016-05-10
+            <time itemprop="dateCreated" datetime="2018-06-19T17:26:18+08:00" content="2018-06-19">
+              2018-06-19
             </time>
           </span>
 
@@ -314,8 +314,8 @@ $(function() {
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" itemprop="commentsCount"></span>
+                <a href="/2018/06/19/Vue-use源码学习/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2018/06/19/Vue-use源码学习/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -325,7 +325,7 @@ $(function() {
 
           
           
-             <span id="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" class="leancloud_visitors" data-flag-title="">
+             <span id="/2018/06/19/Vue-use源码学习/" class="leancloud_visitors" data-flag-title="Vue.use源码学习">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -346,7 +346,30 @@ $(function() {
       
 
       
-        <p>由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到<a href="http://gold.xitu.io/entry/5731f50ef38c840067dcce48" target="_blank" rel="external">稀土掘金上的转载文章</a>，谢谢大家！</p>
+        <p>由于最近在做一些前端的项目，并且接手了Weex的项目，所以难免和Vue打起了交道，js也是从入门到学习中。项目里用到了Vue的插件机制，所以看了看Vue.use的源码，还是比较简单的，适合新手阅读，所以记录下来以免遗忘。</p>
+<a id="more"></a>
+<h1 id="感谢"><a href="#感谢" class="headerlink" title="感谢"></a>感谢</h1><p>本文最后一章节[结合实际场景]是参考了<a href="https://github.com/bmfe/eros" target="_blank" rel="external">eros</a>这个开源项目的，感谢eros项目组的开发。</p>
+<h1 id="什么是Vue插件"><a href="#什么是Vue插件" class="headerlink" title="什么是Vue插件"></a>什么是Vue插件</h1><p>关于什么是Vue插件大家可以去看<a href="https://cn.vuejs.org/v2/guide/plugins.html" target="_blank" rel="external">官网的解释</a>，总得来说就是提供一个全局注册/调用的能力。</p>
+<h1 id="怎么用"><a href="#怎么用" class="headerlink" title="怎么用"></a>怎么用</h1><p>我们以Weex为例。</p>
+<p>首先有一个toast.js</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Toast = &#123;&#125;</span><br><span class="line">Toast.install = (Vue, options) =&gt; &#123;</span><br><span class="line">    Vue.prototype.$toast = (msg, duration = <span class="number">0.8</span>) =&gt; &#123;</span><br><span class="line">        <span class="keyword">const</span> modal = weex.requireModule(<span class="string">'modal'</span>)</span><br><span class="line">        modal.toast(&#123;</span><br><span class="line">            message: msg,</span><br><span class="line">            duration: <span class="number">0.8</span></span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">Vue.use(Toast)</span><br></pre></td></tr></table></figure>
+<p>很简单，就是定义了一个Toast对面，然后给Toast对象创建一个install方法，方法里给Vue的prototype创建了一个$toast方法，该方法就是调用modal去弹一个toast，最后使用Vue.use方法去注册这个Toast插件。</p>
+<p>然后我们还有一个index.vue：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">	&lt;div&gt;</span><br><span class="line">		&lt;div class=&quot;box&quot; @click=&quot;onclick&quot; @longpress=&quot;onlongpress&quot; @appear=&quot;onappear&quot;  @disappear=&quot;ondisappear&quot;&gt;&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/template&gt;</span><br><span class="line"></span><br><span class="line">&lt;script&gt;</span><br><span class="line">	const modal = weex.requireModule(&apos;modal&apos;)</span><br><span class="line"></span><br><span class="line">	export default &#123;</span><br><span class="line">    	methods: &#123;</span><br><span class="line">        	onclick (event) &#123;</span><br><span class="line">            	this.$toast(&quot;aaa&quot;, 0.8)</span><br><span class="line">        	&#125;,</span><br><span class="line">        	onlongpress (event) &#123;</span><br><span class="line">            	console.log(&apos;onlongpress:&apos;, event)</span><br><span class="line">            	modal.toast(&#123;</span><br><span class="line">                	message: &apos;onlongpress&apos;,</span><br><span class="line">                	duration: 0.8</span><br><span class="line">            	&#125;)</span><br><span class="line">        	&#125;,</span><br><span class="line">        	onappear (event) &#123;</span><br><span class="line">            	console.log(&apos;onappear:&apos;, event)</span><br><span class="line">            	modal.toast(&#123;</span><br><span class="line">                	message: &apos;onappear&apos;,</span><br><span class="line">                    duration: 0.8</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;,</span><br><span class="line">            ondisappear (event) &#123;</span><br><span class="line">                console.log(&apos;ondisappear:&apos;, event)</span><br><span class="line">                modal.toast(&#123;</span><br><span class="line">                    message: &apos;ondisappear&apos;,</span><br><span class="line">                    duration: 0.8</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;</span><br><span class="line">    	&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&lt;/script&gt;</span><br><span class="line"></span><br><span class="line">&lt;style scoped&gt;</span><br><span class="line">.box &#123;</span><br><span class="line">    border-width: 2px;</span><br><span class="line">    border-style: solid;</span><br><span class="line">    border-color: #BBB;</span><br><span class="line">    width: 250px;</span><br><span class="line">    height: 250px;</span><br><span class="line">    margin-top: 250px;</span><br><span class="line">    margin-left: 250px;</span><br><span class="line">    background-color: #EEE;</span><br><span class="line">&#125;</span><br><span class="line">&lt;/style&gt;</span><br></pre></td></tr></table></figure>
+<p>在其中调用了this.$toast去使用插件的方法。</p>
+<p>由此我们可以知道，Vue的插件机制就是通过Vue.use方法去注册的。</p>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Vue.use = <span class="function"><span class="keyword">function</span> (<span class="params">plugin</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (plugin.installed) &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> args = toArray(<span class="built_in">arguments</span>, <span class="number">1</span>);</span><br><span class="line">    args.unshift(<span class="keyword">this</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> plugin.install === <span class="string">'function'</span>) &#123;</span><br><span class="line">        plugin.install.apply(plugin, args);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> plugin === <span class="string">'function'</span>) &#123;</span><br><span class="line">        plugin.apply(<span class="literal">null</span>, args);</span><br><span class="line">    &#125;</span><br><span class="line">    plugin.installed = <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">toArray</span> (<span class="params">list, start</span>) </span>&#123;</span><br><span class="line">  start = start || <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">var</span> i = list.length - start;</span><br><span class="line">  <span class="keyword">var</span> ret = <span class="keyword">new</span> <span class="built_in">Array</span>(i);</span><br><span class="line">  <span class="keyword">while</span> (i--) &#123;</span><br><span class="line">    ret[i] = list[i + start];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> ret</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>use方法非常简单：</p>
+<p>0x01：判断该插件是否已经注册，如果已经注册就直接return，防止重复注册。</p>
+<p>0x02：然后通过toArray方法将Arguments这个类数组转换成真正的数据，并且去掉第一个元素。</p>
+<p>0x03：将this，也就是Vue实例添加到toArray生成的args数组中。</p>
+<p>0x04：判断use的入参plugin是install是否是一个方法，如果是则直接调用该方法。</p>
+<p>0x05：如果第四步是false，则判断plugun本身是不是一个方法，如果是方法，则用它本身代替install去执行。</p>
+<p>0x06：将plugin的installed标记位设置为true。</p>
+<p>就这么简单的6步，use方法就分析完了，其实就是为了去执行插件的install方法，而结合上面的例子我们知道，install中就把$toast赋值给了Vue的prototype，在其他地方就可以使用的。</p>
+<h1 id="结合实际场景"><a href="#结合实际场景" class="headerlink" title="结合实际场景"></a>结合实际场景</h1><p>学习了Vue的插件机制，那么这个机制我们能用来做什么呢？我们结合Weex来看。</p>
+<p>首先我们知道，Weex是把bundle下发到客户端并渲染，所以一个页面的加载时间取决于两部分：bundle下载时间，bundle渲染时间。在不考虑本地缓存的情况下，bundle的大小直接决定了它的下载时间，以及用户所消耗的流量，所以我们需要有一种方式去尽可能的减小这个bundle的体积。这里Vue的插件机制就可以排上用场了。</p>
+<p>首先我们把一部分共用，不太会改动的基础的代码放在客户端，这样bundle里的内容就应该是纯业务相关的代码，在把bundle下载下来之后手动将客户端的基础js拼接到bundle上，这样就能有效地减小bundle的体积，而想要使用这种方式，就必须把基础js通过Vue的插件机制注册，业务js中全局调用，不然是无法拼接的(除非你的基础js不通过webpack打包)，毕竟webpack打包之后所有的代码都是封闭的，无法互相调用。</p>
 
       
     </div>
@@ -359,22 +382,24 @@ $(function() {
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/Vue/" rel="tag">#Vue</a>
+          
+        </div>
+      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/05/06/让我们来聊一聊插件化吧/" rel="next" title="让我们来聊一聊插件化吧">
-                <i class="fa fa-chevron-left"></i> 让我们来聊一聊插件化吧
+              <a href="/2018/04/17/Weex进阶/" rel="next" title="Weex进阶">
+                <i class="fa fa-chevron-left"></i> Weex进阶
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/05/15/记一次苦逼的资源逆向分析/" rel="prev" title="记一次苦逼的资源逆向分析">
-                记一次苦逼的资源逆向分析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -491,7 +516,7 @@ $(function() {
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#感谢"><span class="nav-number">1.</span> <span class="nav-text">感谢</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是Vue插件"><span class="nav-number">2.</span> <span class="nav-text">什么是Vue插件</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#怎么用"><span class="nav-number">3.</span> <span class="nav-text">怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码分析"><span class="nav-number">4.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#结合实际场景"><span class="nav-number">5.</span> <span class="nav-text">结合实际场景</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
