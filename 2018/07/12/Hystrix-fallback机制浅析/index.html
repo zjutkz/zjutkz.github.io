@@ -1,0 +1,918 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hystrix," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="Hystrix作为后端弹性架构的一把利器，用处可以说非常的广泛，最近在写代码的时候接触到了这个框架，所以趁着业余时间粗粗的看了下其中的源码，发现有很多地方值得学习，于是准备写几篇文章记录一下。
+Hystrix的功能比较多，这一篇文章先探讨其中一个比较简单的功能——fallback的具体实现。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hystrix fallback机制浅析">
+<meta property="og:url" content="http://zjutkz.net/2018/07/12/Hystrix-fallback机制浅析/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="Hystrix作为后端弹性架构的一把利器，用处可以说非常的广泛，最近在写代码的时候接触到了这个框架，所以趁着业余时间粗粗的看了下其中的源码，发现有很多地方值得学习，于是准备写几篇文章记录一下。
+Hystrix的功能比较多，这一篇文章先探讨其中一个比较简单的功能——fallback的具体实现。">
+<meta property="og:updated_time" content="2018-07-12T14:36:37.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hystrix fallback机制浅析">
+<meta name="twitter:description" content="Hystrix作为后端弹性架构的一把利器，用处可以说非常的广泛，最近在写代码的时候接触到了这个框架，所以趁着业余时间粗粗的看了下其中的源码，发现有很多地方值得学习，于是准备写几篇文章记录一下。
+Hystrix的功能比较多，这一篇文章先探讨其中一个比较简单的功能——fallback的具体实现。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> Hystrix fallback机制浅析 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hystrix fallback机制浅析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-07-12T21:59:47+08:00" content="2018-07-12">
+              2018-07-12
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/07/12/Hystrix-fallback机制浅析/" class="leancloud_visitors" data-flag-title="Hystrix fallback机制浅析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Hystrix作为后端弹性架构的一把利器，用处可以说非常的广泛，最近在写代码的时候接触到了这个框架，所以趁着业余时间粗粗的看了下其中的源码，发现有很多地方值得学习，于是准备写几篇文章记录一下。</p>
+<p>Hystrix的功能比较多，这一篇文章先探讨其中一个比较简单的功能——fallback的具体实现。</p>
+<a id="more"></a>
+<h1 id="怎么用"><a href="#怎么用" class="headerlink" title="怎么用"></a>怎么用</h1><p>下面我们先来看一下fallback的一个具体使用场景。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@HystrixCommand</span>(</span><br><span class="line">        fallbackMethod = <span class="string">"fallbackFunc"</span>,</span><br><span class="line">        commandProperties = &#123;</span><br><span class="line">                <span class="comment">//超过此时间，HystrixCommand被标记为TIMEOUT，并执行回退逻辑，默认1000ms</span></span><br><span class="line">                <span class="meta">@HystrixProperty</span>(name = <span class="string">"execution.isolation.thread.timeoutInMilliseconds"</span>, value = <span class="string">"500"</span>),</span><br><span class="line">                <span class="comment">//设置在回路被打开，拒绝请求到再次尝试请求并决定回路是否继续打开的时间,默认5000ms</span></span><br><span class="line">                <span class="meta">@HystrixProperty</span>(name = <span class="string">"circuitBreaker.sleepWindowInMilliseconds"</span>, value = <span class="string">"60000"</span>),</span><br><span class="line">                <span class="comment">//设置打开回路并启动回退逻辑的错误比率,默认值50%</span></span><br><span class="line">                <span class="meta">@HystrixProperty</span>(name = <span class="string">"circuitBreaker.errorThresholdPercentage"</span>, value = <span class="string">"50"</span>)</span><br><span class="line">        &#125;,</span><br><span class="line">        threadPoolProperties = &#123;</span><br><span class="line">                <span class="meta">@HystrixProperty</span>(name = <span class="string">"coreSize"</span>, value = <span class="string">"200"</span>)</span><br><span class="line">        &#125;)</span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Map&lt;String, Boolean&gt; <span class="title">someFunc</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		.......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到只要一个方法被注解上了HystrixCommand注解，那么这个方法就会被Hystrix监控，注解中有一个参数叫fallbackMethod，很显然，<b>就是当被注解的方法发生异常之后，会调用fallbackMethod</b>，在上文中也就是fallbackFunc。值得一提的是HystrixCommand注解有很多的参数，这也是Hystrix功能核心所在，具体的参数可以参考<a href="http://tietang.wang/2016/02/25/hystrix/Hystrix%E5%8F%82%E6%95%B0%E8%AF%A6%E8%A7%A3/" target="_blank" rel="external">这篇文章</a>。</p>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><p>既然是注解，又是在SpringMVC中，自然而然的就联想到了AOP，翻一翻源码，果不其然有一个HystrixCommandAspect类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Pointcut</span>(<span class="string">"@annotation(com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand)"</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hystrixCommandAnnotationPointcut</span><span class="params">()</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Pointcut</span>(<span class="string">"@annotation(com.netflix.hystrix.contrib.javanica.annotation.HystrixCollapser)"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">hystrixCollapserAnnotationPointcut</span><span class="params">()</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Around</span>(<span class="string">"hystrixCommandAnnotationPointcut() || hystrixCollapserAnnotationPointcut()"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">methodsAnnotatedWithHystrixCommand</span><span class="params">(<span class="keyword">final</span> ProceedingJoinPoint joinPoint)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    Method method = getMethodFromTarget(joinPoint);</span><br><span class="line">    Validate.notNull(method, <span class="string">"failed to get method from joinPoint: %s"</span>, joinPoint);</span><br><span class="line">    <span class="keyword">if</span> (method.isAnnotationPresent(HystrixCommand.class) &amp;&amp; method.isAnnotationPresent(HystrixCollapser.class)) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"method cannot be annotated with HystrixCommand and HystrixCollapser "</span> +</span><br><span class="line">                <span class="string">"annotations at the same time"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    MetaHolderFactory metaHolderFactory = META_HOLDER_FACTORY_MAP.get(HystrixPointcutType.of(method));</span><br><span class="line">    MetaHolder metaHolder = metaHolderFactory.create(joinPoint);</span><br><span class="line">    HystrixInvokable invokable = HystrixCommandFactory.getInstance().create(metaHolder);</span><br><span class="line">    ExecutionType executionType = metaHolder.isCollapserAnnotationPresent() ?</span><br><span class="line">            metaHolder.getCollapserExecutionType() : metaHolder.getExecutionType();</span><br><span class="line"></span><br><span class="line">    Object result;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (!metaHolder.isObservable()) &#123;</span><br><span class="line">            result = CommandExecutor.execute(invokable, executionType, metaHolder);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            result = executeObservable(invokable, executionType, metaHolder);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (HystrixBadRequestException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> e.getCause() != <span class="keyword">null</span> ? e.getCause() : e;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (HystrixRuntimeException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> hystrixRuntimeExceptionToThrowable(metaHolder, e);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Pointcut指向2个注解，其中一个就是我们用到的HystrixCommand。</p>
+<p>具体的编织方法，我们来看下面这一段：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">MetaHolderFactory metaHolderFactory = META_HOLDER_FACTORY_MAP.get(HystrixPointcutType.of(method));</span><br><span class="line">MetaHolder metaHolder = metaHolderFactory.create(joinPoint);</span><br><span class="line">HystrixInvokable invokable = HystrixCommandFactory.getInstance().create(metaHolder);</span><br><span class="line">ExecutionType executionType = metaHolder.isCollapserAnnotationPresent() ?</span><br><span class="line">        metaHolder.getCollapserExecutionType() : metaHolder.getExecutionType();</span><br><span class="line"></span><br><span class="line">Object result;</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!metaHolder.isObservable()) &#123;</span><br><span class="line">        result = CommandExecutor.execute(invokable, executionType, metaHolder);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        result = executeObservable(invokable, executionType, metaHolder);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">catch</span> (HystrixBadRequestException e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> e.getCause() != <span class="keyword">null</span> ? e.getCause() : e;</span><br><span class="line">&#125; <span class="keyword">catch</span> (HystrixRuntimeException e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> hystrixRuntimeExceptionToThrowable(metaHolder, e);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> result;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>用于joinPoint生成一个metaHolder，这个metaHolder中存储了和被注解方法相关的信息。</li>
+</ol>
+<ol start="2">
+<li>根据metaHolder生成一个invokable，而这个invokable就是我们的command。</li>
+<li>根据注解的类型获取一个executionType。</li>
+<li>判断该方法的返回类型是否是Observable，根绝返回类型进行执行。</li>
+</ol>
+<p>很有意思的第四点，竟然有RxJava的代码在其中，其实看过源码你就会知道，Hystrix内部已经深度集成了RxJava了，这对做Android的我来说还是有点惊喜的，我之前的博客中也有几篇关于RxJava的文章哦~</p>
+<p>我们看返回值不是Observable的，也就是下面这一行执行代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">result = CommandExecutor.execute(invokable, executionType, metaHolder);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title">execute</span><span class="params">(HystrixInvokable invokable, ExecutionType executionType, MetaHolder metaHolder)</span> <span class="keyword">throws</span> RuntimeException </span>&#123;</span><br><span class="line">    Validate.notNull(invokable);</span><br><span class="line">    Validate.notNull(metaHolder);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (executionType) &#123;</span><br><span class="line">        <span class="keyword">case</span> SYNCHRONOUS: &#123;</span><br><span class="line">            <span class="keyword">return</span> castToExecutable(invokable, executionType).execute();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">case</span> ASYNCHRONOUS: &#123;</span><br><span class="line">            HystrixExecutable executable = castToExecutable(invokable, executionType);</span><br><span class="line">            <span class="keyword">if</span> (metaHolder.hasFallbackMethodCommand()</span><br><span class="line">                    &amp;&amp; ExecutionType.ASYNCHRONOUS == metaHolder.getFallbackExecutionType()) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> FutureDecorator(executable.queue());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> executable.queue();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">case</span> OBSERVABLE: &#123;</span><br><span class="line">            HystrixObservable observable = castToObservable(invokable);</span><br><span class="line">            <span class="keyword">return</span> ObservableExecutionMode.EAGER == metaHolder.getObservableExecutionMode() ? observable.observe() : observable.toObservable();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"unsupported execution type: "</span> + executionType);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据executionType去执行，我们看其中的同步执行：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> HystrixExecutable <span class="title">castToExecutable</span><span class="params">(HystrixInvokable invokable, ExecutionType executionType)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (invokable <span class="keyword">instanceof</span> HystrixExecutable) &#123;</span><br><span class="line">        <span class="keyword">return</span> (HystrixExecutable) invokable;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Command should implement "</span> + HystrixExecutable.class.getCanonicalName() + <span class="string">" interface to execute in: "</span> + executionType + <span class="string">" mode"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其实很简单啦，就是调用command的execute方法。</p>
+<p>command是Hystrix的核心理念，其中的基类是AbstractCommand，我们来看其子类HystrixCommand的execute方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> R <span class="title">execute</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> queue().get();</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> Exceptions.sneakyThrow(decomposeException(e));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中调用了queue方法，而queue方法中最核心的一行代码是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> Future&lt;R&gt; delegate = toObservable().toBlocking().toFuture();</span><br></pre></td></tr></table></figure>
+<p>又见Rxjava的影子，可见其真的是深度集成啊~</p>
+<p>toObservable的代码灰常的长，但是如果你对RxJava有所了解的话，其实逻辑是非常清晰的，我们提取其中关键的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> Observable.defer(<span class="keyword">new</span> Func0&lt;Observable&lt;R&gt;&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Observable&lt;R&gt; <span class="title">call</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        ......</span><br><span class="line">        Observable&lt;R&gt; hystrixObservable =</span><br><span class="line">                Observable.defer(applyHystrixSemantics)</span><br><span class="line">                        .map(wrapWithAllOnNextHooks);</span><br><span class="line"></span><br><span class="line">        Observable&lt;R&gt; afterCache;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// put in cache</span></span><br><span class="line">        <span class="keyword">if</span> (requestCacheEnabled &amp;&amp; cacheKey != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// wrap it for caching</span></span><br><span class="line">            HystrixCachedObservable&lt;R&gt; toCache = HystrixCachedObservable.from(hystrixObservable, _cmd);</span><br><span class="line">            HystrixCommandResponseFromCache&lt;R&gt; fromCache = (HystrixCommandResponseFromCache&lt;R&gt;) requestCache.putIfAbsent(cacheKey, toCache);</span><br><span class="line">            <span class="keyword">if</span> (fromCache != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="comment">// another thread beat us so we'll use the cached value instead</span></span><br><span class="line">                toCache.unsubscribe();</span><br><span class="line">                isResponseFromCache = <span class="keyword">true</span>;</span><br><span class="line">                <span class="keyword">return</span> handleRequestCacheHitAndEmitValues(fromCache, _cmd);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// we just created an ObservableCommand so we cast and return it</span></span><br><span class="line">                afterCache = toCache.toObservable();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            afterCache = hystrixObservable;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> afterCache</span><br><span class="line">                .doOnTerminate(terminateCommandCleanup)     <span class="comment">// perform cleanup once (either on normal terminal state (this line), or unsubscribe (next line))</span></span><br><span class="line">                .doOnUnsubscribe(unsubscribeCommandCleanup) <span class="comment">// perform cleanup once</span></span><br><span class="line">                .doOnCompleted(fireOnCompletedHook);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>通过defer去做延时绑定，并且判断缓存的逻辑，我们这篇文章不关注缓存，而已afterCache就是hystrixObservable，最后通过doOnTerminate，doOnUnsubscribe和doOnComplete去做收尾的一些工作。</p>
+<p>可以看到Hystrix内部是如何结合Rxjava去做异步操作的，逻辑很清晰，这里不得不吹一下RxJava了，真是好用啊！！</p>
+<p>下面我们来看applyHystrixSemantics这个observable。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">rivate Observable&lt;R&gt; <span class="title">applyHystrixSemantics</span><span class="params">(<span class="keyword">final</span> AbstractCommand&lt;R&gt; _cmd)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// mark that we're starting execution on the ExecutionHook</span></span><br><span class="line">    <span class="comment">// if this hook throws an exception, then a fast-fail occurs with no fallback.  No state is left inconsistent</span></span><br><span class="line">    executionHook.onStart(_cmd);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* determine if we're allowed to execute */</span></span><br><span class="line">    <span class="keyword">if</span> (circuitBreaker.attemptExecution()) &#123;</span><br><span class="line">        <span class="keyword">final</span> TryableSemaphore executionSemaphore = getExecutionSemaphore();</span><br><span class="line">        <span class="keyword">final</span> AtomicBoolean semaphoreHasBeenReleased = <span class="keyword">new</span> AtomicBoolean(<span class="keyword">false</span>);</span><br><span class="line">        <span class="keyword">final</span> Action0 singleSemaphoreRelease = <span class="keyword">new</span> Action0() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">if</span> (semaphoreHasBeenReleased.compareAndSet(<span class="keyword">false</span>, <span class="keyword">true</span>)) &#123;</span><br><span class="line">                    executionSemaphore.release();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> Action1&lt;Throwable&gt; markExceptionThrown = <span class="keyword">new</span> Action1&lt;Throwable&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Throwable t)</span> </span>&#123;</span><br><span class="line">                eventNotifier.markEvent(HystrixEventType.EXCEPTION_THROWN, commandKey);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (executionSemaphore.tryAcquire()) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="comment">/* used to track userThreadExecutionTime */</span></span><br><span class="line">                executionResult = executionResult.setInvocationStartTime(System.currentTimeMillis());</span><br><span class="line">                <span class="keyword">return</span> executeCommandAndObserve(_cmd)</span><br><span class="line">                        .doOnError(markExceptionThrown)</span><br><span class="line">                        .doOnTerminate(singleSemaphoreRelease)</span><br><span class="line">                        .doOnUnsubscribe(singleSemaphoreRelease);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (RuntimeException e) &#123;</span><br><span class="line">                <span class="keyword">return</span> Observable.error(e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> handleSemaphoreRejectionViaFallback();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> handleShortCircuitViaFallback();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中又是RxJava的代码，最关键的代码是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> executeCommandAndObserve(_cmd)</span><br><span class="line">        .doOnError(markExceptionThrown)</span><br><span class="line">        .doOnTerminate(singleSemaphoreRelease)</span><br><span class="line">        .doOnUnsubscribe(singleSemaphoreRelease);</span><br></pre></td></tr></table></figure>
+<p>这里我们就不一一分析的，其实光看名字就知道了，executeCommandAndObserve做具体的方法执行：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Observable&lt;R&gt; <span class="title">executeCommandAndObserve</span><span class="params">(<span class="keyword">final</span> AbstractCommand&lt;R&gt; _cmd)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> HystrixRequestContext currentRequestContext = HystrixRequestContext.getContextForCurrentThread();</span><br><span class="line"></span><br><span class="line">    .....</span><br><span class="line">   </span><br><span class="line">    <span class="keyword">final</span> Func1&lt;Throwable, Observable&lt;R&gt;&gt; handleFallback = <span class="keyword">new</span> Func1&lt;Throwable, Observable&lt;R&gt;&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Observable&lt;R&gt; <span class="title">call</span><span class="params">(Throwable t)</span> </span>&#123;</span><br><span class="line">            circuitBreaker.markNonSuccess();</span><br><span class="line">            Exception e = getExceptionFromThrowable(t);</span><br><span class="line">            executionResult = executionResult.setExecutionException(e);</span><br><span class="line">            <span class="keyword">if</span> (e <span class="keyword">instanceof</span> RejectedExecutionException) &#123;</span><br><span class="line">                <span class="keyword">return</span> handleThreadPoolRejectionViaFallback(e);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (t <span class="keyword">instanceof</span> HystrixTimeoutException) &#123;</span><br><span class="line">                <span class="keyword">return</span> handleTimeoutViaFallback();</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (t <span class="keyword">instanceof</span> HystrixBadRequestException) &#123;</span><br><span class="line">                <span class="keyword">return</span> handleBadRequestByEmittingError(e);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">/*</span><br><span class="line">                 * Treat HystrixBadRequestException from ExecutionHook like a plain HystrixBadRequestException.</span><br><span class="line">                 */</span></span><br><span class="line">                <span class="keyword">if</span> (e <span class="keyword">instanceof</span> HystrixBadRequestException) &#123;</span><br><span class="line">                    eventNotifier.markEvent(HystrixEventType.BAD_REQUEST, commandKey);</span><br><span class="line">                    <span class="keyword">return</span> Observable.error(e);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">return</span> handleFailureViaFallback(e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> Action1&lt;Notification&lt;? <span class="keyword">super</span> R&gt;&gt; setRequestContext = <span class="keyword">new</span> Action1&lt;Notification&lt;? <span class="keyword">super</span> R&gt;&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(Notification&lt;? <span class="keyword">super</span> R&gt; rNotification)</span> </span>&#123;</span><br><span class="line">            setRequestContextIfNeeded(currentRequestContext);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    Observable&lt;R&gt; execution;</span><br><span class="line">    <span class="keyword">if</span> (properties.executionTimeoutEnabled().get()) &#123;</span><br><span class="line">        execution = executeCommandWithSpecifiedIsolation(_cmd)</span><br><span class="line">                .lift(<span class="keyword">new</span> HystrixObservableTimeoutOperator&lt;R&gt;(_cmd));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        execution = executeCommandWithSpecifiedIsolation(_cmd);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> execution.doOnNext(markEmits)</span><br><span class="line">            .doOnCompleted(markOnCompleted)</span><br><span class="line">            .onErrorResumeNext(handleFallback)</span><br><span class="line">            .doOnEach(setRequestContext);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>execution的链式调用中有onErrorResumeNext，并传入了handlerFallback，而handlerFallback中处理了具体的一些错误，入超时等。说道超时，我们可以看一下和它相关的代码，execution在生成的时候，有一个HystrixObservableTimeoutOperator操作符：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Subscriber&lt;? <span class="keyword">super</span> R&gt; call(<span class="keyword">final</span> Subscriber&lt;? <span class="keyword">super</span> R&gt; child) &#123;</span><br><span class="line">    <span class="keyword">final</span> CompositeSubscription s = <span class="keyword">new</span> CompositeSubscription();</span><br><span class="line">    <span class="comment">// if the child unsubscribes we unsubscribe our parent as well</span></span><br><span class="line">    child.add(s);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//capture the HystrixRequestContext upfront so that we can use it in the timeout thread later</span></span><br><span class="line">    <span class="keyword">final</span> HystrixRequestContext hystrixRequestContext = HystrixRequestContext.getContextForCurrentThread();</span><br><span class="line"></span><br><span class="line">    TimerListener listener = <span class="keyword">new</span> TimerListener() &#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">tick</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="comment">// if we can go from NOT_EXECUTED to TIMED_OUT then we do the timeout codepath</span></span><br><span class="line">            <span class="comment">// otherwise it means we lost a race and the run() execution completed or did not start</span></span><br><span class="line">            <span class="keyword">if</span> (originalCommand.isCommandTimedOut.compareAndSet(TimedOutStatus.NOT_EXECUTED, TimedOutStatus.TIMED_OUT)) &#123;</span><br><span class="line">                <span class="comment">// report timeout failure</span></span><br><span class="line">                originalCommand.eventNotifier.markEvent(HystrixEventType.TIMEOUT, originalCommand.commandKey);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// shut down the original request</span></span><br><span class="line">                s.unsubscribe();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">final</span> HystrixContextRunnable timeoutRunnable = <span class="keyword">new</span> HystrixContextRunnable(originalCommand.concurrencyStrategy, hystrixRequestContext, <span class="keyword">new</span> Runnable() &#123;</span><br><span class="line"></span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                        child.onError(<span class="keyword">new</span> HystrixTimeoutException());</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">                timeoutRunnable.run();</span><br><span class="line">                <span class="comment">//if it did not start, then we need to mark a command start for concurrency metrics, and then issue the timeout</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getIntervalTimeInMilliseconds</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> originalCommand.properties.executionTimeoutInMilliseconds().get();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
+<p>它的call方法中去做了计时，如果超时，就抛出HystrixTimeoutException这个exception。</p>
+<p>我们来看和HystrixTimeoutException相关的handleTimeoutViaFallback。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Observable&lt;R&gt; <span class="title">handleTimeoutViaFallback</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> getFallbackOrThrowException(<span class="keyword">this</span>, HystrixEventType.TIMEOUT, FailureType.TIMEOUT, <span class="string">"timed-out"</span>, <span class="keyword">new</span> TimeoutException());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用了getFallbackOrThrowException方法，而其中则会调用getFallbackAction方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> CommandAction <span class="title">getFallbackAction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> commandActions.getFallbackAction();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>commandActions是怎么传入的呢？回到Aspect类中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HystrixInvokable invokable = HystrixCommandFactory.getInstance().create(metaHolder);</span><br></pre></td></tr></table></figure>
+<p>command是通过工厂类生成的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> HystrixInvokable <span class="title">create</span><span class="params">(MetaHolder metaHolder)</span> </span>&#123;</span><br><span class="line">    HystrixInvokable executable;</span><br><span class="line">    <span class="keyword">if</span> (metaHolder.isCollapserAnnotationPresent()) &#123;</span><br><span class="line">        executable = <span class="keyword">new</span> CommandCollapser(metaHolder);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (metaHolder.isObservable()) &#123;</span><br><span class="line">        executable = <span class="keyword">new</span> GenericObservableCommand(HystrixCommandBuilderFactory.getInstance().create(metaHolder));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        executable = <span class="keyword">new</span> GenericCommand(HystrixCommandBuilderFactory.getInstance().create(metaHolder));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> executable;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看最后一个else里的代码是去new了一个command。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="title">AbstractHystrixCommand</span><span class="params">(HystrixCommandBuilder builder)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(builder.getSetterBuilder().build());</span><br><span class="line">    <span class="keyword">this</span>.commandActions = builder.getCommandActions();</span><br><span class="line">    <span class="keyword">this</span>.collapsedRequests = builder.getCollapsedRequests();</span><br><span class="line">    <span class="keyword">this</span>.cacheResultInvocationContext = builder.getCacheResultInvocationContext();</span><br><span class="line">    <span class="keyword">this</span>.cacheRemoveInvocationContext = builder.getCacheRemoveInvocationContext();</span><br><span class="line">    <span class="keyword">this</span>.ignoreExceptions = builder.getIgnoreExceptions();</span><br><span class="line">    <span class="keyword">this</span>.executionType = builder.getExecutionType();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在构造函数中传入了commandActions。那HystrixCommandBuilder又是怎么生成呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;ResponseType&gt; <span class="function">HystrixCommandBuilder <span class="title">create</span><span class="params">(MetaHolder metaHolder, Collection&lt;HystrixCollapser.CollapsedRequest&lt;ResponseType, Object&gt;&gt; collapsedRequests)</span> </span>&#123;</span><br><span class="line">    validateMetaHolder(metaHolder);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> HystrixCommandBuilder.builder()</span><br><span class="line">            .setterBuilder(createGenericSetterBuilder(metaHolder))</span><br><span class="line">            .commandActions(createCommandActions(metaHolder))</span><br><span class="line">            .collapsedRequests(collapsedRequests)</span><br><span class="line">            .cacheResultInvocationContext(createCacheResultInvocationContext(metaHolder))</span><br><span class="line">            .cacheRemoveInvocationContext(createCacheRemoveInvocationContext(metaHolder))</span><br><span class="line">            .ignoreExceptions(metaHolder.getCommandIgnoreExceptions())</span><br><span class="line">            .executionType(metaHolder.getExecutionType())</span><br><span class="line">            .build();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>builder中的commandActions是通过metaHolder生成的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> CommandActions <span class="title">createCommandActions</span><span class="params">(MetaHolder metaHolder)</span> </span>&#123;</span><br><span class="line">    CommandAction commandAction = createCommandAction(metaHolder);</span><br><span class="line">    CommandAction fallbackAction = createFallbackAction(metaHolder);</span><br><span class="line">    <span class="keyword">return</span> CommandActions.builder().commandAction(commandAction)</span><br><span class="line">            .fallbackAction(fallbackAction).build();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中createFallbackAction会通过metaHolder找到被注解方法中有没有注解上fallbackMethod(第一章节中的fallbackFunc)，如果有，则传入其中。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，我们已经分析完了Hystrix中的fallback机制，总得来说就是通过RxJava去做异步操作，并获取注解中的fallbackMethod，在捕获异常之后调用具体的方法。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hystrix/" rel="tag">#Hystrix</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/06/21/再谈Android组件化/" rel="next" title="再谈Android组件化">
+                <i class="fa fa-chevron-left"></i> 再谈Android组件化
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">37</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">27</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#怎么用"><span class="nav-number">1.</span> <span class="nav-text">怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
