@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="webpack," />
+  <meta name="keywords" content="Weex," />
 
 
 
@@ -59,16 +59,16 @@
 
 
 
-<meta name="description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="description" content="我们在开发Weex的过程中，肯定会用到模块的调用，而如果直接将客户端的native方法暴露给前端使用，会造成一定的不便，例如客户端某个模块的某个方法有改动，则所有的前端页面都要进行修改，所以我们需要一种“中间件”的方式去屏蔽差异。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="webpack自定义loader初探">
-<meta property="og:url" content="http://zjutkz.net/2018/08/28/webpack自定义loader初探/index.html">
+<meta property="og:title" content="一种封装Weex模块调用的方法">
+<meta property="og:url" content="http://zjutkz.net/2018/10/16/一种封装Weex模块调用的方法/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
-<meta property="og:updated_time" content="2018-08-28T10:28:43.000Z">
+<meta property="og:description" content="我们在开发Weex的过程中，肯定会用到模块的调用，而如果直接将客户端的native方法暴露给前端使用，会造成一定的不便，例如客户端某个模块的某个方法有改动，则所有的前端页面都要进行修改，所以我们需要一种“中间件”的方式去屏蔽差异。">
+<meta property="og:updated_time" content="2018-10-16T11:00:02.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="webpack自定义loader初探">
-<meta name="twitter:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="twitter:title" content="一种封装Weex模块调用的方法">
+<meta name="twitter:description" content="我们在开发Weex的过程中，肯定会用到模块的调用，而如果直接将客户端的native方法暴露给前端使用，会造成一定的不便，例如客户端某个模块的某个方法有改动，则所有的前端页面都要进行修改，所以我们需要一种“中间件”的方式去屏蔽差异。">
 
 
 
@@ -86,7 +86,7 @@
   };
 </script>
 
-  <title> webpack自定义loader初探 | zjutkz's blog </title>
+  <title> 一种封装Weex模块调用的方法 | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +291,7 @@ $(function() {
             
             
               
-                webpack自定义loader初探
+                一种封装Weex模块调用的方法
               
             
           </h1>
@@ -303,8 +303,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-28T18:16:08+08:00" content="2018-08-28">
-              2018-08-28
+            <time itemprop="dateCreated" datetime="2018-10-16T17:48:45+08:00" content="2018-10-16">
+              2018-10-16
             </time>
           </span>
 
@@ -318,7 +318,7 @@ $(function() {
 
           
           
-             <span id="/2018/08/28/webpack自定义loader初探/" class="leancloud_visitors" data-flag-title="webpack自定义loader初探">
+             <span id="/2018/10/16/一种封装Weex模块调用的方法/" class="leancloud_visitors" data-flag-title="一种封装Weex模块调用的方法">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -339,28 +339,18 @@ $(function() {
       
 
       
-        <p>最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。</p>
+        <p>我们在开发Weex的过程中，肯定会用到模块的调用，而如果直接将客户端的native方法暴露给前端使用，会造成一定的不便，例如客户端某个模块的某个方法有改动，则所有的前端页面都要进行修改，所以我们需要一种“中间件”的方式去屏蔽差异。</p>
 <a id="more"></a>
-<h1 id="什么是loader"><a href="#什么是loader" class="headerlink" title="什么是loader"></a>什么是loader</h1><p>我们都知道webpack作为当下最火的一个前端构建工具，具有很多很实用的功能，loader就是其中之一。说的通俗一点，loader就是用于对模块的源码进行转换。对于做Android的同学，大家可以把它想象成gradle中的transform task。</p>
-<h1 id="loader怎么用"><a href="#loader怎么用" class="headerlink" title="loader怎么用"></a>loader怎么用</h1><p>在平时的开发过程中，loader的使用也是非常常见的，我们可以在工程的webpack.config.js中定义：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">module</span>: &#123;</span><br><span class="line">  rules: [</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.css$/</span>,</span><br><span class="line">      use: [</span><br><span class="line">        <span class="string">'vue-style-loader'</span>,</span><br><span class="line">        <span class="string">'css-loader'</span></span><br><span class="line">      ],</span><br><span class="line">    &#125;,      &#123;</span><br><span class="line">      test: <span class="regexp">/\.vue$/</span>,</span><br><span class="line">      loader: <span class="string">'vue-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        loaders: &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// other vue-loader options go here</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.(png|jpg|gif|svg)$/</span>,</span><br><span class="line">      loader: <span class="string">'file-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        name: <span class="string">'[name].[ext]?[hash]'</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，对于css文件，我们使用css-loader，对于vue文件，我们使用vue-loader，对于图片文件，我们使用file-loader。这些loader会将对应的文件进行转换，构建出最终的产物。</p>
-<h1 id="如何自定义loader"><a href="#如何自定义loader" class="headerlink" title="如何自定义loader"></a>如何自定义loader</h1><p>有了上面的经验，我们该如何自定义一个loader呢？其实也是非常简单的。</p>
-<p>首先我们创建一个js文件，就取名叫test-loader吧。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> loaderUtils = <span class="built_in">require</span>(<span class="string">'loader-utils'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params">source</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"start process code..."</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> options = loaderUtils.getOptions(<span class="keyword">this</span>) || &#123;&#125;;</span><br><span class="line">    <span class="keyword">if</span>(options !== &#123;&#125;) &#123;</span><br><span class="line">        <span class="keyword">var</span> replaceMap = options[<span class="string">"replaceMap"</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">var</span> key <span class="keyword">in</span> replaceMap) &#123;</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">            source = source.replace(key, replaceMap[key]);</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> source;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>这就是全部的代码了，其实一个loader内部就是一个node模块，代码的编写就和平时写node一样就ok了。</p>
-<p>test-loader的逻辑就是获取到设置的option，并且做一个文本的替换。</p>
-<p>假设我们还有2个js文件，分别是test.js和index.js</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">'test is loaded'</span>;</span><br><span class="line"><span class="built_in">module</span>.exports = str;</span><br><span class="line"></span><br><span class="line">test.js</span><br></pre></td></tr></table></figure>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="built_in">require</span>(<span class="string">'./src/test'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(test);</span><br><span class="line"></span><br><span class="line">index.js</span><br></pre></td></tr></table></figure>
-<p>然后我们在webpack.config.js中加入我们自己的test-loader。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">   test: <span class="regexp">/\.js$/</span>,</span><br><span class="line">   loader: <span class="string">'test-loader'</span>,</span><br><span class="line">   exclude: <span class="regexp">/node_modules/</span>,</span><br><span class="line">   options: &#123;</span><br><span class="line">        replaceMap: &#123;</span><br><span class="line">           <span class="string">"loaded"</span>: <span class="string">"yeah"</span></span><br><span class="line">        &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中options中，我们将“loaded”字符串替换成“yeah”。</p>
-<p>但是我们的loader并没有上传到npm中，所以我们还需要在webpack.config.js中加入下面这段代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">resolveLoader: &#123;</span><br><span class="line">    modules: [path.join(__dirname, <span class="string">'./src/loaders'</span>), <span class="string">'node_modules'</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>用于加载本地loader。</p>
-<p>这样我们最终构建出来的产物中，所有的“loaded”字符串就会被替换成“yeah”了。</p>
-<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>这篇文章非常浅显，主要就是讲了一下loader的使用方式，其实我们熟知的很多loader都是这么做的，只不过是业务逻辑上的复杂程度不同而已，大家也可以自己试试看。</p>
+<h1 id="整体思路"><a href="#整体思路" class="headerlink" title="整体思路"></a>整体思路</h1><p>首先我们要明确的是，这个“中间件”也是js代码，但是它向下调用native的模块，向上将结果传递给前端业务代码，并且独立于所有的业务页面，这样业务代码只需要在使用的时候调用它就可以，而如果nativa模块有改动，我们也只要改动相应的中间件就可以了，业务代码不需要做调整。</p>
+<h1 id="方案一"><a href="#方案一" class="headerlink" title="方案一"></a>方案一</h1><p>基于这样的需求，我们可以很快的想到一种最基础的方式就是新建一个项目并通过npm发布，在业务代码中直接引用，这种模块化的方式配合webpack应该是比较常见的一种写法了，但是这种情况存在一个弊端，就是最终的dest js会比较的大，因为会包含我们添加了npm包，而这会导致我们Weex资源下载和加载的变慢，显示不是一种最优解。</p>
+<h1 id="方案二"><a href="#方案二" class="headerlink" title="方案二"></a>方案二</h1><p>关于方案二可以看我之前写的文章<a href="http://zjutkz.net/2018/06/19/Vue-use%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/">Vue.use源码学习</a>，具体就是通过Vue的插件机制去完成注册。</p>
+<h1 id="方案三"><a href="#方案三" class="headerlink" title="方案三"></a>方案三</h1><p>方案三则是通过Weex本身的js service的方式去注册，关于js service大家可以去官网查看：<a href="https://weex.apache.org/cn/references/js-service.html" target="_blank" rel="external">JS Service</a>。</p>
+<p>通过查看native端的源码发现，其实它内部就是使用了js的自执行函数来完成的注册：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">registerService</span><span class="params">(String name, String serviceScript, Map&lt;String, Object&gt; options)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (TextUtils.isEmpty(name) || TextUtils.isEmpty(serviceScript)) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">    String param1 = <span class="string">"register: global.registerService, unregister: global.unregisterService"</span>;</span><br><span class="line">    String param2 = <span class="string">"serviceName: \""</span> + name + <span class="string">"\""</span>;</span><br><span class="line">    <span class="keyword">for</span> (String key: options.keySet()) &#123;</span><br><span class="line">        <span class="comment">// TODO - why always string?</span></span><br><span class="line">        Object value = options.get(key);</span><br><span class="line">        <span class="keyword">if</span> (value <span class="keyword">instanceof</span>  String) &#123;</span><br><span class="line">            param2 += <span class="string">", \'"</span> + key + <span class="string">"\': \'"</span> + value + <span class="string">"\'"</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            param2 += <span class="string">", \'"</span> + key + <span class="string">"\': "</span> + value;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    String serviceJs = String.format(<span class="string">";(function(service, options)&#123; ;%s; &#125;)(&#123; %s &#125;, &#123; %s &#125;);"</span>, serviceScript, param1, param2);</span><br><span class="line"></span><br><span class="line">    WXJSService service = <span class="keyword">new</span> WXJSService();</span><br><span class="line">    service.setName(name);</span><br><span class="line">    service.setScript(serviceScript);</span><br><span class="line">    service.setOptions(options);</span><br><span class="line">    sInstanceJSServiceMap.put(name, service);</span><br><span class="line"></span><br><span class="line">    WXBridgeManager.getInstance().execJSService(serviceJs);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，Weex通过拼接了一个function并执行它来注册我们自己写的code，我们提取一下这个function可以看到：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params">service, options</span>)</span>&#123;jsCode&#125;)(&#123;register: global.registerService, unregister: global.unregisterService&#125;, &#123;serviceName: name&#125;</span><br></pre></td></tr></table></figure>
+<p>这就是拼接好的代码，其实就是执行jsCode部分，并且传入了两个参数，最终通过global这个全局变量去注册。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>上面提供了三种思路，其中方案一比较简单，但是缺点就是会增加包的体积，导致Weex性能的下降。而方案二和方案三通过了一定的“黑魔法”去完成代码的加载，这里我们需要注意的是，通过方案二或者方案三来完成功能的时候，我们需要一个独立的js文件来承载其中的代码，而这个js文件我们可以缓存到本地，在需要更新的时候进行更新就好了。</p>
 
       
     </div>
@@ -375,7 +365,7 @@ $(function() {
       
         <div class="post-tags">
           
-            <a href="/tags/webpack/" rel="tag">#webpack</a>
+            <a href="/tags/Weex/" rel="tag">#Weex</a>
           
         </div>
       
@@ -384,17 +374,13 @@ $(function() {
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/07/12/Hystrix-fallback机制浅析/" rel="next" title="Hystrix fallback机制浅析">
-                <i class="fa fa-chevron-left"></i> Hystrix fallback机制浅析
+              <a href="/2018/08/28/webpack自定义loader初探/" rel="next" title="webpack自定义loader初探">
+                <i class="fa fa-chevron-left"></i> webpack自定义loader初探
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/10/16/一种封装Weex模块调用的方法/" rel="prev" title="一种封装Weex模块调用的方法">
-                一种封装Weex模块调用的方法 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -508,7 +494,7 @@ $(function() {
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是loader"><span class="nav-number">1.</span> <span class="nav-text">什么是loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#loader怎么用"><span class="nav-number">2.</span> <span class="nav-text">loader怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何自定义loader"><span class="nav-number">3.</span> <span class="nav-text">如何自定义loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#整体思路"><span class="nav-number">1.</span> <span class="nav-text">整体思路</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#方案一"><span class="nav-number">2.</span> <span class="nav-text">方案一</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#方案二"><span class="nav-number">3.</span> <span class="nav-text">方案二</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#方案三"><span class="nav-number">4.</span> <span class="nav-text">方案三</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
