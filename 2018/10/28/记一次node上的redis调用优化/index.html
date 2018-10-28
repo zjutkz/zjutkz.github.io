@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="node," />
 
 
 
@@ -59,16 +59,16 @@
 
 
 
-<meta name="description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="description" content="最近负责的node项目在高并发的情况下性能表现非常的差，rt基本会在7 80ms甚至100ms以上，由于对外提供了dubbo接口，所以经常导致上游应用和自己的dubbo线程池耗尽，所以花了一点时间排查了一番，才发现原来自己的node功力还有很长的路要走啊~之后node的文章可能会越来越多~">
 <meta property="og:type" content="article">
-<meta property="og:title" content="zjutkz's blog">
-<meta property="og:url" content="http://zjutkz.net/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/index.html">
+<meta property="og:title" content="记一次node上的redis调用优化">
+<meta property="og:url" content="http://zjutkz.net/2018/10/28/记一次node上的redis调用优化/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
-<meta property="og:updated_time" content="2016-10-27T10:32:50.000Z">
+<meta property="og:description" content="最近负责的node项目在高并发的情况下性能表现非常的差，rt基本会在7 80ms甚至100ms以上，由于对外提供了dubbo接口，所以经常导致上游应用和自己的dubbo线程池耗尽，所以花了一点时间排查了一番，才发现原来自己的node功力还有很长的路要走啊~之后node的文章可能会越来越多~">
+<meta property="og:updated_time" content="2018-10-28T12:57:33.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="zjutkz's blog">
-<meta name="twitter:description" content="由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到稀土掘金上的转载文章，谢谢大家！">
+<meta name="twitter:title" content="记一次node上的redis调用优化">
+<meta name="twitter:description" content="最近负责的node项目在高并发的情况下性能表现非常的差，rt基本会在7 80ms甚至100ms以上，由于对外提供了dubbo接口，所以经常导致上游应用和自己的dubbo线程池耗尽，所以花了一点时间排查了一番，才发现原来自己的node功力还有很长的路要走啊~之后node的文章可能会越来越多~">
 
 
 
@@ -86,7 +86,7 @@
   };
 </script>
 
-  <title>  | zjutkz's blog </title>
+  <title> 记一次node上的redis调用优化 | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +291,7 @@ $(function() {
             
             
               
-                
+                记一次node上的redis调用优化
               
             
           </h1>
@@ -303,8 +303,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-05-10T16:43:31+08:00" content="2016-05-10">
-              2016-05-10
+            <time itemprop="dateCreated" datetime="2018-10-28T17:25:09+08:00" content="2018-10-28">
+              2018-10-28
             </time>
           </span>
 
@@ -318,7 +318,7 @@ $(function() {
 
           
           
-             <span id="/2016/05/10/从Instant-Run出发，谈谈Android上的热修复/" class="leancloud_visitors" data-flag-title="">
+             <span id="/2018/10/28/记一次node上的redis调用优化/" class="leancloud_visitors" data-flag-title="记一次node上的redis调用优化">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -339,7 +339,24 @@ $(function() {
       
 
       
-        <p>由于这篇文章《从Instant-Run出发，谈谈Android上的热修复》被我不小心删除了，现在无法复原，所以有想了解instant－run机制的同学可以移步到<a href="http://gold.xitu.io/entry/5731f50ef38c840067dcce48" target="_blank" rel="external">稀土掘金上的转载文章</a>，谢谢大家！</p>
+        <p>最近负责的node项目在高并发的情况下性能表现非常的差，rt基本会在7 80ms甚至100ms以上，由于对外提供了dubbo接口，所以经常导致上游应用和自己的dubbo线程池耗尽，所以花了一点时间排查了一番，才发现原来自己的node功力还有很长的路要走啊~之后node的文章可能会越来越多~</p>
+<a id="more"></a>
+<h1 id="最蠢的方式"><a href="#最蠢的方式" class="headerlink" title="最蠢的方式"></a>最蠢的方式</h1><p>先来看看我最早是怎么用的呢：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; params.length; i++) &#123;</span><br><span class="line">    redisKey = getKey(params.id);</span><br><span class="line">    <span class="keyword">let</span> value = <span class="keyword">await</span> redis.exec(<span class="string">'get'</span>, redisKey);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这就是我最原始的调用方法，就是在for循环里不断的去await结果的请求，这样的结果就是每一个请求都需要等待上一个请求完成再去执行，只要在高流量的时候有一部分请求rt很高，就会引起雪崩的反应。</p>
+<h1 id="使用Promise-all优化请求"><a href="#使用Promise-all优化请求" class="headerlink" title="使用Promise.all优化请求"></a>使用Promise.all优化请求</h1><p>经过了一阵谷歌之后，我发现可以通过Promise.all的形式来进行请求链路的优化：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; params.length; i++) &#123;</span><br><span class="line">redisKey = getKey(params.id);</span><br><span class="line">    arr.push(redis.exec(<span class="string">'get'</span>, redisKey))</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">await</span> <span class="built_in">Promise</span>.all(arr);</span><br></pre></td></tr></table></figure>
+<p>上面的第一种方式被我司的node大神严重吐槽了10分钟，然后告诉我，使用Promise.all的方式可以很有效的优化这种连续的网络请求，我赶紧将代码改完并上线。</p>
+<p>自信满满的上线之后，迎来的确实现实无情的打击，在高流量的时刻，报警依然不断，我一边和领导说“没事，我再看看”，心里一边想着辞职报告该怎么写。</p>
+<h1 id="redis的正确使用姿势"><a href="#redis的正确使用姿势" class="headerlink" title="redis的正确使用姿势"></a>redis的正确使用姿势</h1><p>在继续经过了一系列的谷歌之后，我才发现原来的是对redis的理解太浅了，针对于业务上的需求，我不假思索的只知道使用最简单的set和get，而redis对于set和get这样的命令是一条命令一个tcp请求，在业务场景上确实不太合理，于是我使用谷歌告诉我的pipeline机制去改造现有的get请求：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> batch = <span class="keyword">await</span> RedisClient.getClient().batch();</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; params.length; i++) &#123;</span><br><span class="line">	 batch.get(redisKey);</span><br><span class="line">&#125;</span><br><span class="line">batch.exec();</span><br></pre></td></tr></table></figure>
+<p>对于pipeline机制大家可以看<a href="https://blog.csdn.net/u011489043/article/details/78769428" target="_blank" rel="external">这篇文章</a>。在使用pipeline之后，便秘一下就通畅了，再也没有报警过，终于可以不用辞职了。</p>
+<p>再后面的日子里，我觉得认真的研究一下redis这个东西，保证让上面的问题不再发生，于是我发现其实还是有一种更加简单的方案的，那就是使用mget：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; params.length; i++) &#123;</span><br><span class="line">    redisKey = getKey(params.id);</span><br><span class="line">    arr.push(redisKey);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> value = <span class="keyword">await</span> redis.exec(<span class="string">'mget'</span>, arr);</span><br></pre></td></tr></table></figure>
+<p>使用mget进行批量的查询，这是redis里比较常见的一种方式了~</p>
+<h1 id="总结一下"><a href="#总结一下" class="headerlink" title="总结一下"></a>总结一下</h1><p>在对以上四种方式进行了对比之后得出了数据上的结论：</p>
+<p>在一个200次的循环中调用redis请求，第一种最蠢的方案大概是8000ms左右，第二种Promise.all的方案大概在2000ms左右，而第三和第四种方案，大概只需要几十ms就能完成，这真的是质的飞跃啊。</p>
+<p>这个线上血淋淋的案例让我决定真的要好好的研究一下redis，不能再轻视它导致犯错。</p>
 
       
     </div>
@@ -352,22 +369,24 @@ $(function() {
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/node/" rel="tag">#node</a>
+          
+        </div>
+      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/05/06/让我们来聊一聊插件化吧/" rel="next" title="让我们来聊一聊插件化吧">
-                <i class="fa fa-chevron-left"></i> 让我们来聊一聊插件化吧
+              <a href="/2018/10/16/一种封装Weex模块调用的方法/" rel="next" title="一种封装Weex模块调用的方法">
+                <i class="fa fa-chevron-left"></i> 一种封装Weex模块调用的方法
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/05/15/记一次苦逼的资源逆向分析/" rel="prev" title="记一次苦逼的资源逆向分析">
-                记一次苦逼的资源逆向分析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -481,7 +500,7 @@ $(function() {
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#最蠢的方式"><span class="nav-number">1.</span> <span class="nav-text">最蠢的方式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#使用Promise-all优化请求"><span class="nav-number">2.</span> <span class="nav-text">使用Promise.all优化请求</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis的正确使用姿势"><span class="nav-number">3.</span> <span class="nav-text">redis的正确使用姿势</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结一下"><span class="nav-number">4.</span> <span class="nav-text">总结一下</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
