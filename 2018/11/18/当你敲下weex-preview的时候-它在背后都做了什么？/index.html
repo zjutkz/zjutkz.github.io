@@ -1,0 +1,908 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Weex," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="当我们在开发Weex的时候，总是会使用到Weex官方的开发工具weex-toolkit，在我们使用weex-toolkit，享受它带来的便利的时候，还是有必要去了解一下它背后的整个逻辑的，掌握这样的逻辑有助于我们更好的了解如何更好的使用Weex。
+我们这篇文章就以weex preview这个最常用的命令为例，来探究一下这背后的代码。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="当你敲下weex preview的时候 它在背后都做了什么？">
+<meta property="og:url" content="http://zjutkz.net/2018/11/18/当你敲下weex-preview的时候-它在背后都做了什么？/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="当我们在开发Weex的时候，总是会使用到Weex官方的开发工具weex-toolkit，在我们使用weex-toolkit，享受它带来的便利的时候，还是有必要去了解一下它背后的整个逻辑的，掌握这样的逻辑有助于我们更好的了解如何更好的使用Weex。
+我们这篇文章就以weex preview这个最常用的命令为例，来探究一下这背后的代码。">
+<meta property="og:updated_time" content="2018-11-18T09:43:04.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="当你敲下weex preview的时候 它在背后都做了什么？">
+<meta name="twitter:description" content="当我们在开发Weex的时候，总是会使用到Weex官方的开发工具weex-toolkit，在我们使用weex-toolkit，享受它带来的便利的时候，还是有必要去了解一下它背后的整个逻辑的，掌握这样的逻辑有助于我们更好的了解如何更好的使用Weex。
+我们这篇文章就以weex preview这个最常用的命令为例，来探究一下这背后的代码。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 当你敲下weex preview的时候 它在背后都做了什么？ | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                当你敲下weex preview的时候 它在背后都做了什么？
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-11-18T16:49:05+08:00" content="2018-11-18">
+              2018-11-18
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/11/18/当你敲下weex-preview的时候-它在背后都做了什么？/" class="leancloud_visitors" data-flag-title="当你敲下weex preview的时候 它在背后都做了什么？">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>当我们在开发Weex的时候，总是会使用到Weex官方的开发工具weex-toolkit，在我们使用weex-toolkit，享受它带来的便利的时候，还是有必要去了解一下它背后的整个逻辑的，掌握这样的逻辑有助于我们更好的了解如何更好的使用Weex。</p>
+<p>我们这篇文章就以weex preview这个最常用的命令为例，来探究一下这背后的代码。</p>
+<a id="more"></a>
+<h1 id="weex-preview能做什么"><a href="#weex-preview能做什么" class="headerlink" title="weex preview能做什么"></a>weex preview能做什么</h1><p>我们以官方的awesome-project为例，当我们在命令行中敲入weex preview src/components/HelloWorld.vue的时候，我们会看到浏览器自动打开了一个页面，这个页面中一个手机壳一样的web页面，让我们可以查看Weex代码编译出来的效果，还有一个二维码，通过playground这样的扫码工具进行扫码，可以在移动端打开这个Weex页面。</p>
+<p>从这一个页面我们不难看出一点：同样的一份代码，我们通过一个命令，构建出既适用于web端又适用于移动端的产物，那么这个产物究竟是如何被构建出来的呢？</p>
+<h1 id="构建过程"><a href="#构建过程" class="headerlink" title="构建过程"></a>构建过程</h1><p>在开始fuck source code之前，我们要先了解一下如何使用node来开发命令行工具，这里我推荐一下阮一峰的<a href="http://www.ruanyifeng.com/blog/2015/05/command-line-with-node.html" target="_blank" rel="external">Node.js 命令行程序开发教程</a>。</p>
+<p>看完文章之后，我们来看weex-toolkit是怎么做的。根据惯例，我们看weex-toolkit这个项目bin目录下的js文件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xtoolkit.command(<span class="string">'preview'</span>, <span class="string">'npm:weex-previewer'</span>).locate(<span class="built_in">require</span>.resolve(<span class="string">'weex-previewer'</span>));</span><br></pre></td></tr></table></figure>
+<p>其中和我们今天文章相关的一行就是这个，从代码中我们知道，preview最终是调用了weex-previewer这个npm项目，那我们就再来看weex-previewer的bin目录里的js。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">detect(program.port).then((open) =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> target = pipe(program.args)</span><br><span class="line">  <span class="keyword">if</span> (target) &#123;</span><br><span class="line">    <span class="comment">// If permission to track use</span></span><br><span class="line">    <span class="keyword">let</span> entryCount = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">let</span> fileType;</span><br><span class="line">    <span class="keyword">let</span> options;</span><br><span class="line">    <span class="keyword">let</span> optionflags;</span><br><span class="line">    <span class="keyword">const</span> entryType = &#123;</span><br><span class="line">      <span class="number">2</span>: <span class="string">'single'</span>,</span><br><span class="line">      <span class="number">6</span>: <span class="string">'folder'</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (target.entry) &#123;</span><br><span class="line">      entryCount+=<span class="number">2</span>;</span><br><span class="line">      fileType = helper.getFileType(path.basename(target.entry))</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (target.folder) &#123;</span><br><span class="line">      entryCount+=<span class="number">4</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    optionflags = &#123;</span><br><span class="line">      entry: !!program.entry,</span><br><span class="line">      port:!!program.port,</span><br><span class="line">      verbose:!!program.verbose,</span><br><span class="line">      config:!!program.config,</span><br><span class="line">      loglevel:!!program.loglevel</span><br><span class="line">    &#125;</span><br><span class="line">    hook.record(<span class="string">'/weex_tool.weex-previewer.sence'</span>, &#123; file_type: fileType, entry: entryType[entryCount], options: options&#125;);</span><br><span class="line"></span><br><span class="line">    options = &#123;</span><br><span class="line">      config:program.config</span><br><span class="line">    &#125;</span><br><span class="line">    logger.info(<span class="string">'Bundling source...'</span>)</span><br><span class="line">    preview(target, open, options);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> pipe = (args) =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (!args || !args[<span class="number">0</span>]) &#123;</span><br><span class="line">    program.outputHelp();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> target = args[<span class="number">0</span>];</span><br><span class="line">  <span class="keyword">const</span> ext = path.extname(target);</span><br><span class="line">  <span class="keyword">let</span> result = &#123;</span><br><span class="line">    folder: <span class="string">''</span>,</span><br><span class="line">    entry: <span class="string">''</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span>(!fs.existsSync(target))&#123;</span><br><span class="line">    logger.error(<span class="string">`Not found file <span class="subst">$&#123;target&#125;</span>`</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!ext) &#123;</span><br><span class="line">    result.folder = target;</span><br><span class="line">    <span class="keyword">if</span> (!program.entry) &#123;</span><br><span class="line">      logger.error(<span class="string">`Need to config the entry file like: \`<span class="subst">$&#123;binname&#125;</span> <span class="subst">$&#123;target&#125;</span> --entry <span class="subst">$&#123;path.join(target, 'index.vue')&#125;</span>\``</span>);</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      result.entry = program.entry</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    result.entry = target || <span class="string">''</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中通过pipe方法去组装了一个参数，并且调用preview方法去处理真正的逻辑。</p>
+<p>preview方法的逻辑比较复杂，我们一点一点来看：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">init: <span class="function"><span class="keyword">function</span> (<span class="params">args, port, options</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!helper.checkEntry(args.entry)) &#123;</span><br><span class="line">    <span class="keyword">return</span> logger.error(<span class="string">'Not a ".vue" or ".we" file'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.params = <span class="built_in">Object</span>.assign(&#123;&#125;, defaultParams, args);</span><br><span class="line">  <span class="keyword">this</span>.params.options = options;</span><br><span class="line">  <span class="keyword">this</span>.params.port = port;</span><br><span class="line">  <span class="keyword">this</span>.params.wsport = port + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">this</span>.params.source = <span class="keyword">this</span>.params.folder || <span class="keyword">this</span>.params.entry;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>.params.folder) &#123;</span><br><span class="line">    <span class="keyword">this</span>.file = path.relative(<span class="keyword">this</span>.params.source, <span class="keyword">this</span>.params.entry);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.file = <span class="keyword">this</span>.params.entry;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.fileType = helper.getFileType(<span class="keyword">this</span>.file);</span><br><span class="line">  <span class="keyword">this</span>.module = <span class="keyword">this</span>.file.replace(path.extname(<span class="keyword">this</span>.file), <span class="string">''</span>);</span><br><span class="line">  <span class="keyword">this</span>.fileDir = process.cwd();</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.fileFlow();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，根据文件名获取文件的类型：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">getFileType: <span class="function"><span class="keyword">function</span> (<span class="params">filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="regexp">/\.vue$/</span>.test(filename) ? <span class="string">'vue'</span> : <span class="string">'we'</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着，调用fileFlow方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">fileFlow () &#123;</span><br><span class="line">  logger.verbose(<span class="string">`init template diretory to <span class="subst">$&#123;this.params.temDir&#125;</span>`</span>);</span><br><span class="line">  <span class="keyword">this</span>.initTemDir();</span><br><span class="line">  logger.verbose(<span class="string">'building JS file'</span>);</span><br><span class="line">  <span class="keyword">this</span>.buildJSFile(() =&gt; &#123;</span><br><span class="line">    logger.verbose(<span class="string">'start server'</span>);</span><br><span class="line">    <span class="keyword">this</span>.startServer();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在fileFlow方法中，先调用了initTemDir方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> WEEX_TMP_DIR = <span class="string">'.weex_tmp'</span>;</span><br><span class="line"></span><br><span class="line">initTemDir () &#123;</span><br><span class="line">    <span class="keyword">if</span> (!fs.existsSync(<span class="keyword">this</span>.params.temDir)) &#123;</span><br><span class="line">      <span class="keyword">this</span>.params.temDir = WEEX_TMP_DIR;</span><br><span class="line">      fs.mkdirsSync(WEEX_TMP_DIR);</span><br><span class="line">      fs.copySync(<span class="string">`<span class="subst">$&#123;__dirname&#125;</span>/../vue-template/template/`</span>, WEEX_TMP_DIR);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// replace old file</span></span><br><span class="line">    fs.copySync(<span class="string">`<span class="subst">$&#123;__dirname&#125;</span>/../vue-template/template/weex.html`</span>, <span class="string">`<span class="subst">$&#123;this.params.temDir&#125;</span>/weex.html`</span>);</span><br><span class="line">    <span class="keyword">const</span> vueRegArr = [&#123;</span><br><span class="line">      rule: <span class="regexp">/&#123;&#123;\$script&#125;&#125;/</span>,</span><br><span class="line">      scripts: <span class="string">`</span><br><span class="line">&lt;script src="./assets/vue.runtime.js"&gt;&lt;/script&gt;</span><br><span class="line">&lt;script src="./assets/weex-vue-render/index.js"&gt;&lt;/script&gt;</span><br><span class="line">    `</span></span><br><span class="line">    &#125;];</span><br><span class="line">    <span class="keyword">const</span> weRegArr = [&#123;</span><br><span class="line">      rule: <span class="regexp">/&#123;&#123;\$script&#125;&#125;/</span>,</span><br><span class="line">      scripts: <span class="string">`</span><br><span class="line">&lt;script src="./assets/weex-html5/weex.js"&gt;&lt;/script&gt;</span><br><span class="line">    `</span></span><br><span class="line">    &#125;];</span><br><span class="line">    <span class="keyword">let</span> regarr = vueRegArr;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.fileType === <span class="string">'we'</span>) &#123;</span><br><span class="line">      regarr = weRegArr;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">this</span>.params.webSource = path.join(<span class="keyword">this</span>.params.temDir, <span class="string">'temp'</span>);</span><br><span class="line">      <span class="keyword">if</span> (fs.existsSync(<span class="keyword">this</span>.params.webSource)) &#123;</span><br><span class="line">        fs.removeSync(<span class="keyword">this</span>.params.webSource);</span><br><span class="line">      &#125;</span><br><span class="line">      helper.createVueSrc(<span class="keyword">this</span>.params.source, <span class="keyword">this</span>.params.webSource);</span><br><span class="line">    &#125;</span><br><span class="line">    helper.replace(path.join(<span class="string">`<span class="subst">$&#123;this.params.temDir&#125;</span>/`</span>, <span class="string">'weex.html'</span>), regarr);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，创建了一个.weex_temp文件夹。各位同学可以在敲下weex preview命令之后去看一下你的工程里，是会多了一个.weex_temp文件夹的，就是这么来的。</p>
+<p>接着，调用了helper的createVueSrc和replace方法，在.weex_temp文件夹下创建了一个weex.html文件：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"utf-8"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">title</span>&gt;</span>weex-vue-demo<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"viewport"</span> <span class="attr">content</span>=<span class="string">"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"apple-mobile-web-app-capable"</span> <span class="attr">content</span>=<span class="string">"yes"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"apple-mobile-web-app-status-bar-style"</span> <span class="attr">content</span>=<span class="string">"black"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"apple-touch-fullscreen"</span> <span class="attr">content</span>=<span class="string">"yes"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"format-detection"</span> <span class="attr">content</span>=<span class="string">"telephone=no, email=no"</span>&gt;</span></span><br><span class="line">  <span class="comment">&lt;!-- &lt;style&gt;body &gt; div &#123; height: 100%; &#125;&lt;/style&gt; --&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined">body::before &#123; content: "1"; height: 1px; overflow: hidden; color: transparent; display: block; &#125;</span><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./assets/vue.runtime.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./assets/weex-vue-render/index.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"root"</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./assets/weex-init.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>其中最重要的三行是：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./assets/vue.runtime.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./assets/weex-vue-render/index.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./assets/weex-init.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>注入了这三个js文件，它们是做什么用的，我们之后再看。</p>
+<p>回到weex-previewer，在创建好了.weex_temp之后，调用了buildJSFile方法，看名字我们就可以猜到，这就是最关键的一步了。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line">buildJSFile (callback) &#123;</span><br><span class="line">  <span class="keyword">const</span> buildOpt = &#123;</span><br><span class="line">    watch: <span class="literal">true</span>,</span><br><span class="line">    ext: <span class="regexp">/\.js$/</span>.test(<span class="keyword">this</span>.params.entry) ? <span class="string">'js'</span> : <span class="keyword">this</span>.fileType,</span><br><span class="line">    ...this.params.options</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="keyword">let</span> source = <span class="keyword">this</span>.params.entry;</span><br><span class="line">  <span class="keyword">const</span> dest = path.join(<span class="keyword">this</span>.params.temDir, <span class="string">'dist'</span>);</span><br><span class="line">  <span class="keyword">let</span> webDest;</span><br><span class="line">  <span class="keyword">let</span> vueSource = <span class="keyword">this</span>.params.source;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>.params.folder) &#123;</span><br><span class="line">    source = <span class="keyword">this</span>.params.folder;</span><br><span class="line">    vueSource = <span class="keyword">this</span>.params.folder;</span><br><span class="line">    buildOpt.entry = <span class="keyword">this</span>.params.entry;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    webDest = path.join(<span class="keyword">this</span>.params.temDir, <span class="string">'dist'</span>, <span class="keyword">this</span>.params.entry.replace(path.basename(<span class="keyword">this</span>.params.entry), <span class="string">''</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>.fileType === <span class="string">'vue'</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (buildOpt.entry) &#123;</span><br><span class="line">      buildOpt.entry = <span class="keyword">this</span>.params.entry;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      source = <span class="keyword">this</span>.params.entry;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// for weex</span></span><br><span class="line">    <span class="keyword">this</span>.build(vueSource, dest, buildOpt, () =&gt; &#123;</span><br><span class="line">      logger.info(<span class="string">'weex JS bundle saved at '</span> + path.resolve(<span class="keyword">this</span>.params.temDir));</span><br><span class="line">      <span class="comment">// for web</span></span><br><span class="line">      <span class="keyword">this</span>.build(<span class="keyword">this</span>.params.webSource, webDest || dest, &#123;</span><br><span class="line">        web: <span class="literal">true</span>,</span><br><span class="line">        ext: <span class="string">'js'</span></span><br><span class="line">      &#125;, callback);</span><br><span class="line">    &#125;, () =&gt; &#123;</span><br><span class="line">      <span class="comment">// for web</span></span><br><span class="line">      <span class="keyword">this</span>.build(<span class="keyword">this</span>.params.webSource, webDest || dest, &#123;</span><br><span class="line">        web: <span class="literal">true</span>,</span><br><span class="line">        ext: <span class="string">'js'</span></span><br><span class="line">      &#125;, callback);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.build(source, dest, buildOpt, callback);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;,</span><br><span class="line">build (src, dest, opts, buildcallback, watchCallback) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!opts.web &amp;&amp; path.extname(src) === <span class="string">'.vue'</span>) &#123;</span><br><span class="line">    dest += <span class="string">'/[name].weex.js'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (!opts.web &amp;&amp; path.extname(src) !== <span class="string">'.vue'</span>) &#123;</span><br><span class="line">    opts[<span class="string">'filename'</span>] = <span class="string">'[name].weex.js'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  builder.build(src, dest,</span><br><span class="line">    &#123;</span><br><span class="line">      ...opts,</span><br><span class="line">      ...this.params.options</span><br><span class="line">    &#125;,</span><br><span class="line">    (err, fileStream) =&gt; &#123;</span><br><span class="line">      <span class="keyword">if</span> (!err) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span>.wsSuccess) &#123;</span><br><span class="line">          <span class="keyword">if</span> (<span class="keyword">typeof</span> watchCallback !== <span class="string">'undefined'</span>) &#123;</span><br><span class="line">            watchCallback();</span><br><span class="line">          &#125;</span><br><span class="line">          logger.info(fileStream);</span><br><span class="line">          server.sendSocketMessage();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">          buildcallback();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> &#123;</span><br><span class="line">        logger.error(err);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;,</span><br><span class="line">startServer () &#123;</span><br><span class="line">  <span class="keyword">const</span> self = <span class="keyword">this</span>;</span><br><span class="line">  server.run(&#123;</span><br><span class="line">    dir: <span class="keyword">this</span>.params.temDir,</span><br><span class="line">    <span class="built_in">module</span>: <span class="keyword">this</span>.module,</span><br><span class="line">    fileType: <span class="keyword">this</span>.fileType,</span><br><span class="line">    port: <span class="keyword">this</span>.params.port,</span><br><span class="line">    wsport: <span class="keyword">this</span>.params.wsport,</span><br><span class="line">    open: <span class="keyword">this</span>.params.open,</span><br><span class="line">    wsSuccessCallback () &#123;</span><br><span class="line">      self.wsSuccess = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法比较长，但是总结起来就是两点：</p>
+<p>(1) 在build方法中调用weex-builder去构建js文件。</p>
+<p>(2) startSever方法中起一个http服务。</p>
+<p>在weex-builder这个工程中，就是我们喜闻乐见的webpack打包，值得一提的是，其中对weex和web环境进行了区分，weex环境下使用weex-loader打包，而web环境下使用vue-loader打包。打包出来是2个不同的js，一个为html.weex.js，而一个为html.js。</p>
+<p>至此，我们知道了整个链路中最关键的一步：分别使用weex和web的webpack配置去打包同一份源码，从而打出两个不同的目标js文件。</p>
+<p>最后，我们来看startServer。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">run (args) &#123;</span><br><span class="line">  <span class="keyword">const</span> params = args;</span><br><span class="line">  <span class="keyword">const</span> options = &#123;</span><br><span class="line">    root: params.dir,</span><br><span class="line">    cache: <span class="string">'-1'</span>,</span><br><span class="line">    showDir: <span class="literal">true</span>,</span><br><span class="line">    autoIndex: <span class="literal">true</span></span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="keyword">this</span>.rootDir = params.dir;</span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.checkPort(params.port)) &#123;</span><br><span class="line">    <span class="keyword">return</span> logger.info(<span class="string">'HTTP port is illegal and please try another'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.bindProcessEvent();</span><br><span class="line">  <span class="keyword">const</span> servers = httpServer.createServer(options);</span><br><span class="line">  servers.listen(params.port, <span class="string">'0.0.0.0'</span>, () =&gt; &#123;</span><br><span class="line">    logger.info((<span class="keyword">new</span> <span class="built_in">Date</span>()) + <span class="string">`http  is listening on port <span class="subst">$&#123;params.port&#125;</span>`</span>);</span><br><span class="line">    <span class="keyword">const</span> IP = <span class="keyword">this</span>.getLocalIP();</span><br><span class="line">    <span class="keyword">const</span> previewUrl = <span class="string">`http://<span class="subst">$&#123;IP&#125;</span>:<span class="subst">$&#123;params.port&#125;</span>/?hot-reload_controller&amp;page=<span class="subst">$&#123;params.module&#125;</span>.js&amp;loader=xhr&amp;wsport=<span class="subst">$&#123;params.wsport&#125;</span>&amp;type=<span class="subst">$&#123;params.fileType&#125;</span>`</span>;</span><br><span class="line">    <span class="keyword">if</span> (params.open) &#123;</span><br><span class="line">      opener(previewUrl);</span><br><span class="line">    &#125;</span><br><span class="line">    logger.info(previewUrl);</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">this</span>.startWebSocket(params.wsport, params.wsSuccessCallback);</span><br><span class="line">  <span class="keyword">return</span> servers;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到就是起了一个http服务，根目录是.weex_temp文件夹。而我们去看.weex_temp文件夹，会发现有一个index.html的入口文件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">  &lt;meta charset="utf-8"&gt;</span><br><span class="line">  &lt;title&gt;Weex Preview&lt;/title&gt;</span><br><span class="line">  &lt;meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"&gt;</span><br><span class="line">  &lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;</span><br><span class="line">  &lt;meta name="apple-mobile-web-app-status-bar-style" content="black"&gt;</span><br><span class="line">  &lt;meta name="apple-touch-fullscreen" content="yes"&gt;</span><br><span class="line">  &lt;meta name="format-detection" content="telephone=no, email=no"&gt;</span><br><span class="line">  &lt;link rel="stylesheet" href="./assets/style.css"&gt;</span><br><span class="line">  &lt;script src="./assets/qrcode.js"&gt;&lt;/script&gt;</span><br><span class="line">  &lt;script src="./assets/vue.js"&gt;&lt;/script&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">  &lt;h1&gt;Weex Preview&lt;/h1&gt;</span><br><span class="line">  &lt;div id="app"&gt;&lt;/div&gt;</span><br><span class="line">  &lt;template id="app-template"&gt;</span><br><span class="line">    &lt;div id="app"&gt;</span><br><span class="line">      &lt;div class="mock-phone"&gt;</span><br><span class="line">        &lt;div class="inner"&gt;</span><br><span class="line">          &lt;iframe id="preview" :src="src"&gt;&lt;/iframe&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">        &lt;div class="camera"&gt;&lt;/div&gt;</span><br><span class="line">        &lt;div class="earpiece"&gt;&lt;/div&gt;</span><br><span class="line">        &lt;div class="home-btn"&gt;&lt;/div&gt;</span><br><span class="line">      &lt;/div&gt;</span><br><span class="line">      &lt;div id="qrcode"&gt;</span><br><span class="line">        &lt;h2&gt;QRCode&lt;/h2&gt;</span><br><span class="line">        &lt;a :href="val" target="_blank"&gt;&lt;canvas ref="canvas" width="200" height="200"&gt;&lt;/canvas&gt;&lt;/a&gt;</span><br><span class="line">        &lt;p class="bundle-url"&gt;&lt;a :href="url" target="_blank"&gt;查看文件源码&lt;/a&gt;&lt;/p&gt;</span><br><span class="line">      &lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  &lt;/template&gt;</span><br><span class="line">  &lt;script&gt;</span><br><span class="line">    function getUrlParam(key,searchStr) &#123;</span><br><span class="line">      var reg = new RegExp('[?|&amp;]' + key + '=([^&amp;]+)');</span><br><span class="line">      searchStr = searchStr || location.search;</span><br><span class="line">      var match = searchStr.match(reg)</span><br><span class="line">      return match &amp;&amp; match[1]</span><br><span class="line">    &#125;</span><br><span class="line">    var module = getUrlParam('page') || 'app.js';</span><br><span class="line">    if(getUrlParam('type') == 'vue') &#123;</span><br><span class="line">      module = module.replace(/\.js$/,'.weex.js');</span><br><span class="line">    &#125;</span><br><span class="line">    var protocol = location.protocol + '//'</span><br><span class="line">    var hostname = location.hostname;</span><br><span class="line">    var wsport = getUrlParam('wsport') || '8082';</span><br><span class="line">    var port = location.port ? ':' + location.port : '';</span><br><span class="line">    var url = protocol + hostname + port + location.pathname.replace(/\/index\.html$/, '/').replace(/\/$/,'/' + module);</span><br><span class="line">    </span><br><span class="line">    new Vue(&#123;</span><br><span class="line">      el: '#app',</span><br><span class="line">      template: '#app-template',</span><br><span class="line">      data: &#123; </span><br><span class="line">        val: url + '?hot-reload_controller=1&amp;_wx_tpl=' + url,</span><br><span class="line">        url: url,</span><br><span class="line">        src: "./weex.html?req=" + Math.floor(Math.random() * 100000) + "&amp;page=" + getUrlParam('page'),</span><br><span class="line">      &#125;,</span><br><span class="line">      mounted: function () &#123;</span><br><span class="line">        var qrcodedraw = new QRCodeLib.QRCodeDraw()</span><br><span class="line">        qrcodedraw.draw(this.$refs.canvas, this.val.replace('.web',''), function () &#123;&#125;)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    //for hot reload</span><br><span class="line">    startSocketCheck();</span><br><span class="line">    </span><br><span class="line">    function startSocketCheck() &#123;</span><br><span class="line">      if (location.protocol.match(/file/)) &#123;</span><br><span class="line">       return;</span><br><span class="line">     &#125;</span><br><span class="line">     if (location.search.indexOf('hot-reload_controller') === -1) &#123;</span><br><span class="line">       return;</span><br><span class="line">     &#125;</span><br><span class="line">     if (typeof WebSocket === 'undefined') &#123;</span><br><span class="line">       console.info('auto refresh need WebSocket support');</span><br><span class="line">       return;</span><br><span class="line">     &#125;</span><br><span class="line">     var host = location.hostname;</span><br><span class="line">     var port = wsport;</span><br><span class="line">      try &#123;</span><br><span class="line">        var client = new WebSocket('ws://' + host + ':' + port + '/', 'echo-protocol');</span><br><span class="line">        client.onerror = function () &#123;</span><br><span class="line">          console.log('refresh controller websocket connection error');</span><br><span class="line">        &#125;;</span><br><span class="line">        client.onmessage = function (e) &#123;</span><br><span class="line">          console.log('Received: \'' + e.data + '\'');</span><br><span class="line">          if (e.data === 'refresh') &#123;</span><br><span class="line">            location.reload();</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;;  </span><br><span class="line">      &#125;catch(er) &#123;</span><br><span class="line">        console.log(er);</span><br><span class="line">      &#125;  </span><br><span class="line">      </span><br><span class="line">    &#125;;</span><br><span class="line">         </span><br><span class="line">  &lt;/script&gt;</span><br><span class="line">  </span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+<p>可以看到，代码中的ifame就对应文章开头说的页面中的手机壳，而二维码组件则对应可以扫的那个二维码。</p>
+<p>我们先看iframe，iframe中的src参数为：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">src: <span class="string">"./weex.html?req="</span> + <span class="built_in">Math</span>.floor(<span class="built_in">Math</span>.random() * <span class="number">100000</span>) + <span class="string">"&amp;page="</span> + getUrlParam(<span class="string">'page'</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getUrlParam</span>(<span class="params">key,searchStr</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">var</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="string">'[?|&amp;]'</span> + key + <span class="string">'=([^&amp;]+)'</span>);</span><br><span class="line">      searchStr = searchStr || location.search;</span><br><span class="line">      <span class="keyword">var</span> match = searchStr.match(reg)</span><br><span class="line">      <span class="keyword">return</span> match &amp;&amp; match[<span class="number">1</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，src就是我们前面提到的weex.html。而weex.html中会引用weex-init.js这个文件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">getUrlParam</span> (<span class="params">key</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="string">'[?|&amp;]'</span> + key + <span class="string">'=([^&amp;]+)'</span>)</span><br><span class="line">    <span class="keyword">var</span> match = location.search.match(reg)</span><br><span class="line">    <span class="keyword">return</span> match &amp;&amp; match[<span class="number">1</span>]</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="keyword">var</span> page = getUrlParam(<span class="string">'page'</span>) || <span class="string">'index.js'</span>;</span><br><span class="line">  <span class="keyword">var</span> bundle = <span class="built_in">document</span>.createElement(<span class="string">'script'</span>)</span><br><span class="line">  <span class="comment">// only for web</span></span><br><span class="line">  bundle.src = page</span><br><span class="line">  <span class="built_in">document</span>.body.appendChild(bundle)</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+<p>这个文件就是在body中插了一个js文件而已。而这个js就是前面我们使用weex-builder打包出来的HelloWorld.js。</p>
+<p>而这个js之所以能够被加载出来，就是因为在wee.html中使用了上述提到的weex-vue-render和vue-runtime这两个组件。</p>
+<p>讲完了web端，我们回过头来讲一下移动端。移动端非常简单，其实就是二维码关联了HelloWorld.weex.js这个文件，在扫码的时候通过移动端sdk进行加载而已。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>通过上面的分析，我们可以知道如果需要将一份weex的源代码构建出在移动端和web端可用的两份资源，我们需要做以下几件事：</p>
+<ol>
+<li>使用weex-loader和vue-loader分别对源码进行打包，从而得出两份js构建产物(其实也可以使用同一个loader的，那就是直接使用weex-vue-loader)。</li>
+<li>在web端中使用，需要结合weex-vue-render和vue-runtime这两个js，用以抹平weex和web端的差异(事实上，在注入了这两个js之后，我们可以在全局中得到了一个已经被挂载了的weex实例，而我们可以通过这个weex实例来进行registerModule，registerComponent等操作)。</li>
+<li>移动端很简单，直接使用weex sdk进行渲染就好。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Weex/" rel="tag">#Weex</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/28/记一次node上的redis调用优化/" rel="next" title="记一次node上的redis调用优化">
+                <i class="fa fa-chevron-left"></i> 记一次node上的redis调用优化
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">41</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">29</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#weex-preview能做什么"><span class="nav-number">1.</span> <span class="nav-text">weex preview能做什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#构建过程"><span class="nav-number">2.</span> <span class="nav-text">构建过程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
