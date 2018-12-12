@@ -1,0 +1,902 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Weex," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="最近在做一些Weex web端的东西，不可避免的和weex-vue-render打起了交道，为了能更好的理解web端的构建，所以花了一点时间走读了一遍weex-vue-render的源码，这里做一个记录，以防遗忘。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Weex中web端屏幕适配的哲学">
+<meta property="og:url" content="http://zjutkz.net/2018/12/12/weex-vue-render代码浅析/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="最近在做一些Weex web端的东西，不可避免的和weex-vue-render打起了交道，为了能更好的理解web端的构建，所以花了一点时间走读了一遍weex-vue-render的源码，这里做一个记录，以防遗忘。">
+<meta property="og:updated_time" content="2018-12-12T11:54:27.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Weex中web端屏幕适配的哲学">
+<meta name="twitter:description" content="最近在做一些Weex web端的东西，不可避免的和weex-vue-render打起了交道，为了能更好的理解web端的构建，所以花了一点时间走读了一遍weex-vue-render的源码，这里做一个记录，以防遗忘。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> Weex中web端屏幕适配的哲学 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Weex中web端屏幕适配的哲学
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-12-12T16:03:19+08:00" content="2018-12-12">
+              2018-12-12
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/12/12/weex-vue-render代码浅析/" class="leancloud_visitors" data-flag-title="Weex中web端屏幕适配的哲学">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近在做一些Weex web端的东西，不可避免的和weex-vue-render打起了交道，为了能更好的理解web端的构建，所以花了一点时间走读了一遍weex-vue-render的源码，这里做一个记录，以防遗忘。</p>
+<a id="more"></a>
+<h1 id="weex-vue-render是什么"><a href="#weex-vue-render是什么" class="headerlink" title="weex-vue-render是什么"></a>weex-vue-render是什么</h1><p>这是它的<a href="https://github.com/weexteam/weex-vue-render" target="_blank" rel="external">github地址</a>。</p>
+<p>我们知道Weex在构建的时候会打包出一个js给客户端进行加载，而如果我们需要在web端也使用同一套代码进行渲染的话，还需要一个web端用的js，并且通过weex-vue-render去渲染。所以一句话概括，weex-vue-render就是用来渲染web端Weex的工具。</p>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><p>首先我们来看工程下的入口文件：packages/src/index.js</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> weex <span class="keyword">from</span> <span class="string">'../../../src'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> components <span class="keyword">from</span> <span class="string">'../../../src/components'</span></span><br><span class="line"><span class="keyword">import</span> modules <span class="keyword">from</span> <span class="string">'../../../src/modules'</span></span><br><span class="line"><span class="keyword">import</span> directives <span class="keyword">from</span> <span class="string">'../../../src/directives'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> preInit = weex.init</span><br><span class="line"></span><br><span class="line">weex.init = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  preInit.apply(weex, <span class="built_in">arguments</span>)</span><br><span class="line">  <span class="keyword">const</span> plugins = components.concat(modules)</span><br><span class="line"></span><br><span class="line">  plugins.forEach(<span class="function"><span class="keyword">function</span> (<span class="params">plugin</span>) </span>&#123;</span><br><span class="line">    weex.install(plugin)</span><br><span class="line">  &#125;)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">const</span> k <span class="keyword">in</span> directives) &#123;</span><br><span class="line">    weex.install(directives[k])</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (global.Vue) &#123;</span><br><span class="line">  weex.init(global.Vue)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> weex</span><br></pre></td></tr></table></figure>
+<p>首先组装了一个数组，里面是components和modules，并且调用了weex的install方法去注册，之后调用了init方法初始化，最终将其export出去。</p>
+<p>从这里我们就知道，为什么在加载了这个js之后，我们就可以获取一个weex对象，这个weex对象就是这里export出去的。</p>
+<p>下面我们来看看weex.install都做了什么吧~</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">install (<span class="built_in">module</span>) &#123;</span><br><span class="line">  <span class="built_in">module</span>.init(<span class="keyword">this</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而components和modules这个数组都有些什么呢？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  geolocation,</span><br><span class="line">  storage,</span><br><span class="line">  stream,</span><br><span class="line">  clipboard,</span><br><span class="line">  eventModule,</span><br><span class="line">  modal,</span><br><span class="line">  websocket,</span><br><span class="line">  animation,</span><br><span class="line">  dom,</span><br><span class="line">  globalEvent,</span><br><span class="line">  navigatorModule,</span><br><span class="line">  webview,</span><br><span class="line">  meta</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  <span class="comment">// a,</span></span><br><span class="line">  <span class="comment">// div,</span></span><br><span class="line">  <span class="comment">// image,</span></span><br><span class="line">  input,</span><br><span class="line">  _switch,</span><br><span class="line">  scrollable,</span><br><span class="line">  slider,</span><br><span class="line">  <span class="comment">// text,</span></span><br><span class="line">  textarea,</span><br><span class="line">  video,</span><br><span class="line">  web</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>可以看到，这些其实就和我们客户端所注册的是一样的。我们挑一个来看看：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getTextarea</span> (<span class="params">weex</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; extractComponentStyle &#125; = weex</span><br><span class="line">  <span class="keyword">const</span> &#123; inputCommon &#125; = weex.mixins</span><br><span class="line">  <span class="keyword">const</span> &#123; extend, mapFormEvents &#125; = weex.utils</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    name: <span class="string">'weex-textarea'</span>,</span><br><span class="line">    mixins: [inputCommon],</span><br><span class="line">    props: &#123;</span><br><span class="line">      value: <span class="built_in">String</span>,</span><br><span class="line">      placeholder: <span class="built_in">String</span>,</span><br><span class="line">      disabled: &#123;</span><br><span class="line">        type: [<span class="built_in">String</span>, <span class="built_in">Boolean</span>],</span><br><span class="line">        <span class="keyword">default</span>: <span class="literal">false</span></span><br><span class="line">      &#125;,</span><br><span class="line">      autofocus: &#123;</span><br><span class="line">        type: [<span class="built_in">String</span>, <span class="built_in">Boolean</span>],</span><br><span class="line">        <span class="keyword">default</span>: <span class="literal">false</span></span><br><span class="line">      &#125;,</span><br><span class="line">      rows: &#123;</span><br><span class="line">        type: [<span class="built_in">String</span>, <span class="built_in">Number</span>],</span><br><span class="line">        <span class="keyword">default</span>: <span class="number">2</span></span><br><span class="line">      &#125;,</span><br><span class="line">      returnKeyType: <span class="built_in">String</span></span><br><span class="line">    &#125;,</span><br><span class="line"></span><br><span class="line">    render (createElement) &#123;</span><br><span class="line">      <span class="comment">/* istanbul ignore next */</span></span><br><span class="line">      <span class="comment">// if (process.env.NODE_ENV === 'development') &#123;</span></span><br><span class="line">      <span class="comment">//   validateStyles('textarea', this.$vnode.data &amp;&amp; this.$vnode.data.staticStyle)</span></span><br><span class="line">      <span class="comment">// &#125;</span></span><br><span class="line">      <span class="keyword">const</span> events = extend(mapFormEvents(<span class="keyword">this</span>))</span><br><span class="line">      <span class="keyword">return</span> createElement(<span class="string">'html:textarea'</span>, &#123;</span><br><span class="line">        attrs: &#123;</span><br><span class="line">          <span class="string">'weex-type'</span>: <span class="string">'textarea'</span>,</span><br><span class="line">          value: <span class="keyword">this</span>.value,</span><br><span class="line">          disabled: (<span class="keyword">this</span>.disabled !== <span class="string">'false'</span> &amp;&amp; <span class="keyword">this</span>.disabled !== <span class="literal">false</span>),</span><br><span class="line">          autofocus: (<span class="keyword">this</span>.autofocus !== <span class="string">'false'</span> &amp;&amp; <span class="keyword">this</span>.autofocus !== <span class="literal">false</span>),</span><br><span class="line">          placeholder: <span class="keyword">this</span>.placeholder,</span><br><span class="line">          rows: <span class="keyword">this</span>.rows,</span><br><span class="line">          <span class="string">'return-key-type'</span>: <span class="keyword">this</span>.returnKeyType</span><br><span class="line">        &#125;,</span><br><span class="line">        domProps: &#123;</span><br><span class="line">          value: <span class="keyword">this</span>.value</span><br><span class="line">        &#125;,</span><br><span class="line">        on: <span class="keyword">this</span>.createKeyboardEvent(events),</span><br><span class="line">        staticClass: <span class="string">'weex-textarea weex-el'</span>,</span><br><span class="line">        staticStyle: extractComponentStyle(<span class="keyword">this</span>)</span><br><span class="line">      &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> &#123;</span><br><span class="line">  init (weex) &#123;</span><br><span class="line">    weex.registerComponent(<span class="string">'textarea'</span>, getTextarea(weex))</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是一个component，它的init方法，其实就是调用了weex的registerComponent将其注册。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">registerComponent (name, component) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.__vue__) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">console</span>.log(<span class="string">'[Vue Render] Vue is not found. Please import Vue.js before register a component.'</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>._components[name] = <span class="number">0</span></span><br><span class="line">  <span class="keyword">if</span> (component._css) &#123;</span><br><span class="line">    <span class="keyword">const</span> css = component._css.replace(<span class="regexp">/\b[+-]?[\d.]+rem;?\b/g</span>, <span class="function"><span class="keyword">function</span> (<span class="params">m</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">parseFloat</span>(m) * <span class="number">75</span> * weex.config.env.scale + <span class="string">'px'</span></span><br><span class="line">    &#125;)</span><br><span class="line">    utils.appendCss(css, <span class="string">`weex-cmp-<span class="subst">$&#123;name&#125;</span>`</span>)</span><br><span class="line">    <span class="keyword">delete</span> component._css</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.__vue__.component(name, component)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而registerComponent方法，也就是调用了vue的component方法了~</p>
+<p>说完了install，我们再来看一下init方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">init</span> (<span class="params">Vue<span class="comment">/*, options = &#123;&#125;*/</span></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (_inited) &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">  _inited = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">  setVue(Vue)</span><br><span class="line"></span><br><span class="line">  Vue.prototype.$getConfig = () =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.warn(<span class="string">'[Vue Render] "this.$getConfig" is deprecated, please use "weex.config" instead.'</span>)</span><br><span class="line">    <span class="keyword">return</span> weex.config</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> htmlRegex = <span class="regexp">/^html:/i</span></span><br><span class="line">  Vue.config.isReservedTag = tag =&gt; htmlRegex.test(tag)</span><br><span class="line">  Vue.config.parsePlatformTagName = tag =&gt; tag.replace(htmlRegex, <span class="string">''</span>)</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">isWeexTag</span> (<span class="params">tag</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">typeof</span> weex._components[tag] !== <span class="string">'undefined'</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> oldGetTagNamespace = Vue.config.getTagNamespace</span><br><span class="line">  Vue.config.getTagNamespace = <span class="function"><span class="keyword">function</span> (<span class="params">tag</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (isWeexTag(tag)) &#123;</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> oldGetTagNamespace(tag)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Vue.mixin(base)</span><br><span class="line">  Vue.mixin(event)</span><br><span class="line">  Vue.mixin(style)</span><br><span class="line">  Vue.mixin(sticky)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中会调用setVue方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">setVue</span> (<span class="params">vue</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!vue) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'[Vue Render] Vue not found. Please make sure vue 2.x runtime is imported.'</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (global.weex.__vue__) &#123;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">  &#125;</span><br><span class="line">  global.weex.__vue__ = vue</span><br><span class="line">  weex.install(renderFunctionPlugin)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">`[Vue Render] install Vue <span class="subst">$&#123;vue.version&#125;</span>.`</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> weex</span><br></pre></td></tr></table></figure>
+<p>可以看到，这里将vue进行了赋值。而这里的weex，其实是src/weex/instance.js。</p>
+<p>大家去看这个js，可以看到里面有很多方法，例如registerComponent，registerModule等，也就是上面提到的。</p>
+<p>而在这个js中，会去import一个wx-env：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="string">'./wx-env'</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="string">'../lib/envd'</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> &#123; init <span class="keyword">as</span> initViewport &#125; <span class="keyword">from</span> <span class="string">'./viewport'</span></span><br><span class="line"><span class="keyword">import</span> &#123; extend &#125; <span class="keyword">from</span> <span class="string">'../utils'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * get WXEnvironment info.</span><br><span class="line"> * @param  &#123;object&#125; viewportInfo: info about viewport.</span><br><span class="line"> * @param  &#123;object&#125; envInfo: info parsed from lib.env.</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">initEnv</span> (<span class="params">viewportInfo, envInfo</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> browserName = envInfo.browser ? envInfo.browser.name : navigator.appName</span><br><span class="line">  <span class="keyword">const</span> browserVersion = envInfo.browser ? envInfo.browser.version.val : <span class="literal">null</span></span><br><span class="line">  <span class="keyword">let</span> osName = envInfo.os.name</span><br><span class="line">  <span class="keyword">if</span> (osName.match(<span class="regexp">/(iPhone|iPad|iPod)/i</span>)) &#123;</span><br><span class="line">    osName = <span class="string">'iOS'</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (osName.match(<span class="regexp">/Android/i</span>)) &#123;</span><br><span class="line">    osName = <span class="string">'android'</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> osVersion = envInfo.os.version.val</span><br><span class="line">  <span class="keyword">const</span> env = &#123;</span><br><span class="line">    platform: <span class="string">'Web'</span>,</span><br><span class="line">    weexVersion: <span class="string">'process.env.WEEX_VERSION'</span>,</span><br><span class="line">    userAgent: navigator.userAgent,</span><br><span class="line">    appName: browserName,</span><br><span class="line">    appVersion: browserVersion,</span><br><span class="line">    osName,</span><br><span class="line">    osVersion,</span><br><span class="line">    deviceModel: envInfo.os.name || <span class="literal">null</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">/**</span><br><span class="line">   * viewportInfo: scale, deviceWidth, deviceHeight. dpr</span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">return</span> extend(viewportInfo, env)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// const viewportInfo = initViewport()</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 750 by default currently</span></span><br><span class="line"><span class="comment">// const scale = viewportInfo.scale</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// const units = &#123;</span></span><br><span class="line"><span class="comment">//   REM: 12 * scale,</span></span><br><span class="line"><span class="comment">//   VW: viewportInfo.deviceWidth / 100,</span></span><br><span class="line"><span class="comment">//   VH: viewportInfo.deviceHeight / 100,</span></span><br><span class="line"><span class="comment">//   VMIN: Math.min(viewportInfo.deviceWidth, viewportInfo.deviceHeight) / 100,</span></span><br><span class="line"><span class="comment">//   VMAX: Math.max(viewportInfo.deviceWidth, viewportInfo.deviceHeight) / 100,</span></span><br><span class="line"><span class="comment">//   CM: 96 / 2.54 * scale,</span></span><br><span class="line"><span class="comment">//   MM: 96 / 25.4 * scale,</span></span><br><span class="line"><span class="comment">//   Q: 96 / 25.4 / 4 * scale,</span></span><br><span class="line"><span class="comment">//   IN: 96 * scale,</span></span><br><span class="line"><span class="comment">//   PT: 96 / 72 * scale,</span></span><br><span class="line"><span class="comment">//   PC: 96 / 6 * scale,</span></span><br><span class="line"><span class="comment">//   PX: scale</span></span><br><span class="line"><span class="comment">// &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Object.freeze(units)</span></span><br><span class="line"><span class="comment">// Object.freeze(env)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// window.CSS_UNIT = units</span></span><br><span class="line"><span class="built_in">window</span>.WXEnvironment = initEnv(initViewport(), <span class="built_in">window</span>.lib.env)</span><br></pre></td></tr></table></figure>
+<p>这个类会调用initEnv方法，而initEnv的入参需要调用initViewport方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">init</span> (<span class="params">viewportWidth = width</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!isInited) &#123;</span><br><span class="line">    isInited = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> doc = <span class="built_in">window</span>.document</span><br><span class="line">    <span class="keyword">if</span> (!doc) &#123;</span><br><span class="line">      <span class="built_in">console</span>.error(<span class="string">'[vue-render] window.document is undfined.'</span>)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!doc.documentElement) &#123;</span><br><span class="line">      <span class="built_in">console</span>.error(<span class="string">'[vue-render] document.documentElement is undfined.'</span>)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    dpr = info.dpr = <span class="built_in">window</span>.devicePixelRatio</span><br><span class="line">    screenWidth = doc.documentElement.clientWidth</span><br><span class="line">    screenHeight = doc.documentElement.clientHeight</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> resetDeviceHeight = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">      screenHeight = doc.documentElement.clientHeight</span><br><span class="line">      <span class="keyword">const</span> env = <span class="built_in">window</span>.weex &amp;&amp; <span class="built_in">window</span>.weex.config.env</span><br><span class="line">      info.deviceHeight = env.deviceHeight = screenHeight * dpr</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// set root font for rem.</span></span><br><span class="line">    setRootFont(screenWidth, viewportWidth)</span><br><span class="line">    setMetaViewport(viewportWidth)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">window</span>.addEventListener(<span class="string">'resize'</span>, resetDeviceHeight)</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * why not to use window.screen.width to get screenWidth ? Because in some</span><br><span class="line">     * old webkit browser on android system it get the device pixel width, which</span><br><span class="line">     * is the screenWidth multiply by the device pixel ratio.</span><br><span class="line">     * e.g. ip6 -&gt; get 375 for virtual screen width.</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">const</span> scale = screenWidth / viewportWidth</span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 1. if set initial/maximum/mimimum-scale some how the page will have a bounce</span><br><span class="line">     * effect when user drag the page towards horizontal axis.</span><br><span class="line">     * 2. Due to compatibility reasons, not to use viewport meta anymore.</span><br><span class="line">     * 3. viewport meta should always be:</span><br><span class="line">     *    &lt;meta name="viewport"</span><br><span class="line">     *      content="width=device-width,</span><br><span class="line">     *      initial-scale=1,</span><br><span class="line">     *      maximum-scale=1,</span><br><span class="line">     *      user-scalable=no" /&gt;</span><br><span class="line">     */</span></span><br><span class="line">    extend(info, &#123;</span><br><span class="line">      scale,</span><br><span class="line">      rootValue: viewportWidth / <span class="number">10</span>,</span><br><span class="line">      deviceWidth: screenWidth * dpr,</span><br><span class="line">      deviceHeight: screenHeight * dpr</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> info</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法做的事情其实就是初始化viewport。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setRootFont(screenWidth, viewportWidth)</span><br></pre></td></tr></table></figure>
+<p>这一段是设置html的font-size。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setMetaViewport(viewportWidth)</span><br></pre></td></tr></table></figure>
+<p>这一段是设置weex的weex-viewport标签。</p>
+<p>通过这些设置，Weex可以做到在web端不同机型的适配。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> DEFAULT_VIEWPORT_WIDTH = <span class="number">750</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setRootFont</span> (<span class="params">width, viewportWidth, force</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> doc = <span class="built_in">window</span>.document</span><br><span class="line">  <span class="keyword">const</span> rem = width * <span class="number">750</span> / viewportWidth / <span class="number">10</span></span><br><span class="line">  <span class="keyword">if</span> (!doc.documentElement) &#123; <span class="keyword">return</span> &#125;</span><br><span class="line">  <span class="keyword">const</span> rootFontSize = doc.documentElement.style.fontSize</span><br><span class="line">  <span class="keyword">if</span> (!rootFontSize || force) &#123;</span><br><span class="line">    doc.documentElement.style.fontSize = rem + <span class="string">'px'</span></span><br><span class="line">  &#125;</span><br><span class="line">  info.rem = rem</span><br><span class="line">  info.rootValue = viewportWidth / <span class="number">10</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>rem这个变量的计算我们代入具体的数字就可以知道，其实就是screenWdith/10（因为viewportWidth默认是750）。</p>
+<p>这样呢，我们html的font-size就是screenWidth/10了。</p>
+<p>这个我们需要结合文章开头讲到的webpack配置来一起看：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'postcss-plugin-px2rem'</span>)(&#123;</span><br><span class="line">    <span class="comment">// base on 750px standard.</span></span><br><span class="line">    rootValue: <span class="number">75</span>,</span><br><span class="line">    <span class="comment">// to leave 1px alone.</span></span><br><span class="line">    minPixelValue: <span class="number">1.01</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>在配置中，我们使用了postcss-plugin-px2rem插件，并且设置rootValue是75。这样的话，我们在写代码的时候所有的px值都会被除以75并转换成rem，结合刚才的font-size，我们就可以做到屏幕的适配了。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>通过上面的源码分析，我们可以得出weex-vue-render做了以下几件事：</p>
+<ol>
+<li>export出了一个weex对象(scr/weex/instance)。该对象具有registerComponent，registerModule等方法。</li>
+<li>通过调用weex.install这个方法注册了所有基础的module和component。</li>
+<li>通过设置html的font-size，并且配合postcss-plugin-px2rem插件做到了适配不同的屏幕。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Weex/" rel="tag">#Weex</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/27/webpack产物解析/" rel="next" title="webpack产物解析">
+                <i class="fa fa-chevron-left"></i> webpack产物解析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">43</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">29</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#weex-vue-render是什么"><span class="nav-number">1.</span> <span class="nav-text">weex-vue-render是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
