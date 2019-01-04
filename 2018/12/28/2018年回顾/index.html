@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="webpack," />
+  <meta name="keywords" content="回顾," />
 
 
 
@@ -59,16 +59,16 @@
 
 
 
-<meta name="description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="description" content="前年和去年的回顾我都用歌名做标题，今年想了好久，实在不知道怎么取题目了，还是朴素一点吧，毕竟今年什么书都没看。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="webpack自定义loader初探">
-<meta property="og:url" content="http://zjutkz.net/2018/08/28/webpack自定义loader初探/index.html">
+<meta property="og:title" content="2018年回顾">
+<meta property="og:url" content="http://zjutkz.net/2018/12/28/2018年回顾/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
-<meta property="og:updated_time" content="2018-08-28T10:28:43.000Z">
+<meta property="og:description" content="前年和去年的回顾我都用歌名做标题，今年想了好久，实在不知道怎么取题目了，还是朴素一点吧，毕竟今年什么书都没看。">
+<meta property="og:updated_time" content="2019-01-04T13:28:25.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="webpack自定义loader初探">
-<meta name="twitter:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="twitter:title" content="2018年回顾">
+<meta name="twitter:description" content="前年和去年的回顾我都用歌名做标题，今年想了好久，实在不知道怎么取题目了，还是朴素一点吧，毕竟今年什么书都没看。">
 
 
 
@@ -86,7 +86,7 @@
   };
 </script>
 
-  <title> webpack自定义loader初探 | zjutkz's blog </title>
+  <title> 2018年回顾 | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +291,7 @@ $(function() {
             
             
               
-                webpack自定义loader初探
+                2018年回顾
               
             
           </h1>
@@ -303,8 +303,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-28T18:16:08+08:00" content="2018-08-28">
-              2018-08-28
+            <time itemprop="dateCreated" datetime="2018-12-28T22:20:56+08:00" content="2018-12-28">
+              2018-12-28
             </time>
           </span>
 
@@ -318,7 +318,7 @@ $(function() {
 
           
           
-             <span id="/2018/08/28/webpack自定义loader初探/" class="leancloud_visitors" data-flag-title="webpack自定义loader初探">
+             <span id="/2018/12/28/2018年回顾/" class="leancloud_visitors" data-flag-title="2018年回顾">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -339,28 +339,53 @@ $(function() {
       
 
       
-        <p>最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。</p>
+        <p>前年和去年的回顾我都用歌名做标题，今年想了好久，实在不知道怎么取题目了，还是朴素一点吧，毕竟今年什么书都没看。</p>
 <a id="more"></a>
-<h1 id="什么是loader"><a href="#什么是loader" class="headerlink" title="什么是loader"></a>什么是loader</h1><p>我们都知道webpack作为当下最火的一个前端构建工具，具有很多很实用的功能，loader就是其中之一。说的通俗一点，loader就是用于对模块的源码进行转换。对于做Android的同学，大家可以把它想象成gradle中的transform task。</p>
-<h1 id="loader怎么用"><a href="#loader怎么用" class="headerlink" title="loader怎么用"></a>loader怎么用</h1><p>在平时的开发过程中，loader的使用也是非常常见的，我们可以在工程的webpack.config.js中定义：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">module</span>: &#123;</span><br><span class="line">  rules: [</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.css$/</span>,</span><br><span class="line">      use: [</span><br><span class="line">        <span class="string">'vue-style-loader'</span>,</span><br><span class="line">        <span class="string">'css-loader'</span></span><br><span class="line">      ],</span><br><span class="line">    &#125;,      &#123;</span><br><span class="line">      test: <span class="regexp">/\.vue$/</span>,</span><br><span class="line">      loader: <span class="string">'vue-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        loaders: &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// other vue-loader options go here</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.(png|jpg|gif|svg)$/</span>,</span><br><span class="line">      loader: <span class="string">'file-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        name: <span class="string">'[name].[ext]?[hash]'</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，对于css文件，我们使用css-loader，对于vue文件，我们使用vue-loader，对于图片文件，我们使用file-loader。这些loader会将对应的文件进行转换，构建出最终的产物。</p>
-<h1 id="如何自定义loader"><a href="#如何自定义loader" class="headerlink" title="如何自定义loader"></a>如何自定义loader</h1><p>有了上面的经验，我们该如何自定义一个loader呢？其实也是非常简单的。</p>
-<p>首先我们创建一个js文件，就取名叫test-loader吧。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> loaderUtils = <span class="built_in">require</span>(<span class="string">'loader-utils'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params">source</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"start process code..."</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> options = loaderUtils.getOptions(<span class="keyword">this</span>) || &#123;&#125;;</span><br><span class="line">    <span class="keyword">if</span>(options !== &#123;&#125;) &#123;</span><br><span class="line">        <span class="keyword">var</span> replaceMap = options[<span class="string">"replaceMap"</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">var</span> key <span class="keyword">in</span> replaceMap) &#123;</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">            source = source.replace(key, replaceMap[key]);</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> source;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>这就是全部的代码了，其实一个loader内部就是一个node模块，代码的编写就和平时写node一样就ok了。</p>
-<p>test-loader的逻辑就是获取到设置的option，并且做一个文本的替换。</p>
-<p>假设我们还有2个js文件，分别是test.js和index.js</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">'test is loaded'</span>;</span><br><span class="line"><span class="built_in">module</span>.exports = str;</span><br><span class="line"></span><br><span class="line">test.js</span><br></pre></td></tr></table></figure>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="built_in">require</span>(<span class="string">'./src/test'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(test);</span><br><span class="line"></span><br><span class="line">index.js</span><br></pre></td></tr></table></figure>
-<p>然后我们在webpack.config.js中加入我们自己的test-loader。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">   test: <span class="regexp">/\.js$/</span>,</span><br><span class="line">   loader: <span class="string">'test-loader'</span>,</span><br><span class="line">   exclude: <span class="regexp">/node_modules/</span>,</span><br><span class="line">   options: &#123;</span><br><span class="line">        replaceMap: &#123;</span><br><span class="line">           <span class="string">"loaded"</span>: <span class="string">"yeah"</span></span><br><span class="line">        &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中options中，我们将“loaded”字符串替换成“yeah”。</p>
-<p>但是我们的loader并没有上传到npm中，所以我们还需要在webpack.config.js中加入下面这段代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">resolveLoader: &#123;</span><br><span class="line">    modules: [path.join(__dirname, <span class="string">'./src/loaders'</span>), <span class="string">'node_modules'</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>用于加载本地loader。</p>
-<p>这样我们最终构建出来的产物中，所有的“loaded”字符串就会被替换成“yeah”了。</p>
-<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>这篇文章非常浅显，主要就是讲了一下loader的使用方式，其实我们熟知的很多loader都是这么做的，只不过是业务逻辑上的复杂程度不同而已，大家也可以自己试试看。</p>
+<h1 id="工作"><a href="#工作" class="headerlink" title="工作"></a>工作</h1><blockquote>
+<p>目前如鱼也是一步一个脚印正在朝好的方向发展，dau，日均pv等在慢慢上升中，希望新的一年能做得更好。</p>
+</blockquote>
+<p>这是去年年终总结的时候写的，很遗憾今年没有做到。当时老大把我叫到会议室说明年开始如鱼就不做了，我也能理解这样的决定，毕竟创业工作给创新项目的忍耐还是比较小的，一年了也没出什么成绩，砍掉也在情理之中。</p>
+<p>不做如鱼之后，本来我是被分去做主App的业务的，老大把我留下来做基础建设的东西，真的很感谢他，知道我擅长做什么。</p>
+<p>一开始是做Weex，这个东西我在16年就做过，算是公司里接触比较早的一批人了。刚接手的时候整个生态比较混混乱，业务上和性能上都没有具体的数据统计，技术栈也比较杂，没有一个系统的规划。于是花了差不多一个星期的时候用来整理和思考项目的架构，之后拉个一个项目组就开始做了起来。最早的时候只做Android，后来老大说要搞一个平台来投放和管理整体的Weex页面，于是开始写vue还有java-web，再后来把java-web迁移到了node，再后来不满足于考虑客户端的事情，开始着手于前端的改造，从脚手架到组件化，可以说有效的提升了目前公司Weex的整体开发效率。如果没有Weex这个项目，今年一年可能就混日子混过去了。</p>
+<p>除了Weex之外，今年还是依旧负责了整个公司的账号项目。这个项目今年最大的进展可能就是统一了公司北京和杭州的前端sdk。但是其实这个说起还是很坎坷的，项目进展异常的缓慢，作为pm我也没有怎么去推动，最后被cto叫去开会，才抓紧把它搞定了。除了前端sdk之外，由于人员变动的原因，还在维护遗留的后端项目。对于这个项目我最大的感触就是：<strong>账号说底层也底层，说上层也上层，对于这样一个较为特殊的模块，我们需要有一个完善的监控链路来还原和捕捉用户产生的行为，从而反向推动整体业务的前进</strong>。</p>
+<p>还有就是参与了公司的埋点项目，由于会node和vue的原因，开发了一个埋点平台用来给BI，QA还有产品运营同学管理和查询埋点相关的数据。</p>
+<p>今年在工作上说实话并没有去年那么忙，有更多的时间用来自我学习和思考。特别是今年服务的业务是一个电商型的App，和去年负责的创新型App有很大的不同，在App的产品形态上也思考了许多：<strong>好的App有两种：第一种在功能上非常的闭环，由此构建出一套固定死板但是用起来方便快捷的产品形态；第二种则是花样繁多，把决定权交由用户，本身提供一个平台，像堆积木一样，让用户做建筑师。但是现在有太多的App夹在两者中间，最终成为了一个我们口中的“半吊子”</strong>。</p>
+<h1 id="个人成长"><a href="#个人成长" class="headerlink" title="个人成长"></a>个人成长</h1><p>去年说今年想在github的排名上有所突破，不过没能做到，甚至今年一年都没有开源几个项目。主要原因是花了大量的精力在java-web和node的学习上，而对于这两块来说我还是个小学生，自然开源不出什么好的项目。</p>
+<p>不过今年的收获还是很多的，java-web在持续的深入，node和vue从零学习。另外就是由于Weex的原因了解了一写前端的构建体系。唯一不足的可能就是老本行Android了，基本就在原地踏步。</p>
+<p>今年写的博客算是比较多了，主要是三类内容：</p>
+<p>Android相关：</p>
+<p><a href="http://zjutkz.net/2018/01/25/InMemoryDexClassLoader%E6%BA%90%E7%A0%81%E6%8E%A2%E7%A9%B6/">InMemoryDexClassLoader探究</a></p>
+<p><a href="http://zjutkz.net/2018/04/17/Weex%E8%BF%9B%E9%98%B6/">Weex进阶</a></p>
+<p><a href="http://zjutkz.net/2018/06/21/%E5%86%8D%E8%B0%88Android%E7%BB%84%E4%BB%B6%E5%8C%96/">再谈Android组件化</a></p>
+<p>后端相关：</p>
+<p><a href="http://zjutkz.net/2018/03/17/dubbo%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/">dubbo源码学习</a></p>
+<p><a href="http://zjutkz.net/2018/03/18/dubbo%E4%B8%AD%E7%9A%84SPI/">dubbo中的SPI</a></p>
+<p><a href="http://zjutkz.net/2018/03/19/dubbo%E4%B8%AD%E7%9A%84%E8%AF%B7%E6%B1%82%E5%8F%91%E9%80%81%E5%92%8C%E6%8E%A5%E6%94%B6/">dubbo中的请求与编/解码</a></p>
+<p><a href="http://zjutkz.net/2018/04/03/dubbo%E4%B8%AD%E7%9A%84SpringMVC%E4%BE%9D%E8%B5%96%E6%B3%A8%E5%85%A5/">dubbo中的SpringMVC依赖注入</a></p>
+<p><a href="http://zjutkz.net/2018/07/12/Hystrix-fallback%E6%9C%BA%E5%88%B6%E6%B5%85%E6%9E%90/">Hystrix fallback机制浅析</a></p>
+<p>前端相关：</p>
+<p><a href="http://zjutkz.net/2018/06/19/Vue-use%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/">Vue-use源码学习</a></p>
+<p><a href="http://zjutkz.net/2018/08/28/webpack%E8%87%AA%E5%AE%9A%E4%B9%89loader%E5%88%9D%E6%8E%A2/">webpack自定义loader初探</a></p>
+<p><a href="http://zjutkz.net/2018/10/16/%E4%B8%80%E7%A7%8D%E5%B0%81%E8%A3%85Weex%E6%A8%A1%E5%9D%97%E8%B0%83%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95/">一种封装Weex模块调用的方法</a></p>
+<p><a href="http://zjutkz.net/2018/10/28/%E8%AE%B0%E4%B8%80%E6%AC%A1node%E4%B8%8A%E7%9A%84redis%E8%B0%83%E7%94%A8%E4%BC%98%E5%8C%96/">记一次node上的redis调用优化</a></p>
+<p><a href="http://zjutkz.net/2018/11/18/%E5%BD%93%E4%BD%A0%E6%95%B2%E4%B8%8Bweex-preview%E7%9A%84%E6%97%B6%E5%80%99-%E5%AE%83%E5%9C%A8%E8%83%8C%E5%90%8E%E9%83%BD%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F/">当你敲下weex-preview的时候-它在背后都做了什么?</a></p>
+<p><a href="http://zjutkz.net/2018/11/27/webpack%E4%BA%A7%E7%89%A9%E8%A7%A3%E6%9E%90/">webpack产物解析</a></p>
+<p><a href="http://zjutkz.net/2018/12/12/weex-vue-render%E4%BB%A3%E7%A0%81%E6%B5%85%E6%9E%90/">weex-vue-render代码浅析</a></p>
+<p>感觉今年一年都在当初学者，没怎么深入的挖掘一些东西。所以明年希望自己在专业上懂的更多更深，前端上不再是一个使用者而是创造者，Android上要时刻关注新事物的变化，不然就是不进则退了。另外还想去了解容器化的东西，docker，k8s等等。</p>
+<h1 id="生活"><a href="#生活" class="headerlink" title="生活"></a>生活</h1><p>跨年的那天看到好多人的总结，都是x月做了xxx，x月去xxx玩，回想自己这一年(也不是这一年，应该说工作之后)就基本一年去一个地方，平时也基本被工作填满，不知道这样是不是正确的。</p>
+<p>前两天没事做的时候重新看了一遍五月天《顽固》的mv，想了想我在读书的时候好像真的没什么梦想，就是整天玩和打球，到了大三的时候突然觉得自己想成为一个优秀的程序员了，于是开始写代码，到现在我还是这么想的，不知道这个是不是梦想呢？</p>
+<p>今年没有去晋升，因为去了估计也过不了。</p>
+<p>好多人离职，又有好多人入职，还有好多人叫我去他们那边。没有离开微店的主要原因是我觉得在微店我能学到很多，而且微店也给了我很大的平台，我还没有厉害到去哪里都可以发光，所以不想让自己熄灭。</p>
+<p>接上文，今年好几个熟悉的同事都离职了，其实我觉得工作的更换是一件很正常的事，但是有人是开心并感激的走，有人却是愤怒记恨着走，两者取决于你走的时候面临的状况，如果你是一个有能力者，那你必定是主动选择的离开，这种情况下往往不会带有焦躁的情绪，而如果你是一个无能者，那你的离开背后可能是自己待不下去了，也可能是公司的结构优化，这样的结果往往是不好的。所以没必要对一个人离职时候的情绪或者行为有太多的评价，事实往往就在背后。</p>
+<p>过几天女朋友要去家里吃饭，外婆对这件事也心心念念了好久了。</p>
+<p>接上文，年末的时候外婆住院了，那几天我一直在思考一件事，如果人生是一场比赛的话，有些人注定只能陪你上半场，而有些人会在下半场加入进来，而我要做的就是让比赛中我的上下半场的队友能在现在这个15分钟的中场休息时间见个面，这样他们和我才会不留遗憾。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>18年过完了，微博上关注着一个博主，他从年初开始就在记录着2018年的使用进度，我从0%一路看到了100%，之前和同事聊天，他和我说不同的年龄段对时间的感知是不一样的，我觉得我现在正处于时间膨胀的阶段，也不知道是好还是坏。</p>
+<p>对于19年，我想把膨胀的时间慢慢的凝固，希望在19年年底写总结的时候，可以用到下面这句话：</p>
+<blockquote>
+<p>相信爱会永恒 </p>
+<p>相信每个陌生人</p>
+<p>相信你会成为最想成为的人</p>
+</blockquote>
 
       
     </div>
@@ -375,7 +400,7 @@ $(function() {
       
         <div class="post-tags">
           
-            <a href="/tags/webpack/" rel="tag">#webpack</a>
+            <a href="/tags/回顾/" rel="tag">#回顾</a>
           
         </div>
       
@@ -384,17 +409,13 @@ $(function() {
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/07/12/Hystrix-fallback机制浅析/" rel="next" title="Hystrix fallback机制浅析">
-                <i class="fa fa-chevron-left"></i> Hystrix fallback机制浅析
+              <a href="/2018/12/12/weex-vue-render代码浅析/" rel="next" title="weex-vue-render代码浅析">
+                <i class="fa fa-chevron-left"></i> weex-vue-render代码浅析
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/10/16/一种封装Weex模块调用的方法/" rel="prev" title="一种封装Weex模块调用的方法">
-                一种封装Weex模块调用的方法 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -508,7 +529,7 @@ $(function() {
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是loader"><span class="nav-number">1.</span> <span class="nav-text">什么是loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#loader怎么用"><span class="nav-number">2.</span> <span class="nav-text">loader怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何自定义loader"><span class="nav-number">3.</span> <span class="nav-text">如何自定义loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#工作"><span class="nav-number">1.</span> <span class="nav-text">工作</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#个人成长"><span class="nav-number">2.</span> <span class="nav-text">个人成长</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#生活"><span class="nav-number">3.</span> <span class="nav-text">生活</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
