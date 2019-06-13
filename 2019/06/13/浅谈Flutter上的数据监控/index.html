@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="webpack," />
+  <meta name="keywords" content="Flutter," />
 
 
 
@@ -59,16 +59,16 @@
 
 
 
-<meta name="description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="description" content="最近看公司Flutter项目的时候，发现想要分析数据非常的困难，不是数据缺失就是数据异常，作为一个成熟的企业来说这是非常危险的，缺少了数据就像船只在海上航行的时候没有了方向，将会变得无所适从，所以这周花了点时间去优化。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="webpack自定义loader初探">
-<meta property="og:url" content="http://zjutkz.net/2018/08/28/webpack自定义loader初探/index.html">
+<meta property="og:title" content="浅谈Flutter上的数据监控">
+<meta property="og:url" content="http://zjutkz.net/2019/06/13/浅谈Flutter上的数据监控/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
-<meta property="og:updated_time" content="2018-08-28T10:28:43.000Z">
+<meta property="og:description" content="最近看公司Flutter项目的时候，发现想要分析数据非常的困难，不是数据缺失就是数据异常，作为一个成熟的企业来说这是非常危险的，缺少了数据就像船只在海上航行的时候没有了方向，将会变得无所适从，所以这周花了点时间去优化。">
+<meta property="og:updated_time" content="2019-06-13T16:15:17.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="webpack自定义loader初探">
-<meta name="twitter:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="twitter:title" content="浅谈Flutter上的数据监控">
+<meta name="twitter:description" content="最近看公司Flutter项目的时候，发现想要分析数据非常的困难，不是数据缺失就是数据异常，作为一个成熟的企业来说这是非常危险的，缺少了数据就像船只在海上航行的时候没有了方向，将会变得无所适从，所以这周花了点时间去优化。">
 
 
 
@@ -86,7 +86,7 @@
   };
 </script>
 
-  <title> webpack自定义loader初探 | zjutkz's blog </title>
+  <title> 浅谈Flutter上的数据监控 | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +291,7 @@ $(function() {
             
             
               
-                webpack自定义loader初探
+                浅谈Flutter上的数据监控
               
             
           </h1>
@@ -303,8 +303,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-28T18:16:08+08:00" content="2018-08-28">
-              2018-08-28
+            <time itemprop="dateCreated" datetime="2019-06-13T21:59:11+08:00" content="2019-06-13">
+              2019-06-13
             </time>
           </span>
 
@@ -318,7 +318,7 @@ $(function() {
 
           
           
-             <span id="/2018/08/28/webpack自定义loader初探/" class="leancloud_visitors" data-flag-title="webpack自定义loader初探">
+             <span id="/2019/06/13/浅谈Flutter上的数据监控/" class="leancloud_visitors" data-flag-title="浅谈Flutter上的数据监控">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -339,28 +339,56 @@ $(function() {
       
 
       
-        <p>最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。</p>
+        <p>最近看公司Flutter项目的时候，发现想要分析数据非常的困难，不是数据缺失就是数据异常，作为一个成熟的企业来说这是非常危险的，缺少了数据就像船只在海上航行的时候没有了方向，将会变得无所适从，所以这周花了点时间去优化。</p>
 <a id="more"></a>
-<h1 id="什么是loader"><a href="#什么是loader" class="headerlink" title="什么是loader"></a>什么是loader</h1><p>我们都知道webpack作为当下最火的一个前端构建工具，具有很多很实用的功能，loader就是其中之一。说的通俗一点，loader就是用于对模块的源码进行转换。对于做Android的同学，大家可以把它想象成gradle中的transform task。</p>
-<h1 id="loader怎么用"><a href="#loader怎么用" class="headerlink" title="loader怎么用"></a>loader怎么用</h1><p>在平时的开发过程中，loader的使用也是非常常见的，我们可以在工程的webpack.config.js中定义：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">module</span>: &#123;</span><br><span class="line">  rules: [</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.css$/</span>,</span><br><span class="line">      use: [</span><br><span class="line">        <span class="string">'vue-style-loader'</span>,</span><br><span class="line">        <span class="string">'css-loader'</span></span><br><span class="line">      ],</span><br><span class="line">    &#125;,      &#123;</span><br><span class="line">      test: <span class="regexp">/\.vue$/</span>,</span><br><span class="line">      loader: <span class="string">'vue-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        loaders: &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// other vue-loader options go here</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.(png|jpg|gif|svg)$/</span>,</span><br><span class="line">      loader: <span class="string">'file-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        name: <span class="string">'[name].[ext]?[hash]'</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，对于css文件，我们使用css-loader，对于vue文件，我们使用vue-loader，对于图片文件，我们使用file-loader。这些loader会将对应的文件进行转换，构建出最终的产物。</p>
-<h1 id="如何自定义loader"><a href="#如何自定义loader" class="headerlink" title="如何自定义loader"></a>如何自定义loader</h1><p>有了上面的经验，我们该如何自定义一个loader呢？其实也是非常简单的。</p>
-<p>首先我们创建一个js文件，就取名叫test-loader吧。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> loaderUtils = <span class="built_in">require</span>(<span class="string">'loader-utils'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params">source</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"start process code..."</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> options = loaderUtils.getOptions(<span class="keyword">this</span>) || &#123;&#125;;</span><br><span class="line">    <span class="keyword">if</span>(options !== &#123;&#125;) &#123;</span><br><span class="line">        <span class="keyword">var</span> replaceMap = options[<span class="string">"replaceMap"</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">var</span> key <span class="keyword">in</span> replaceMap) &#123;</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">            source = source.replace(key, replaceMap[key]);</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> source;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>这就是全部的代码了，其实一个loader内部就是一个node模块，代码的编写就和平时写node一样就ok了。</p>
-<p>test-loader的逻辑就是获取到设置的option，并且做一个文本的替换。</p>
-<p>假设我们还有2个js文件，分别是test.js和index.js</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">'test is loaded'</span>;</span><br><span class="line"><span class="built_in">module</span>.exports = str;</span><br><span class="line"></span><br><span class="line">test.js</span><br></pre></td></tr></table></figure>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="built_in">require</span>(<span class="string">'./src/test'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(test);</span><br><span class="line"></span><br><span class="line">index.js</span><br></pre></td></tr></table></figure>
-<p>然后我们在webpack.config.js中加入我们自己的test-loader。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">   test: <span class="regexp">/\.js$/</span>,</span><br><span class="line">   loader: <span class="string">'test-loader'</span>,</span><br><span class="line">   exclude: <span class="regexp">/node_modules/</span>,</span><br><span class="line">   options: &#123;</span><br><span class="line">        replaceMap: &#123;</span><br><span class="line">           <span class="string">"loaded"</span>: <span class="string">"yeah"</span></span><br><span class="line">        &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中options中，我们将“loaded”字符串替换成“yeah”。</p>
-<p>但是我们的loader并没有上传到npm中，所以我们还需要在webpack.config.js中加入下面这段代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">resolveLoader: &#123;</span><br><span class="line">    modules: [path.join(__dirname, <span class="string">'./src/loaders'</span>), <span class="string">'node_modules'</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>用于加载本地loader。</p>
-<p>这样我们最终构建出来的产物中，所有的“loaded”字符串就会被替换成“yeah”了。</p>
-<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>这篇文章非常浅显，主要就是讲了一下loader的使用方式，其实我们熟知的很多loader都是这么做的，只不过是业务逻辑上的复杂程度不同而已，大家也可以自己试试看。</p>
+<h1 id="我们要关注什么数据"><a href="#我们要关注什么数据" class="headerlink" title="我们要关注什么数据"></a>我们要关注什么数据</h1><p>对于Flutter这样的组件来说，我们需要关注的数据无非是两项：</p>
+<ul>
+<li>性能数据</li>
+<li>异常数据</li>
+</ul>
+<p>这两项数据是我们监控整个Flutter应用是否优秀的最基础也是最重要的指标。性能数据能够帮我们分析出Flutter对比Native，RN，Weex等框架是否有优势，而异常数据则是反应了项目的健康程度，很多时候在项目开发和测试的过程中问题没有暴露，而是在线上才会有问题，如果没有异常监控，应用就很难具备从错误中快速恢复的能力。</p>
+<h1 id="性能数据"><a href="#性能数据" class="headerlink" title="性能数据"></a>性能数据</h1><p>对于性能数据，我们可以拆分成以下两个点：</p>
+<ul>
+<li>渲染时长</li>
+<li>页面帧率</li>
+</ul>
+<p>对于页面帧率，目前我还没有什么仔细思考过，这一块的内容我会放在之后的文章中介绍。</p>
+<p>对于渲染时长，我们可以通过Flutter给出的系统回调在监控页面第一帧的渲染时间。Android为以下方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">getFlutterView().addFirstFrameListener(<span class="keyword">new</span> FlutterView.FirstFrameListener() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onFirstFrame</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="comment">//第一帧渲染回调</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>iOS也差不多，具体大家可以参考网上的例子。</p>
+<h1 id="异常数据"><a href="#异常数据" class="headerlink" title="异常数据"></a>异常数据</h1><p>对于异常数据，我们可以拆分成以下几个点：</p>
+<ul>
+<li>页面的打开次数</li>
+<li>页面发生异常的次数</li>
+<li>Framework的异常次数</li>
+<li>crash次数</li>
+</ul>
+<p>统计页面的打开次数是为了让我们更好的观测整个大盘的数据，并且以它作为分母，得出我们整个Flutter项目的渲染成功率，这是很重要的一个指标。</p>
+<p>但是我们想一想，在Flutter中使用navigator打开一个页面，如果我们不做任何处理的话，是无法感知到一个Flutter页面被打开了的，所以我们需要通过注册nevigator的observer去监听页面的打开与关闭：</p>
+<figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Widget build(BuildContext context) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> MaterialApp(</span><br><span class="line">    navigatorObservers: [<span class="keyword">new</span> MyNavigatorObserver()],</span><br><span class="line">    home: <span class="keyword">new</span> Scaffold(</span><br><span class="line">      body: <span class="keyword">new</span> MyPage(),</span><br><span class="line">    ),</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在MyNavigatorObserver中通过didPush方法去上报页面打开的埋点。</p>
+<p>有了页面的打开数据之后，我们接下去需要统计的是异常的发生次数，而在Flutter中异常可以大致分为三类：</p>
+<ol>
+<li>Dart异常</li>
+<li>Framework异常</li>
+<li>crash</li>
+</ol>
+<p>对于Dart异常，我们可以通过全局的onError函数去捕获：</p>
+<figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">runZoned&lt;Future&lt;<span class="built_in">Null</span>&gt;&gt;(() <span class="keyword">async</span> &#123;</span><br><span class="line">runApp(<span class="keyword">new</span> MyApp());</span><br><span class="line">&#125;, onError-: (error, stackTrace) <span class="keyword">async</span> &#123;</span><br><span class="line">	<span class="comment">//监听DartError</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>但是这里的回调是只要有Dart层的error就会触发，这样就带来一个问题：<strong>许多不影响用户体验，无关紧要的error都会被我们统计到，从而影响我们数据的准确性</strong>。针对于上面这个问题，我的想法是既然要统计的是<strong>影响用户</strong>的error，那我们可以借助Flutter本身的特性，我们知道Flutter在build期间发生了异常会展示一个红屏的widget，这个widget是ErrorWidget，我们只需要hook这个widget的生成，在该widget展示的时候上报我们需要的埋点就可以了：</p>
+<figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ErrorWidget.builder = (FlutterErrorDetails flutterErrorDetails) &#123;</span><br><span class="line">  <span class="comment">//统计Dart error</span></span><br><span class="line">  <span class="keyword">return</span> ErrorWidget(flutterErrorDetails.exception);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>甚至我们还可以在这里重写这个ErrorWidget，去展示我们自定义的错误页。</p>
+<p>说完了Dart异常，我们接着去处理Framework异常。这个异常比较特殊，应该是Android独有的，因为在Android中我们需要加载动态库去完成Flutter的初始化，所以这里我们可以捕获动态库的加载，如果有异常发生或者加载失败，则算作为Framework层异常。</p>
+<p>最后一个则是运行时的crash，对于这部分异常，我们需要做的就是进行堆栈的捕获，并且判断是否是Flutter引起的crash，如果是则上报埋点。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>通过上面的几个数据统计，我们可以计算出Flutter应用的以下几个数据：</p>
+<ul>
+<li>页面渲染时间</li>
+<li>页面帧率</li>
+<li>页面打开次数</li>
+<li>页面异常率</li>
+<li>页面崩溃率</li>
+</ul>
+<p>有了以上的几个数据，我们就可以根据它们来进行业务上的优化，做到百尺竿头更进一步。</p>
 
       
     </div>
@@ -375,7 +403,7 @@ $(function() {
       
         <div class="post-tags">
           
-            <a href="/tags/webpack/" rel="tag">#webpack</a>
+            <a href="/tags/Flutter/" rel="tag">#Flutter</a>
           
         </div>
       
@@ -384,17 +412,13 @@ $(function() {
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/07/12/Hystrix-fallback机制浅析/" rel="next" title="Hystrix fallback机制浅析">
-                <i class="fa fa-chevron-left"></i> Hystrix fallback机制浅析
+              <a href="/2019/03/18/typescript中的decorator/" rel="next" title="typescript中的decorator">
+                <i class="fa fa-chevron-left"></i> typescript中的decorator
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/10/16/一种封装Weex模块调用的方法/" rel="prev" title="一种封装Weex模块调用的方法">
-                一种封装Weex模块调用的方法 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -508,7 +532,7 @@ $(function() {
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是loader"><span class="nav-number">1.</span> <span class="nav-text">什么是loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#loader怎么用"><span class="nav-number">2.</span> <span class="nav-text">loader怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何自定义loader"><span class="nav-number">3.</span> <span class="nav-text">如何自定义loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#我们要关注什么数据"><span class="nav-number">1.</span> <span class="nav-text">我们要关注什么数据</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#性能数据"><span class="nav-number">2.</span> <span class="nav-text">性能数据</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#异常数据"><span class="nav-number">3.</span> <span class="nav-text">异常数据</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
