@@ -65,7 +65,7 @@
 <meta property="og:url" content="http://zjutkz.net/2019/07/22/论NodeJS中的循环引用/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
 <meta property="og:description" content="最近在用node的时候排查一个问题排查了半天，最终发现是循环引用导致的问题，故在此记录一下。">
-<meta property="og:updated_time" content="2019-07-22T10:57:20.000Z">
+<meta property="og:updated_time" content="2019-07-22T11:05:47.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="论NodeJS中的循环引用">
 <meta name="twitter:description" content="最近在用node的时候排查一个问题排查了半天，最终发现是循环引用导致的问题，故在此记录一下。">
@@ -362,7 +362,7 @@ $(function() {
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">入口文件-&gt;child.ts-&gt;parent.ts-&gt;util.ts-&gt;child_2.ts-&gt;parent.ts</span><br></pre></td></tr></table></figure>
 <p>很明显这里存在着一个循环引用，当我们在加载child_2.ts这个文件的时候，parent.ts还处在未加载完的状态。</p>
 <p>我们可以去<a href="https://nodejs.org/api/modules.html#modules_cycles" target="_blank" rel="external">官网看一下node中是如何处理循环引用的</a>。</p>
-<p>通过官网我们可以知道，对于这样的循环引用，在child_2.ts加载parent.ts的时候，会去缓存中寻找，而由于parent.ts还未加载完成，所以缓存中会是一个空对象了，观望中用的语句是<em>an unfinished copy of the a.js</em>。</p>
+<p>通过官网我们可以知道，对于这样的循环引用，在child_2.ts加载parent.ts的时候，会去缓存中寻找，而由于parent.ts还未加载完成，所以缓存中会是一个空对象了，官网中用的语句是<em>an unfinished copy of the a.js</em>。</p>
 <h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>知道原因之后，解决方案也就变得清晰了起来，一句话搞定，将parent.ts中的import语句放在后面：</p>
 <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">abstract</span> <span class="keyword">class</span> Parent &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">abstract</span> hello(): <span class="built_in">string</span>;</span><br><span class="line"></span><br><span class="line">    func(): <span class="built_in">string</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> Util.useChildInSameCase();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> &#123;Util&#125; from <span class="string">"./util"</span>;</span><br></pre></td></tr></table></figure>
 <p>这样在加载parent.ts的时候，就会先export对象，然后再import所需要的util.ts了。</p>
