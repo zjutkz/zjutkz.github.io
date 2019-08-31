@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="webpack," />
+  <meta name="keywords" content="bigdata DataX," />
 
 
 
@@ -59,16 +59,16 @@
 
 
 
-<meta name="description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="description" content="最近去公司的大数据部门轮岗，接的第一个任务就是异构数据的导出项目，趁着机会学习了一下DataX框架，开一个系列来记录一下。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="webpack自定义loader初探">
-<meta property="og:url" content="http://zjutkz.net/2018/08/28/webpack自定义loader初探/index.html">
+<meta property="og:title" content="DataX学习之HelloWorld">
+<meta property="og:url" content="http://zjutkz.net/2019/08/31/DataX学习之HelloWorld/index.html">
 <meta property="og:site_name" content="zjutkz's blog">
-<meta property="og:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
-<meta property="og:updated_time" content="2018-08-28T10:28:43.000Z">
+<meta property="og:description" content="最近去公司的大数据部门轮岗，接的第一个任务就是异构数据的导出项目，趁着机会学习了一下DataX框架，开一个系列来记录一下。">
+<meta property="og:updated_time" content="2019-08-31T07:38:53.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="webpack自定义loader初探">
-<meta name="twitter:description" content="最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。">
+<meta name="twitter:title" content="DataX学习之HelloWorld">
+<meta name="twitter:description" content="最近去公司的大数据部门轮岗，接的第一个任务就是异构数据的导出项目，趁着机会学习了一下DataX框架，开一个系列来记录一下。">
 
 
 
@@ -86,7 +86,7 @@
   };
 </script>
 
-  <title> webpack自定义loader初探 | zjutkz's blog </title>
+  <title> DataX学习之HelloWorld | zjutkz's blog </title>
 </head>
 
 
@@ -291,7 +291,7 @@ $(function() {
             
             
               
-                webpack自定义loader初探
+                DataX学习之HelloWorld
               
             
           </h1>
@@ -303,8 +303,8 @@ $(function() {
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-28T18:16:08+08:00" content="2018-08-28">
-              2018-08-28
+            <time itemprop="dateCreated" datetime="2019-08-31T15:25:32+08:00" content="2019-08-31">
+              2019-08-31
             </time>
           </span>
 
@@ -318,7 +318,7 @@ $(function() {
 
           
           
-             <span id="/2018/08/28/webpack自定义loader初探/" class="leancloud_visitors" data-flag-title="webpack自定义loader初探">
+             <span id="/2019/08/31/DataX学习之HelloWorld/" class="leancloud_visitors" data-flag-title="DataX学习之HelloWorld">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -339,28 +339,21 @@ $(function() {
       
 
       
-        <p>最近负责的Weex项目涉及到一些构建上的问题，需要通过自定义webpack的loader去实现，于是学习了一下这方面的知识，写一篇文章做个总结，以免遗忘。</p>
+        <p>最近去公司的大数据部门轮岗，接的第一个任务就是异构数据的导出项目，趁着机会学习了一下DataX框架，开一个系列来记录一下。</p>
 <a id="more"></a>
-<h1 id="什么是loader"><a href="#什么是loader" class="headerlink" title="什么是loader"></a>什么是loader</h1><p>我们都知道webpack作为当下最火的一个前端构建工具，具有很多很实用的功能，loader就是其中之一。说的通俗一点，loader就是用于对模块的源码进行转换。对于做Android的同学，大家可以把它想象成gradle中的transform task。</p>
-<h1 id="loader怎么用"><a href="#loader怎么用" class="headerlink" title="loader怎么用"></a>loader怎么用</h1><p>在平时的开发过程中，loader的使用也是非常常见的，我们可以在工程的webpack.config.js中定义：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">module</span>: &#123;</span><br><span class="line">  rules: [</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.css$/</span>,</span><br><span class="line">      use: [</span><br><span class="line">        <span class="string">'vue-style-loader'</span>,</span><br><span class="line">        <span class="string">'css-loader'</span></span><br><span class="line">      ],</span><br><span class="line">    &#125;,      &#123;</span><br><span class="line">      test: <span class="regexp">/\.vue$/</span>,</span><br><span class="line">      loader: <span class="string">'vue-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        loaders: &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// other vue-loader options go here</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      test: <span class="regexp">/\.(png|jpg|gif|svg)$/</span>,</span><br><span class="line">      loader: <span class="string">'file-loader'</span>,</span><br><span class="line">      options: &#123;</span><br><span class="line">        name: <span class="string">'[name].[ext]?[hash]'</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，对于css文件，我们使用css-loader，对于vue文件，我们使用vue-loader，对于图片文件，我们使用file-loader。这些loader会将对应的文件进行转换，构建出最终的产物。</p>
-<h1 id="如何自定义loader"><a href="#如何自定义loader" class="headerlink" title="如何自定义loader"></a>如何自定义loader</h1><p>有了上面的经验，我们该如何自定义一个loader呢？其实也是非常简单的。</p>
-<p>首先我们创建一个js文件，就取名叫test-loader吧。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> loaderUtils = <span class="built_in">require</span>(<span class="string">'loader-utils'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params">source</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"start process code..."</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> options = loaderUtils.getOptions(<span class="keyword">this</span>) || &#123;&#125;;</span><br><span class="line">    <span class="keyword">if</span>(options !== &#123;&#125;) &#123;</span><br><span class="line">        <span class="keyword">var</span> replaceMap = options[<span class="string">"replaceMap"</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">var</span> key <span class="keyword">in</span> replaceMap) &#123;</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">            source = source.replace(key, replaceMap[key]);</span><br><span class="line">            <span class="built_in">console</span>.log(source);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> source;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>这就是全部的代码了，其实一个loader内部就是一个node模块，代码的编写就和平时写node一样就ok了。</p>
-<p>test-loader的逻辑就是获取到设置的option，并且做一个文本的替换。</p>
-<p>假设我们还有2个js文件，分别是test.js和index.js</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">'test is loaded'</span>;</span><br><span class="line"><span class="built_in">module</span>.exports = str;</span><br><span class="line"></span><br><span class="line">test.js</span><br></pre></td></tr></table></figure>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="built_in">require</span>(<span class="string">'./src/test'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(test);</span><br><span class="line"></span><br><span class="line">index.js</span><br></pre></td></tr></table></figure>
-<p>然后我们在webpack.config.js中加入我们自己的test-loader。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">   test: <span class="regexp">/\.js$/</span>,</span><br><span class="line">   loader: <span class="string">'test-loader'</span>,</span><br><span class="line">   exclude: <span class="regexp">/node_modules/</span>,</span><br><span class="line">   options: &#123;</span><br><span class="line">        replaceMap: &#123;</span><br><span class="line">           <span class="string">"loaded"</span>: <span class="string">"yeah"</span></span><br><span class="line">        &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中options中，我们将“loaded”字符串替换成“yeah”。</p>
-<p>但是我们的loader并没有上传到npm中，所以我们还需要在webpack.config.js中加入下面这段代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">resolveLoader: &#123;</span><br><span class="line">    modules: [path.join(__dirname, <span class="string">'./src/loaders'</span>), <span class="string">'node_modules'</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>用于加载本地loader。</p>
-<p>这样我们最终构建出来的产物中，所有的“loaded”字符串就会被替换成“yeah”了。</p>
-<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>这篇文章非常浅显，主要就是讲了一下loader的使用方式，其实我们熟知的很多loader都是这么做的，只不过是业务逻辑上的复杂程度不同而已，大家也可以自己试试看。</p>
+<h1 id="项目背景"><a href="#项目背景" class="headerlink" title="项目背景"></a>项目背景</h1><p>既然是异构数据的导出，那肯定少不了数据源和目标源。数据源有hive和kafka，目标源涵盖很多，像hbase，hive，kafka，es等等，之前公司的做法是通过mr任务去跑数据，但是配置很繁琐，而且基本都是祖传配置，需要人工拷贝，所以趁着这次重构，希望在前端展示上做一个产品化的平台来cover这些工作量，并且在后端核心的导出逻辑上使用一些其他方式，抛弃mr任务。</p>
+<p>经过研讨之后项目组决定以hive为目标源的项目还是使用mr任务去跑，而以kafka为数据源的项目则使用DataX这个开源框架。</p>
+<h1 id="何为DataX"><a href="#何为DataX" class="headerlink" title="何为DataX"></a>何为DataX</h1><p>根据Github上的描述，DataX就是一个离线数据的同步工具，来解决异构数据源之间的高效同步。在围观了一下代码之后发现这个项目确实不错，对于我这样一个大数据的新手玩家来说，只需要编写简单的reader和writer插件就可以完成任务，颇有serverless的感觉。</p>
+<p>不过DataX还有一个问题，就是貌似只支持单机而不支持集群，所以真正投入生产可能还得配合成熟的调度框架才行。</p>
+<h1 id="Hello-Datax"><a href="#Hello-Datax" class="headerlink" title="Hello Datax"></a>Hello Datax</h1><p>作为程序员，当然还是要以代码说话，在研究了半天时间之后，我决定动手写一个DataX的kafkareader插件的小demo用来上手。</p>
+<p>对于DataX插件的资料大家可以去看<a href="https://github.com/alibaba/DataX/blob/master/dataxPluginDev.md" target="_blank" rel="external">DataX插件开发宝典</a>这篇文章，写的十分详细了。</p>
+<p>既然要开发kafkareader，那肯定是要将DataX和kafka整合到一起了，话不多说，先看代码吧：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">KafkaReader</span> <span class="keyword">extends</span> <span class="title">Reader</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Job</span> <span class="keyword">extends</span> <span class="title">Reader</span>.<span class="title">Job</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">private</span> Configuration originalConfig = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</span><br><span class="line">         <span class="keyword">this</span>.originalConfig = <span class="keyword">super</span>.getPluginJobConf();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> List&lt;Configuration&gt; <span class="title">split</span><span class="params">(<span class="keyword">int</span> adviceNumber)</span> </span>&#123;</span><br><span class="line">         List&lt;Configuration&gt; configurations = <span class="keyword">new</span> ArrayList&lt;Configuration&gt;();</span><br><span class="line"></span><br><span class="line">         <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; adviceNumber; i++) &#123;</span><br><span class="line">            configurations.add(<span class="keyword">this</span>.originalConfig.clone());</span><br><span class="line">         &#125;</span><br><span class="line">         <span class="keyword">return</span> configurations;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Task</span> <span class="keyword">extends</span> <span class="title">Reader</span>.<span class="title">Task</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">private</span> List&lt;String&gt; topics = <span class="keyword">new</span> ArrayList&lt;String&gt;();</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</span><br><span class="line">         topics.add(<span class="string">"kafka_topic"</span>);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">startRead</span><span class="params">(RecordSender recordSender)</span> </span>&#123;</span><br><span class="line">         Properties props = <span class="keyword">new</span> Properties();</span><br><span class="line">         props.put(<span class="string">"bootstrap.servers"</span>, <span class="string">"clusters_ip"</span>);</span><br><span class="line">         props.put(<span class="string">"group.id"</span>, <span class="string">"kzTestGroup"</span>);</span><br><span class="line">         props.put(<span class="string">"enable.auto.commit"</span>, <span class="string">"true"</span>);</span><br><span class="line">         props.put(<span class="string">"auto.commit.interval.ms"</span>, <span class="string">"1000"</span>);</span><br><span class="line">         props.put(<span class="string">"session.timeout.ms"</span>, <span class="string">"30000"</span>);</span><br><span class="line">         props.put(<span class="string">"max.poll.records"</span>, <span class="number">1000</span>);</span><br><span class="line">         props.put(<span class="string">"auto.offset.reset"</span>, <span class="string">"latest"</span>);</span><br><span class="line">         props.put(<span class="string">"key.deserializer"</span>, StringDeserializer.class.getName());</span><br><span class="line">         props.put(<span class="string">"value.deserializer"</span>, StringDeserializer.class.getName());</span><br><span class="line">         KafkaConsumer&lt;String, String&gt; consumer = <span class="keyword">new</span> KafkaConsumer&lt;String, String&gt;(props);</span><br><span class="line">         consumer.subscribe(topics);</span><br><span class="line"></span><br><span class="line">         Record oneRecord = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">         <span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</span><br><span class="line">            System.out.println(<span class="string">"start polling kafka msg..."</span>);</span><br><span class="line"></span><br><span class="line">            ConsumerRecords&lt;String,String&gt; records = consumer.poll(<span class="number">100</span>);</span><br><span class="line">            Iterator&lt;ConsumerRecord&lt;String,String&gt;&gt; iterator = records.iterator();</span><br><span class="line">            <span class="keyword">if</span>(!iterator.hasNext()) &#123;</span><br><span class="line">               System.out.println(<span class="string">"no data..."</span>);</span><br><span class="line">               <span class="comment">//break;</span></span><br><span class="line">            &#125;</span><br><span class="line">            System.out.println(<span class="string">"msg arriving..."</span>);</span><br><span class="line">            <span class="keyword">if</span>(iterator.hasNext()) &#123;</span><br><span class="line">               ConsumerRecord&lt;String,String&gt; record = iterator.next();</span><br><span class="line">               oneRecord = buildOneRecord(recordSender, record.value());</span><br><span class="line">               <span class="keyword">if</span> (oneRecord != <span class="keyword">null</span>) &#123;</span><br><span class="line">                  recordSender.sendToWriter(oneRecord);</span><br><span class="line">               &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">               Thread.sleep(<span class="number">3000</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">               e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="function"><span class="keyword">private</span> Record <span class="title">buildOneRecord</span><span class="params">(RecordSender recordSender, String value)</span> </span>&#123;</span><br><span class="line">         System.out.println(<span class="string">"msg value =&gt; "</span> + value);</span><br><span class="line">         Record record = recordSender.createRecord();</span><br><span class="line">         record.addColumn(<span class="keyword">new</span> StringColumn(value));</span><br><span class="line">         <span class="keyword">return</span> record;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个demo的代码十分简单，根据DataX插件开发宝典的指示，创建一个Reader，并有2个静态内部类Job和Task。</p>
+<p>在Task的startRead方法中去创建一个kafka的consumer并且监听topic，将数据封装成DataX所需要的recode并通过recordSender传递出去就可以了。</p>
+<p>当然，这个demo是非常简单的一个例子，对于要投入生产的代码，我们需要做的是参数化，比如kafka的集群地址，topic需要用参数的方式配置，还有就是和位点相关的逻辑，是否需要从头开始消费等等。</p>
+<p>最后就是Job类的Task方法了，这里我直接使用了adviceNumber去创建多个Task，根据kafka的特别，我个人推荐是直接使用kafka的partition数量去创建Task，比较合理。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>这篇文章算是DataX框架学习使用的一个开篇，随着公司项目的进行，肯定会有更多的知识需要学习，文章也会继续更新~</p>
 
       
     </div>
@@ -375,7 +368,7 @@ $(function() {
       
         <div class="post-tags">
           
-            <a href="/tags/webpack/" rel="tag">#webpack</a>
+            <a href="/tags/bigdata-DataX/" rel="tag">#bigdata DataX</a>
           
         </div>
       
@@ -384,17 +377,13 @@ $(function() {
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/07/12/Hystrix-fallback机制浅析/" rel="next" title="Hystrix fallback机制浅析">
-                <i class="fa fa-chevron-left"></i> Hystrix fallback机制浅析
+              <a href="/2019/07/22/论NodeJS中的循环引用/" rel="next" title="论NodeJS中的循环引用">
+                <i class="fa fa-chevron-left"></i> 论NodeJS中的循环引用
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/10/16/一种封装Weex模块调用的方法/" rel="prev" title="一种封装Weex模块调用的方法">
-                一种封装Weex模块调用的方法 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -508,7 +497,7 @@ $(function() {
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是loader"><span class="nav-number">1.</span> <span class="nav-text">什么是loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#loader怎么用"><span class="nav-number">2.</span> <span class="nav-text">loader怎么用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何自定义loader"><span class="nav-number">3.</span> <span class="nav-text">如何自定义loader</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#项目背景"><span class="nav-number">1.</span> <span class="nav-text">项目背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#何为DataX"><span class="nav-number">2.</span> <span class="nav-text">何为DataX</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Hello-Datax"><span class="nav-number">3.</span> <span class="nav-text">Hello Datax</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#后记"><span class="nav-number">4.</span> <span class="nav-text">后记</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
