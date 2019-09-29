@@ -1,0 +1,904 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="bigdata mr," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="博客中关于大数据技术的第二篇文章，来分析一下hadoop中必不可少的一环——MapReduce的源码~">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce中的job.setNumReduceTasks(0)原理探究">
+<meta property="og:url" content="http://zjutkz.net/2019/09/29/MapReduce中的job-setNumReduceTasks-0-原理探究/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="博客中关于大数据技术的第二篇文章，来分析一下hadoop中必不可少的一环——MapReduce的源码~">
+<meta property="og:updated_time" content="2019-09-29T13:04:11.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce中的job.setNumReduceTasks(0)原理探究">
+<meta name="twitter:description" content="博客中关于大数据技术的第二篇文章，来分析一下hadoop中必不可少的一环——MapReduce的源码~">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> MapReduce中的job.setNumReduceTasks(0)原理探究 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MapReduce中的job.setNumReduceTasks(0)原理探究
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-09-29T20:26:15+08:00" content="2019-09-29">
+              2019-09-29
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/09/29/MapReduce中的job-setNumReduceTasks-0-原理探究/" class="leancloud_visitors" data-flag-title="MapReduce中的job.setNumReduceTasks(0)原理探究">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>博客中关于大数据技术的第二篇文章，来分析一下hadoop中必不可少的一环——MapReduce的源码~</p>
+<a id="more"></a>
+<h1 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h1><p>为什么会写这篇文章呢，因为前几天在看公司同事写的mr程序，发现其中的git提交记录很有意思，有一条commit叫“去除reduce”，当时的我对MapReduce的理解仅限于官网中的word count这个demo，自然觉得这个很有意思，为什么要去除reduce呢，又是怎么去除的呢？翻看了代码之后发现，其中一行关键的代码就是标题中写到的job.setNumReduceTasks(0)，好奇心驱使我一定要了解到这行代码背后的原理，于是开始了MapReduce的源码探究之旅。</p>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><p>要分析mr的源码，首先肯定是从入口开始看，即job.waitForCompletion：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">waitForCompletion</span><span class="params">(<span class="keyword">boolean</span> verbose</span><br><span class="line">                                 )</span> <span class="keyword">throws</span> IOException, InterruptedException,</span><br><span class="line">                                          ClassNotFoundException </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (state == JobState.DEFINE) &#123;</span><br><span class="line">    submit();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (verbose) &#123;</span><br><span class="line">    monitorAndPrintJob();</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// get the completion poll interval from the client.</span></span><br><span class="line">    <span class="keyword">int</span> completionPollIntervalMillis = </span><br><span class="line">      Job.getCompletionPollInterval(cluster.getConf());</span><br><span class="line">    <span class="keyword">while</span> (!isComplete()) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        Thread.sleep(completionPollIntervalMillis);</span><br><span class="line">      &#125; <span class="keyword">catch</span> (InterruptedException ie) &#123;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> isSuccessful();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到最重要的就是sumbit方法，另外可以知道的是，waitForCompletion内部有一个while循环用来等待整个mr程序的运行结果。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">submit</span><span class="params">()</span> </span><br><span class="line">       <span class="keyword">throws</span> IOException, InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  ensureState(JobState.DEFINE);</span><br><span class="line">  setUseNewAPI();</span><br><span class="line">  connect();</span><br><span class="line">  <span class="keyword">final</span> JobSubmitter submitter = </span><br><span class="line">      getJobSubmitter(cluster.getFileSystem(), cluster.getClient());</span><br><span class="line">  status = ugi.doAs(<span class="keyword">new</span> PrivilegedExceptionAction&lt;JobStatus&gt;() &#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> JobStatus <span class="title">run</span><span class="params">()</span> <span class="keyword">throws</span> IOException, InterruptedException, </span><br><span class="line">    ClassNotFoundException </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> submitter.submitJobInternal(Job.<span class="keyword">this</span>, cluster);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">  state = JobState.RUNNING;</span><br><span class="line">  LOG.info(<span class="string">"The url to track the job: "</span> + getTrackingURL());</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>submit代码第二行，setUseNewAPI函数如其名，就是使用新的api要运行mr：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setUseNewAPI</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">int</span> numReduces = conf.getNumReduceTasks();</span><br><span class="line">  String oldMapperClass = <span class="string">"mapred.mapper.class"</span>;</span><br><span class="line">  String oldReduceClass = <span class="string">"mapred.reducer.class"</span>;</span><br><span class="line">  conf.setBooleanIfUnset(<span class="string">"mapred.mapper.new-api"</span>,</span><br><span class="line">                         conf.get(oldMapperClass) == <span class="keyword">null</span>);</span><br><span class="line">  <span class="keyword">if</span> (conf.getUseNewMapper()) &#123;</span><br><span class="line">    String mode = <span class="string">"new map API"</span>;</span><br><span class="line">    ensureNotSet(<span class="string">"mapred.input.format.class"</span>, mode);</span><br><span class="line">    ensureNotSet(oldMapperClass, mode);</span><br><span class="line">    <span class="keyword">if</span> (numReduces != <span class="number">0</span>) &#123;</span><br><span class="line">      ensureNotSet(<span class="string">"mapred.partitioner.class"</span>, mode);</span><br><span class="line">     &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      ensureNotSet(<span class="string">"mapred.output.format.class"</span>, mode);</span><br><span class="line">    &#125;      </span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    String mode = <span class="string">"map compatability"</span>;</span><br><span class="line">    ensureNotSet(INPUT_FORMAT_CLASS_ATTR, mode);</span><br><span class="line">    ensureNotSet(MAP_CLASS_ATTR, mode);</span><br><span class="line">    <span class="keyword">if</span> (numReduces != <span class="number">0</span>) &#123;</span><br><span class="line">      ensureNotSet(PARTITIONER_CLASS_ATTR, mode);</span><br><span class="line">     &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      ensureNotSet(OUTPUT_FORMAT_CLASS_ATTR, mode);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (numReduces != <span class="number">0</span>) &#123;</span><br><span class="line">    conf.setBooleanIfUnset(<span class="string">"mapred.reducer.new-api"</span>,</span><br><span class="line">                           conf.get(oldReduceClass) == <span class="keyword">null</span>);</span><br><span class="line">    <span class="keyword">if</span> (conf.getUseNewReducer()) &#123;</span><br><span class="line">      String mode = <span class="string">"new reduce API"</span>;</span><br><span class="line">      ensureNotSet(<span class="string">"mapred.output.format.class"</span>, mode);</span><br><span class="line">      ensureNotSet(oldReduceClass, mode);   </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      String mode = <span class="string">"reduce compatability"</span>;</span><br><span class="line">      ensureNotSet(OUTPUT_FORMAT_CLASS_ATTR, mode);</span><br><span class="line">      ensureNotSet(REDUCE_CLASS_ATTR, mode);   </span><br><span class="line">    &#125;</span><br><span class="line">  &#125;   </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下去来看submit中的核心代码，submitter.submitJobInternal，submitJobInternal函数比较复杂，其中最关键的2步是创建splits文件并且提交job：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">JobStatus <span class="title">submitJobInternal</span><span class="params">(Job job, Cluster cluster)</span> </span><br><span class="line"><span class="keyword">throws</span> ClassNotFoundException, InterruptedException, IOException </span>&#123;</span><br><span class="line"></span><br><span class="line">  	....</span><br><span class="line">      </span><br><span class="line">    <span class="keyword">int</span> maps = writeSplits(job, submitJobDir);</span><br><span class="line">    conf.setInt(MRJobConfig.NUM_MAPS, maps);</span><br><span class="line">    LOG.info(<span class="string">"number of splits:"</span> + maps);</span><br><span class="line"></span><br><span class="line">    ....</span><br><span class="line">      </span><br><span class="line">    status = submitClient.submitJob(</span><br><span class="line">        jobId, submitJobDir.toString(), job.getCredentials());</span><br><span class="line">    <span class="keyword">if</span> (status != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> status;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">"Could not launch job"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (status == <span class="keyword">null</span>) &#123;</span><br><span class="line">      LOG.info(<span class="string">"Cleaning up the staging area "</span> + submitJobDir);</span><br><span class="line">      <span class="keyword">if</span> (jtFs != <span class="keyword">null</span> &amp;&amp; submitJobDir != <span class="keyword">null</span>)</span><br><span class="line">        jtFs.delete(submitJobDir, <span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面我们来看writeSplits函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">writeSplits</span><span class="params">(org.apache.hadoop.mapreduce.JobContext job,</span><br><span class="line">    Path jobSubmitDir)</span> <span class="keyword">throws</span> IOException,</span><br><span class="line">    InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  JobConf jConf = (JobConf)job.getConfiguration();</span><br><span class="line">  <span class="keyword">int</span> maps;</span><br><span class="line">  <span class="keyword">if</span> (jConf.getUseNewMapper()) &#123;</span><br><span class="line">    maps = writeNewSplits(job, jobSubmitDir);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    maps = writeOldSplits(jConf, jobSubmitDir);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> maps;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到根据配置的getUseNewMapper这个bool值来判断使用哪种方法去生成splits文件，由上面我们可以知道，只要是执行的waitForCompletion，都是会走newApi。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> &lt;T extends InputSplit&gt;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">writeNewSplits</span><span class="params">(JobContext job, Path jobSubmitDir)</span> <span class="keyword">throws</span> IOException,</span><br><span class="line">    InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  Configuration conf = job.getConfiguration();</span><br><span class="line">  InputFormat&lt;?, ?&gt; input =</span><br><span class="line">    ReflectionUtils.newInstance(job.getInputFormatClass(), conf);</span><br><span class="line"></span><br><span class="line">  List&lt;InputSplit&gt; splits = input.getSplits(job);</span><br><span class="line">  T[] array = (T[]) splits.toArray(<span class="keyword">new</span> InputSplit[splits.size()]);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// sort the splits into order based on size, so that the biggest</span></span><br><span class="line">  <span class="comment">// go first</span></span><br><span class="line">  Arrays.sort(array, <span class="keyword">new</span> SplitComparator());</span><br><span class="line">  JobSplitWriter.createSplitFiles(jobSubmitDir, conf, </span><br><span class="line">      jobSubmitDir.getFileSystem(conf), array);</span><br><span class="line">  <span class="keyword">return</span> array.length;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中最重要的一行代码为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">List&lt;InputSplit&gt; splits = input.getSplits(job);</span><br></pre></td></tr></table></figure>
+<p>通过InputFormat去获取splits文件，而这个InputFormat是我们在创建mr任务的时候设置的，我们来一个比较常用的FileInputFormat：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;InputSplit&gt; <span class="title">getSplits</span><span class="params">(JobContext job)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  StopWatch sw = <span class="keyword">new</span> StopWatch().start();</span><br><span class="line">  <span class="keyword">long</span> minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(job));</span><br><span class="line">  <span class="keyword">long</span> maxSize = getMaxSplitSize(job);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// generate splits</span></span><br><span class="line">  List&lt;InputSplit&gt; splits = <span class="keyword">new</span> ArrayList&lt;InputSplit&gt;();</span><br><span class="line">  List&lt;FileStatus&gt; files = listStatus(job);</span><br><span class="line">  <span class="keyword">for</span> (FileStatus file: files) &#123;</span><br><span class="line">    Path path = file.getPath();</span><br><span class="line">    <span class="keyword">long</span> length = file.getLen();</span><br><span class="line">    <span class="keyword">if</span> (length != <span class="number">0</span>) &#123;</span><br><span class="line">      BlockLocation[] blkLocations;</span><br><span class="line">      <span class="keyword">if</span> (file <span class="keyword">instanceof</span> LocatedFileStatus) &#123;</span><br><span class="line">        blkLocations = ((LocatedFileStatus) file).getBlockLocations();</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        FileSystem fs = path.getFileSystem(job.getConfiguration());</span><br><span class="line">        blkLocations = fs.getFileBlockLocations(file, <span class="number">0</span>, length);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (isSplitable(job, path)) &#123;</span><br><span class="line">        <span class="keyword">long</span> blockSize = file.getBlockSize();</span><br><span class="line">        <span class="keyword">long</span> splitSize = computeSplitSize(blockSize, minSize, maxSize);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">long</span> bytesRemaining = length;</span><br><span class="line">        <span class="keyword">while</span> (((<span class="keyword">double</span>) bytesRemaining)/splitSize &gt; SPLIT_SLOP) &#123;</span><br><span class="line">          <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">          splits.add(makeSplit(path, length-bytesRemaining, splitSize,</span><br><span class="line">                      blkLocations[blkIndex].getHosts(),</span><br><span class="line">                      blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">          bytesRemaining -= splitSize;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (bytesRemaining != <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">          splits.add(makeSplit(path, length-bytesRemaining, bytesRemaining,</span><br><span class="line">                     blkLocations[blkIndex].getHosts(),</span><br><span class="line">                     blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123; <span class="comment">// not splitable</span></span><br><span class="line">        splits.add(makeSplit(path, <span class="number">0</span>, length, blkLocations[<span class="number">0</span>].getHosts(),</span><br><span class="line">                    blkLocations[<span class="number">0</span>].getCachedHosts()));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">      <span class="comment">//Create empty hosts array for zero length files</span></span><br><span class="line">      splits.add(makeSplit(path, <span class="number">0</span>, length, <span class="keyword">new</span> String[<span class="number">0</span>]));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// Save the number of input files for metrics/loadgen</span></span><br><span class="line">  job.getConfiguration().setLong(NUM_INPUT_FILES, files.size());</span><br><span class="line">  sw.stop();</span><br><span class="line">  <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">    LOG.debug(<span class="string">"Total # of splits generated by getSplits: "</span> + splits.size()</span><br><span class="line">        + <span class="string">", TimeTaken: "</span> + sw.now(TimeUnit.MILLISECONDS));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> splits;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>函数中通过isSplitable去判断是否可以切片，对于FileInputFormat来说，默认是可以切片的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">protected boolean isSplitable(JobContext context, Path filename) &#123;</span><br><span class="line">  return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而我们看一下使用最多的TextInputFormat和ParquetInputFormat：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">isSplitable</span><span class="params">(JobContext context, Path file)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">final</span> CompressionCodec codec =</span><br><span class="line">    <span class="keyword">new</span> CompressionCodecFactory(context.getConfiguration()).getCodec(file);</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">null</span> == codec) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> codec <span class="keyword">instanceof</span> SplittableCompressionCodec;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">isSplitable</span><span class="params">(JobContext context, Path filename)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> ContextUtil.getConfiguration(context).getBoolean(SPLIT_FILES, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到对于TextInputFormat需要判断压缩格式，而ParquetInputFormat则是通过配置去判断。</p>
+<p>我们接着看getSplits方法，如果isSplitable返回true，则会进行文件的切割逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">long</span> blockSize = file.getBlockSize();</span><br><span class="line"><span class="keyword">long</span> splitSize = computeSplitSize(blockSize, minSize, maxSize);</span><br><span class="line"></span><br><span class="line"><span class="keyword">long</span> bytesRemaining = length;</span><br><span class="line"><span class="keyword">while</span> (((<span class="keyword">double</span>) bytesRemaining)/splitSize &gt; SPLIT_SLOP) &#123;</span><br><span class="line">  <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">  splits.add(makeSplit(path, length-bytesRemaining, splitSize,</span><br><span class="line">              blkLocations[blkIndex].getHosts(),</span><br><span class="line">              blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">  bytesRemaining -= splitSize;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就是根据一个固定的值去切分文件而已。</p>
+<p>至此我们已经了解了splits文件的生成逻辑，下面我们来看submitJobInternal中的提交job部分：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">status = submitClient.submitJob(</span><br><span class="line">    jobId, submitJobDir.toString(), job.getCredentials());</span><br></pre></td></tr></table></figure>
+<p>其中submitClient我们可以使用它的子类——YARNRunner，从名字就可以看出，job最终提交到了hadoop的另一个杀手锏——yarn中。</p>
+<p>我们的任务最终会通过MapTask和ReduceTask进行执行，下面我们来看MapTask的具体逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">(<span class="keyword">final</span> JobConf job, <span class="keyword">final</span> TaskUmbilicalProtocol umbilical)</span></span><br><span class="line">  <span class="keyword">throws</span> IOException, ClassNotFoundException, InterruptedException </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.umbilical = umbilical;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (isMapTask()) &#123;</span><br><span class="line">    <span class="comment">// If there are no reducers then there won't be any sort. Hence the map </span></span><br><span class="line">    <span class="comment">// phase will govern the entire attempt's progress.</span></span><br><span class="line">    <span class="keyword">if</span> (conf.getNumReduceTasks() == <span class="number">0</span>) &#123;</span><br><span class="line">      mapPhase = getProgress().addPhase(<span class="string">"map"</span>, <span class="number">1.0f</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="comment">// If there are reducers then the entire attempt's progress will be </span></span><br><span class="line">      <span class="comment">// split between the map phase (67%) and the sort phase (33%).</span></span><br><span class="line">      mapPhase = getProgress().addPhase(<span class="string">"map"</span>, <span class="number">0.667f</span>);</span><br><span class="line">      sortPhase  = getProgress().addPhase(<span class="string">"sort"</span>, <span class="number">0.333f</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  TaskReporter reporter = startReporter(umbilical);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">boolean</span> useNewApi = job.getUseNewMapper();</span><br><span class="line">  initialize(job, getJobID(), reporter, useNewApi);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// check if it is a cleanupJobTask</span></span><br><span class="line">  <span class="keyword">if</span> (jobCleanup) &#123;</span><br><span class="line">    runJobCleanupTask(umbilical, reporter);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (jobSetup) &#123;</span><br><span class="line">    runJobSetupTask(umbilical, reporter);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (taskCleanup) &#123;</span><br><span class="line">    runTaskCleanupTask(umbilical, reporter);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (useNewApi) &#123;</span><br><span class="line">    runNewMapper(job, splitMetaInfo, umbilical, reporter);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    runOldMapper(job, splitMetaInfo, umbilical, reporter);</span><br><span class="line">  &#125;</span><br><span class="line">  done(umbilical, reporter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中最重要的是下面这段代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (useNewApi) &#123;</span><br><span class="line">  runNewMapper(job, splitMetaInfo, umbilical, reporter);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  runOldMapper(job, splitMetaInfo, umbilical, reporter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据上文分析，这里会使用runNewMapper。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">private &lt;INKEY,INVALUE,OUTKEY,OUTVALUE&gt;</span><br><span class="line"><span class="keyword">void</span> runNewMapper(final JobConf job,</span><br><span class="line">                  final TaskSplitIndex splitIndex,</span><br><span class="line">                  final TaskUmbilicalProtocol umbilical,</span><br><span class="line">                  TaskReporter reporter</span><br><span class="line">                  ) throws IOException, ClassNotFoundException,</span><br><span class="line">                           InterruptedException &#123;</span><br><span class="line">  <span class="comment">// make a task context so we can get the classes</span></span><br><span class="line">  org.apache.hadoop.mapreduce.TaskAttemptContext taskContext =</span><br><span class="line">    <span class="keyword">new</span> org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl(job, </span><br><span class="line">                                                                getTaskID(),</span><br><span class="line">                                                                reporter);</span><br><span class="line">  <span class="comment">// make a mapper</span></span><br><span class="line">  org.apache.hadoop.mapreduce.Mapper&lt;INKEY,INVALUE,OUTKEY,OUTVALUE&gt; mapper =</span><br><span class="line">    (org.apache.hadoop.mapreduce.Mapper&lt;INKEY,INVALUE,OUTKEY,OUTVALUE&gt;)</span><br><span class="line">      ReflectionUtils.newInstance(taskContext.getMapperClass(), job);</span><br><span class="line">  <span class="comment">// make the input format</span></span><br><span class="line">  org.apache.hadoop.mapreduce.InputFormat&lt;INKEY,INVALUE&gt; inputFormat =</span><br><span class="line">    (org.apache.hadoop.mapreduce.InputFormat&lt;INKEY,INVALUE&gt;)</span><br><span class="line">      ReflectionUtils.newInstance(taskContext.getInputFormatClass(), job);</span><br><span class="line">  <span class="comment">// rebuild the input split</span></span><br><span class="line">  org.apache.hadoop.mapreduce.InputSplit split = <span class="literal">null</span>;</span><br><span class="line">  split = getSplitDetails(<span class="keyword">new</span> Path(splitIndex.getSplitLocation()),</span><br><span class="line">      splitIndex.getStartOffset());</span><br><span class="line">  LOG.info(<span class="string">"Processing split: "</span> + split);</span><br><span class="line"></span><br><span class="line">  org.apache.hadoop.mapreduce.RecordReader&lt;INKEY,INVALUE&gt; input =</span><br><span class="line">    <span class="keyword">new</span> NewTrackingRecordReader&lt;INKEY,INVALUE&gt;</span><br><span class="line">      (split, inputFormat, reporter, taskContext);</span><br><span class="line">  </span><br><span class="line">  job.setBoolean(JobContext.SKIP_RECORDS, isSkipping());</span><br><span class="line">  org.apache.hadoop.mapreduce.RecordWriter output = <span class="literal">null</span>;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// get an output object</span></span><br><span class="line">  <span class="keyword">if</span> (job.getNumReduceTasks() == <span class="number">0</span>) &#123;</span><br><span class="line">    output = </span><br><span class="line">      <span class="keyword">new</span> NewDirectOutputCollector(taskContext, job, umbilical, reporter);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    output = <span class="keyword">new</span> NewOutputCollector(taskContext, job, umbilical, reporter);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  org.apache.hadoop.mapreduce.MapContext&lt;INKEY, INVALUE, OUTKEY, OUTVALUE&gt; </span><br><span class="line">  mapContext = </span><br><span class="line">    <span class="keyword">new</span> MapContextImpl&lt;INKEY, INVALUE, OUTKEY, OUTVALUE&gt;(job, getTaskID(), </span><br><span class="line">        input, output, </span><br><span class="line">        committer, </span><br><span class="line">        reporter, split);</span><br><span class="line"></span><br><span class="line">  org.apache.hadoop.mapreduce.Mapper&lt;INKEY,INVALUE,OUTKEY,OUTVALUE&gt;.Context </span><br><span class="line">      mapperContext = </span><br><span class="line">        <span class="keyword">new</span> WrappedMapper&lt;INKEY, INVALUE, OUTKEY, OUTVALUE&gt;().getMapContext(</span><br><span class="line">            mapContext);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    input.initialize(split, mapperContext);</span><br><span class="line">    mapper.run(mapperContext);</span><br><span class="line">    mapPhase.complete();</span><br><span class="line">    setPhase(TaskStatus.Phase.SORT);</span><br><span class="line">    statusUpdate(umbilical);</span><br><span class="line">    input.close();</span><br><span class="line">    input = <span class="literal">null</span>;</span><br><span class="line">    output.close(mapperContext);</span><br><span class="line">    output = <span class="literal">null</span>;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    closeQuietly(input);</span><br><span class="line">    closeQuietly(output, mapperContext);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数里，终于有我们要排查的问题了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (job.getNumReduceTasks() == <span class="number">0</span>) &#123;</span><br><span class="line">  output = </span><br><span class="line">    <span class="keyword">new</span> NewDirectOutputCollector(taskContext, job, umbilical, reporter);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  output = <span class="keyword">new</span> NewOutputCollector(taskContext, job, umbilical, reporter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果ruduceTask设置的是0，RecordWriter使用的是NewDirectOutputCollector，否则是NewOutputCollector。</p>
+<p>那么这个RecordWriter的作用是什么呢？我们知道，对于一般的Mapper来说，最终都需要调用context.write去写入数据，大家可以debug去看一下这个函数，最终就会调用RecordWriter的write方法，那么下面我们就来看看NewDirectOutputCollector和NewOutputCollector都做了什么：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">out = outputFormat.getRecordWriter(taskContext);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(K key, V value)</span> </span><br><span class="line"><span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</span><br><span class="line">  reporter.progress();</span><br><span class="line">  <span class="keyword">long</span> bytesOutPrev = getOutputBytes(fsStats);</span><br><span class="line">  out.write(key, value);</span><br><span class="line">  <span class="keyword">long</span> bytesOutCurr = getOutputBytes(fsStats);</span><br><span class="line">  fileOutputByteCounter.increment(bytesOutCurr - bytesOutPrev);</span><br><span class="line">  mapOutputRecordCounter.increment(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先是NewDirectOutputCollector，可以看到内部就是调用了outputFormat的recordWrite，而如果我们设置了reduceTaskNums为0，一般会配合使用NullOutputFormat：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> RecordWriter&lt;K, V&gt; </span><br><span class="line">       <span class="title">getRecordWriter</span><span class="params">(TaskAttemptContext context)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> RecordWriter&lt;K, V&gt;()&#123;</span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(K key, V value)</span> </span>&#123; &#125;</span><br><span class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">close</span><span class="params">(TaskAttemptContext context)</span> </span>&#123; &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，内部啥都没做，也就是说，如果reduceTaskNums为0并且使用NullOutputFormat，map阶段过后，程序就结束了。</p>
+<p>下面再来看NewOutputCollector：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(K key, V value)</span> <span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</span><br><span class="line">  collector.collect(key, value,</span><br><span class="line">                    partitioner.getPartition(key, value, partitions));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>内部会调用MapOutputBuffer的collect方法，实现就非常复杂了，设置到写文件，排序等操作，而这些操作在mr中有一个专有名词——shuffle。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>通过上面的分析，我终于明白了为什么要设置reduceTaskNums为0了，因为对于一些特定的场景——比如读取hive数据写kafka topic，其实是不需要使用reduce过程的，只需要在map中将数据读取出来发给kafka就好了，而如果你使用map+reduce的模式，在reduce中处理逻辑的话，会经过一段十分复杂并且耗时的shuffle过程，从我个人的理解，shuffle过程是mr运行缓慢的主要原因，因为它涉及到了大量的文件io，所以我们可以通过不进行reduce阶段来提升整个mr程序的效率。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/bigdata-mr/" rel="tag">#bigdata mr</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/08/31/DataX学习之HelloWorld/" rel="next" title="DataX学习之HelloWorld">
+                <i class="fa fa-chevron-left"></i> DataX学习之HelloWorld
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">50</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">34</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#起因"><span class="nav-number">1.</span> <span class="nav-text">起因</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
