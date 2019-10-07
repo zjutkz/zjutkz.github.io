@@ -1,0 +1,909 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="bigdat mr," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="博客中关于大数据的第三篇文章，国庆期间继续扒了扒MapReduce相关的源码，这篇文章来快速的总结一下reduce阶段。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce之reduce过程浅析">
+<meta property="og:url" content="http://zjutkz.net/2019/10/07/MapReduce之reduce过程浅析/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="博客中关于大数据的第三篇文章，国庆期间继续扒了扒MapReduce相关的源码，这篇文章来快速的总结一下reduce阶段。">
+<meta property="og:updated_time" content="2019-10-07T06:41:40.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce之reduce过程浅析">
+<meta name="twitter:description" content="博客中关于大数据的第三篇文章，国庆期间继续扒了扒MapReduce相关的源码，这篇文章来快速的总结一下reduce阶段。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> MapReduce之reduce过程浅析 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MapReduce之reduce过程浅析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-10-07T14:15:12+08:00" content="2019-10-07">
+              2019-10-07
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/10/07/MapReduce之reduce过程浅析/" class="leancloud_visitors" data-flag-title="MapReduce之reduce过程浅析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>博客中关于大数据的第三篇文章，国庆期间继续扒了扒MapReduce相关的源码，这篇文章来快速的总结一下reduce阶段。</p>
+<a id="more"></a>
+<h1 id="总体概览"><a href="#总体概览" class="headerlink" title="总体概览"></a>总体概览</h1><p>和Map阶段相似，Reduce阶段的入口我们可以看ReduceTask的run方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">(JobConf job, <span class="keyword">final</span> TaskUmbilicalProtocol umbilical)</span></span><br><span class="line">  <span class="keyword">throws</span> IOException, InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  job.setBoolean(JobContext.SKIP_RECORDS, isSkipping());</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (isMapOrReduce()) &#123;</span><br><span class="line">    copyPhase = getProgress().addPhase(<span class="string">"copy"</span>);</span><br><span class="line">    sortPhase  = getProgress().addPhase(<span class="string">"sort"</span>);</span><br><span class="line">    reducePhase = getProgress().addPhase(<span class="string">"reduce"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// start thread that will handle communication with parent</span></span><br><span class="line">  TaskReporter reporter = startReporter(umbilical);</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">boolean</span> useNewApi = job.getUseNewReducer();</span><br><span class="line">  initialize(job, getJobID(), reporter, useNewApi);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// check if it is a cleanupJobTask</span></span><br><span class="line">  <span class="keyword">if</span> (jobCleanup) &#123;</span><br><span class="line">    runJobCleanupTask(umbilical, reporter);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (jobSetup) &#123;</span><br><span class="line">    runJobSetupTask(umbilical, reporter);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (taskCleanup) &#123;</span><br><span class="line">    runTaskCleanupTask(umbilical, reporter);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Initialize the codec</span></span><br><span class="line">  codec = initCodec();</span><br><span class="line">  RawKeyValueIterator rIter = <span class="keyword">null</span>;</span><br><span class="line">  ShuffleConsumerPlugin shuffleConsumerPlugin = <span class="keyword">null</span>;</span><br><span class="line">  </span><br><span class="line">  Class combinerClass = conf.getCombinerClass();</span><br><span class="line">  CombineOutputCollector combineCollector = </span><br><span class="line">    (<span class="keyword">null</span> != combinerClass) ? </span><br><span class="line">   <span class="keyword">new</span> CombineOutputCollector(reduceCombineOutputCounter, reporter, conf) : <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">  Class&lt;? extends ShuffleConsumerPlugin&gt; clazz =</span><br><span class="line">        job.getClass(MRConfig.SHUFFLE_CONSUMER_PLUGIN, Shuffle.class, ShuffleConsumerPlugin.class);</span><br><span class="line">         </span><br><span class="line">  shuffleConsumerPlugin = ReflectionUtils.newInstance(clazz, job);</span><br><span class="line">  LOG.info(<span class="string">"Using ShuffleConsumerPlugin: "</span> + shuffleConsumerPlugin);</span><br><span class="line"></span><br><span class="line">  ShuffleConsumerPlugin.Context shuffleContext = </span><br><span class="line">    <span class="keyword">new</span> ShuffleConsumerPlugin.Context(getTaskID(), job, FileSystem.getLocal(job), umbilical, </span><br><span class="line">                <span class="keyword">super</span>.lDirAlloc, reporter, codec, </span><br><span class="line">                combinerClass, combineCollector, </span><br><span class="line">                spilledRecordsCounter, reduceCombineInputCounter,</span><br><span class="line">                shuffledMapsCounter,</span><br><span class="line">                reduceShuffleBytes, failedShuffleCounter,</span><br><span class="line">                mergedMapOutputsCounter,</span><br><span class="line">                taskStatus, copyPhase, sortPhase, <span class="keyword">this</span>,</span><br><span class="line">                mapOutputFile, localMapFiles);</span><br><span class="line">  shuffleConsumerPlugin.init(shuffleContext);</span><br><span class="line"></span><br><span class="line">  rIter = shuffleConsumerPlugin.run();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// free up the data structures</span></span><br><span class="line">  mapOutputFilesOnDisk.clear();</span><br><span class="line">  </span><br><span class="line">  sortPhase.complete();                         <span class="comment">// sort is complete</span></span><br><span class="line">  setPhase(TaskStatus.Phase.REDUCE); </span><br><span class="line">  statusUpdate(umbilical);</span><br><span class="line">  Class keyClass = job.getMapOutputKeyClass();</span><br><span class="line">  Class valueClass = job.getMapOutputValueClass();</span><br><span class="line">  RawComparator comparator = job.getOutputValueGroupingComparator();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (useNewApi) &#123;</span><br><span class="line">    runNewReducer(job, umbilical, reporter, rIter, comparator, </span><br><span class="line">                  keyClass, valueClass);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    runOldReducer(job, umbilical, reporter, rIter, comparator, </span><br><span class="line">                  keyClass, valueClass);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  shuffleConsumerPlugin.close();</span><br><span class="line">  done(umbilical, reporter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>run方法开头就很清晰的看到了reduce阶段要做的三件事：</p>
+<ol>
+<li>copy</li>
+<li>sort</li>
+<li>reduce</li>
+</ol>
+<p>下面我们就按照这样的顺序来快速过一下吧。</p>
+<h1 id="copy阶段"><a href="#copy阶段" class="headerlink" title="copy阶段"></a>copy阶段</h1><p>我们还是先看ReduceTask的run方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">(JobConf job, <span class="keyword">final</span> TaskUmbilicalProtocol umbilical)</span></span><br><span class="line">  <span class="keyword">throws</span> IOException, InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  job.setBoolean(JobContext.SKIP_RECORDS, isSkipping());</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (isMapOrReduce()) &#123;</span><br><span class="line">    copyPhase = getProgress().addPhase(<span class="string">"copy"</span>);</span><br><span class="line">    sortPhase  = getProgress().addPhase(<span class="string">"sort"</span>);</span><br><span class="line">    reducePhase = getProgress().addPhase(<span class="string">"reduce"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  .....</span><br><span class="line">    </span><br><span class="line">  shuffleConsumerPlugin.init(shuffleContext);</span><br><span class="line"></span><br><span class="line">  rIter = shuffleConsumerPlugin.run();</span><br><span class="line"></span><br><span class="line">  .....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第一步，调用了shuffleConsumerPlugin的init方法去做一些初始化操作：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">(ShuffleConsumerPlugin.Context context)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.context = context;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">this</span>.reduceId = context.getReduceId();</span><br><span class="line">  <span class="keyword">this</span>.jobConf = context.getJobConf();</span><br><span class="line">  <span class="keyword">this</span>.umbilical = context.getUmbilical();</span><br><span class="line">  <span class="keyword">this</span>.reporter = context.getReporter();</span><br><span class="line">  <span class="keyword">this</span>.metrics = <span class="keyword">new</span> ShuffleClientMetrics(reduceId, jobConf);</span><br><span class="line">  <span class="keyword">this</span>.copyPhase = context.getCopyPhase();</span><br><span class="line">  <span class="keyword">this</span>.taskStatus = context.getStatus();</span><br><span class="line">  <span class="keyword">this</span>.reduceTask = context.getReduceTask();</span><br><span class="line">  <span class="keyword">this</span>.localMapFiles = context.getLocalMapFiles();</span><br><span class="line">  </span><br><span class="line">  scheduler = <span class="keyword">new</span> ShuffleSchedulerImpl&lt;K, V&gt;(jobConf, taskStatus, reduceId,</span><br><span class="line">      <span class="keyword">this</span>, copyPhase, context.getShuffledMapsCounter(),</span><br><span class="line">      context.getReduceShuffleBytes(), context.getFailedShuffleCounter());</span><br><span class="line">  merger = createMergeManager(context);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到里面创建了2个比较关键的类：scheduler和merger。scheduler的作用就是用于调度任务，而merger的作用则是用于进行第二阶段的sort。</p>
+<p>我们回到ReduceTask的run方法，看shuffleConsumerPlugin的run：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> RawKeyValueIterator <span class="title">run</span><span class="params">()</span> <span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</span><br><span class="line">  </span><br><span class="line">  .....</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Start the map-completion events fetcher thread</span></span><br><span class="line">  <span class="keyword">final</span> EventFetcher&lt;K,V&gt; eventFetcher = </span><br><span class="line">    <span class="keyword">new</span> EventFetcher&lt;K,V&gt;(reduceId, umbilical, scheduler, <span class="keyword">this</span>,</span><br><span class="line">        maxEventsToFetch);</span><br><span class="line">  eventFetcher.start();</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Start the map-output fetcher threads</span></span><br><span class="line">  <span class="keyword">boolean</span> isLocal = localMapFiles != <span class="keyword">null</span>;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">int</span> numFetchers = isLocal ? <span class="number">1</span> :</span><br><span class="line">    jobConf.getInt(MRJobConfig.SHUFFLE_PARALLEL_COPIES, <span class="number">5</span>);</span><br><span class="line">  Fetcher&lt;K,V&gt;[] fetchers = <span class="keyword">new</span> Fetcher[numFetchers];</span><br><span class="line">  <span class="keyword">if</span> (isLocal) &#123;</span><br><span class="line">    fetchers[<span class="number">0</span>] = <span class="keyword">new</span> LocalFetcher&lt;K, V&gt;(jobConf, reduceId, scheduler,</span><br><span class="line">        merger, reporter, metrics, <span class="keyword">this</span>, reduceTask.getShuffleSecret(),</span><br><span class="line">        localMapFiles);</span><br><span class="line">    fetchers[<span class="number">0</span>].start();</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; numFetchers; ++i) &#123;</span><br><span class="line">      fetchers[i] = <span class="keyword">new</span> Fetcher&lt;K,V&gt;(jobConf, reduceId, scheduler, merger, </span><br><span class="line">                                     reporter, metrics, <span class="keyword">this</span>, </span><br><span class="line">                                     reduceTask.getShuffleSecret());</span><br><span class="line">      fetchers[i].start();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  .....</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> kvIter;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法比较长，并且包含了前面说的copy和sort两个阶段，我们先来看前面的copy阶段，其中创建了2种线程：EventFetcher和Fetcher。其中Fetcher又根据是否是Uber模式分为LocalFetcher和Fetcher。我们先看EventFetcher：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">int</span> failures = <span class="number">0</span>;</span><br><span class="line">  LOG.info(reduce + <span class="string">" Thread started: "</span> + getName());</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">while</span> (!stopped &amp;&amp; !Thread.currentThread().isInterrupted()) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">int</span> numNewMaps = getMapCompletionEvents();</span><br><span class="line">        failures = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">if</span> (numNewMaps &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          LOG.info(reduce + <span class="string">": "</span> + <span class="string">"Got "</span> + numNewMaps + <span class="string">" new map-outputs"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        LOG.debug(<span class="string">"GetMapEventsThread about to sleep for "</span> + SLEEP_TIME);</span><br><span class="line">        <span class="keyword">if</span> (!Thread.currentThread().isInterrupted()) &#123;</span><br><span class="line">          Thread.sleep(SLEEP_TIME);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">        LOG.info(<span class="string">"EventFetcher is interrupted.. Returning"</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (IOException ie) &#123;</span><br><span class="line">        LOG.info(<span class="string">"Exception in getting events"</span>, ie);</span><br><span class="line">        <span class="comment">// check to see whether to abort</span></span><br><span class="line">        <span class="keyword">if</span> (++failures &gt;= MAX_RETRIES) &#123;</span><br><span class="line">          <span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">"too many failures downloading events"</span>, ie);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// sleep for a bit</span></span><br><span class="line">        <span class="keyword">if</span> (!Thread.currentThread().isInterrupted()) &#123;</span><br><span class="line">          Thread.sleep(RETRY_PERIOD);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">    exceptionReporter.reportException(t);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从它的run方法可以知道，EventFetcher的作用就是通过rpc调用去获取已经完成的map task数量。</p>
+<p>我们再看一下Fetcher：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">while</span> (!stopped &amp;&amp; !Thread.currentThread().isInterrupted()) &#123;</span><br><span class="line">      MapHost host = <span class="keyword">null</span>;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// If merge is on, block</span></span><br><span class="line">        merger.waitForResource();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Get a host to shuffle from</span></span><br><span class="line">        host = scheduler.getHost();</span><br><span class="line">        metrics.threadBusy();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Shuffle</span></span><br><span class="line">        copyFromHost(host);</span><br><span class="line">      &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (host != <span class="keyword">null</span>) &#123;</span><br><span class="line">          scheduler.freeHost(host);</span><br><span class="line">          metrics.threadFree();            </span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (InterruptedException ie) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">    exceptionReporter.reportException(t);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先判断是否在进行merge，如果在merge则阻塞，否则通过copyFromHost方法，使用一个http调用去获取map task存储在文件中的数据。</p>
+<p>我们再深入的看一下CopyFromHost方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@VisibleForTesting</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">copyFromHost</span><span class="params">(MapHost host)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="comment">// reset retryStartTime for a new host</span></span><br><span class="line">  retryStartTime = <span class="number">0</span>;</span><br><span class="line">  <span class="comment">// Get completed maps on 'host'</span></span><br><span class="line">  List&lt;TaskAttemptID&gt; maps = scheduler.getMapsForHost(host);</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Sanity check to catch hosts with only 'OBSOLETE' maps, </span></span><br><span class="line">  <span class="comment">// especially at the tail of large jobs</span></span><br><span class="line">  <span class="keyword">if</span> (maps.size() == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">if</span>(LOG.isDebugEnabled()) &#123;</span><br><span class="line">    LOG.debug(<span class="string">"Fetcher "</span> + id + <span class="string">" going to fetch from "</span> + host + <span class="string">" for: "</span></span><br><span class="line">      + maps);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// List of maps to be fetched yet</span></span><br><span class="line">  Set&lt;TaskAttemptID&gt; remaining = <span class="keyword">new</span> HashSet&lt;TaskAttemptID&gt;(maps);</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Construct the url and connect</span></span><br><span class="line">  URL url = getMapOutputURL(host, maps);</span><br><span class="line">  DataInputStream input = openShuffleUrl(host, remaining, url);</span><br><span class="line">  <span class="keyword">if</span> (input == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// Loop through available map-outputs and fetch them</span></span><br><span class="line">    <span class="comment">// On any error, faildTasks is not null and we exit</span></span><br><span class="line">    <span class="comment">// after putting back the remaining maps to the </span></span><br><span class="line">    <span class="comment">// yet_to_be_fetched list and marking the failed tasks.</span></span><br><span class="line">    TaskAttemptID[] failedTasks = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">while</span> (!remaining.isEmpty() &amp;&amp; failedTasks == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        failedTasks = copyMapOutput(host, input, remaining, fetchRetryEnabled);</span><br><span class="line">      &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// Setup connection again if disconnected by NM</span></span><br><span class="line">        connection.disconnect();</span><br><span class="line">        <span class="comment">// Get map output from remaining tasks only.</span></span><br><span class="line">        url = getMapOutputURL(host, remaining);</span><br><span class="line">        input = openShuffleUrl(host, remaining, url);</span><br><span class="line">        <span class="keyword">if</span> (input == <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(failedTasks != <span class="keyword">null</span> &amp;&amp; failedTasks.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      LOG.warn(<span class="string">"copyMapOutput failed for tasks "</span>+Arrays.toString(failedTasks));</span><br><span class="line">      scheduler.hostFailed(host.getHostName());</span><br><span class="line">      <span class="keyword">for</span>(TaskAttemptID left: failedTasks) &#123;</span><br><span class="line">        scheduler.copyFailed(left, host, <span class="keyword">true</span>, <span class="keyword">false</span>);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Sanity check</span></span><br><span class="line">    <span class="keyword">if</span> (failedTasks == <span class="keyword">null</span> &amp;&amp; !remaining.isEmpty()) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">"server didn't return all expected map outputs: "</span></span><br><span class="line">          + remaining.size() + <span class="string">" left."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    input.close();</span><br><span class="line">    input = <span class="keyword">null</span>;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (input != <span class="keyword">null</span>) &#123;</span><br><span class="line">      IOUtils.cleanup(LOG, input);</span><br><span class="line">      input = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (TaskAttemptID left : remaining) &#123;</span><br><span class="line">      scheduler.putBackKnownMapOutput(host, left);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中最重要的就是调用了copyMapOutput方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> TaskAttemptID[] copyMapOutput(MapHost host,</span><br><span class="line">                              DataInputStream input,</span><br><span class="line">                              Set&lt;TaskAttemptID&gt; remaining,</span><br><span class="line">                              <span class="keyword">boolean</span> canRetry) <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">  MapOutput&lt;K,V&gt; mapOutput = <span class="keyword">null</span>;</span><br><span class="line">  TaskAttemptID mapId = <span class="keyword">null</span>;</span><br><span class="line">  <span class="keyword">long</span> decompressedLength = -<span class="number">1</span>;</span><br><span class="line">  <span class="keyword">long</span> compressedLength = -<span class="number">1</span>;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">long</span> startTime = Time.monotonicNow();</span><br><span class="line">    <span class="keyword">int</span> forReduce = -<span class="number">1</span>;</span><br><span class="line">    <span class="comment">//Read the shuffle header</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      ShuffleHeader header = <span class="keyword">new</span> ShuffleHeader();</span><br><span class="line">      header.readFields(input);</span><br><span class="line">      mapId = TaskAttemptID.forName(header.mapId);</span><br><span class="line">      compressedLength = header.compressedLength;</span><br><span class="line">      decompressedLength = header.uncompressedLength;</span><br><span class="line">      forReduce = header.forReduce;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (IllegalArgumentException e) &#123;</span><br><span class="line">      badIdErrs.increment(<span class="number">1</span>);</span><br><span class="line">      LOG.warn(<span class="string">"Invalid map id "</span>, e);</span><br><span class="line">      <span class="comment">//Don't know which one was bad, so consider all of them as bad</span></span><br><span class="line">      <span class="keyword">return</span> remaining.toArray(<span class="keyword">new</span> TaskAttemptID[remaining.size()]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    InputStream is = input;</span><br><span class="line">    is = CryptoUtils.wrapIfNecessary(jobConf, is, compressedLength);</span><br><span class="line">    compressedLength -= CryptoUtils.cryptoPadding(jobConf);</span><br><span class="line">    decompressedLength -= CryptoUtils.cryptoPadding(jobConf);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Do some basic sanity verification</span></span><br><span class="line">    <span class="keyword">if</span> (!verifySanity(compressedLength, decompressedLength, forReduce,</span><br><span class="line">        remaining, mapId)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> TaskAttemptID[] &#123;mapId&#125;;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(LOG.isDebugEnabled()) &#123;</span><br><span class="line">      LOG.debug(<span class="string">"header: "</span> + mapId + <span class="string">", len: "</span> + compressedLength + </span><br><span class="line">          <span class="string">", decomp len: "</span> + decompressedLength);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Get the location for the map output - either in-memory or on-disk</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      mapOutput = merger.reserve(mapId, decompressedLength, id);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (IOException ioe) &#123;</span><br><span class="line">      <span class="comment">// kill this reduce attempt</span></span><br><span class="line">      ioErrs.increment(<span class="number">1</span>);</span><br><span class="line">      scheduler.reportLocalError(ioe);</span><br><span class="line">      <span class="keyword">return</span> EMPTY_ATTEMPT_ID_ARRAY;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Check if we can shuffle *now* ...</span></span><br><span class="line">    <span class="keyword">if</span> (mapOutput == <span class="keyword">null</span>) &#123;</span><br><span class="line">      LOG.info(<span class="string">"fetcher#"</span> + id + <span class="string">" - MergeManager returned status WAIT ..."</span>);</span><br><span class="line">      <span class="comment">//Not an error but wait to process data.</span></span><br><span class="line">      <span class="keyword">return</span> EMPTY_ATTEMPT_ID_ARRAY;</span><br><span class="line">    &#125; </span><br><span class="line">    </span><br><span class="line">    <span class="comment">// The codec for lz0,lz4,snappy,bz2,etc. throw java.lang.InternalError</span></span><br><span class="line">    <span class="comment">// on decompression failures. Catching and re-throwing as IOException</span></span><br><span class="line">    <span class="comment">// to allow fetch failure logic to be processed</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">// Go!</span></span><br><span class="line">      LOG.info(<span class="string">"fetcher#"</span> + id + <span class="string">" about to shuffle output of map "</span></span><br><span class="line">          + mapOutput.getMapId() + <span class="string">" decomp: "</span> + decompressedLength</span><br><span class="line">          + <span class="string">" len: "</span> + compressedLength + <span class="string">" to "</span> + mapOutput.getDescription());</span><br><span class="line">      mapOutput.shuffle(host, is, compressedLength, decompressedLength,</span><br><span class="line">          metrics, reporter);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (java.lang.InternalError e) &#123;</span><br><span class="line">      LOG.warn(<span class="string">"Failed to shuffle for fetcher#"</span>+id, e);</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> IOException(e);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Inform the shuffle scheduler</span></span><br><span class="line">    <span class="keyword">long</span> endTime = Time.monotonicNow();</span><br><span class="line">    <span class="comment">// Reset retryStartTime as map task make progress if retried before.</span></span><br><span class="line">    retryStartTime = <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    scheduler.copySucceeded(mapId, host, compressedLength, </span><br><span class="line">                            startTime, endTime, mapOutput);</span><br><span class="line">    <span class="comment">// Note successful shuffle</span></span><br><span class="line">    remaining.remove(mapId);</span><br><span class="line">    metrics.successFetch();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (IOException ioe) &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (canRetry) &#123;</span><br><span class="line">      checkTimeoutOrRetry(host, ioe);</span><br><span class="line">    &#125; </span><br><span class="line">    </span><br><span class="line">    ioErrs.increment(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">if</span> (mapId == <span class="keyword">null</span> || mapOutput == <span class="keyword">null</span>) &#123;</span><br><span class="line">      LOG.warn(<span class="string">"fetcher#"</span> + id + <span class="string">" failed to read map header"</span> + </span><br><span class="line">               mapId + <span class="string">" decomp: "</span> + </span><br><span class="line">               decompressedLength + <span class="string">", "</span> + compressedLength, ioe);</span><br><span class="line">      <span class="keyword">if</span>(mapId == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> remaining.toArray(<span class="keyword">new</span> TaskAttemptID[remaining.size()]);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> TaskAttemptID[] &#123;mapId&#125;;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">      </span><br><span class="line">    LOG.warn(<span class="string">"Failed to shuffle output of "</span> + mapId + </span><br><span class="line">             <span class="string">" from "</span> + host.getHostName(), ioe); </span><br><span class="line"></span><br><span class="line">    <span class="comment">// Inform the shuffle-scheduler</span></span><br><span class="line">    mapOutput.abort();</span><br><span class="line">    metrics.failedFetch();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> TaskAttemptID[] &#123;mapId&#125;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法比较复杂，我们看关键的步骤：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mapOutput = merger.reserve(mapId, decompressedLength, id);</span><br></pre></td></tr></table></figure>
+<p>这一步通过前面在init中创建的MergeManagerImpl的reverse方法去获取一个mapOutput：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> MapOutput&lt;K,V&gt; <span class="title">reserve</span><span class="params">(TaskAttemptID mapId, </span><br><span class="line">                                           <span class="keyword">long</span> requestedSize,</span><br><span class="line">                                           <span class="keyword">int</span> fetcher</span><br><span class="line">                                           )</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!canShuffleToMemory(requestedSize)) &#123;</span><br><span class="line">    LOG.info(mapId + <span class="string">": Shuffling to disk since "</span> + requestedSize + </span><br><span class="line">             <span class="string">" is greater than maxSingleShuffleLimit ("</span> + </span><br><span class="line">             maxSingleShuffleLimit + <span class="string">")"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> OnDiskMapOutput&lt;K,V&gt;(mapId, reduceId, <span class="keyword">this</span>, requestedSize,</span><br><span class="line">                                    jobConf, mapOutputFile, fetcher, <span class="keyword">true</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">if</span> (usedMemory &gt; memoryLimit) &#123;</span><br><span class="line">    LOG.debug(mapId + <span class="string">": Stalling shuffle since usedMemory ("</span> + usedMemory</span><br><span class="line">        + <span class="string">") is greater than memoryLimit ("</span> + memoryLimit + <span class="string">")."</span> + </span><br><span class="line">        <span class="string">" CommitMemory is ("</span> + commitMemory + <span class="string">")"</span>); </span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Allow the in-memory shuffle to progress</span></span><br><span class="line">  LOG.debug(mapId + <span class="string">": Proceeding with shuffle since usedMemory ("</span></span><br><span class="line">      + usedMemory + <span class="string">") is lesser than memoryLimit ("</span> + memoryLimit + <span class="string">")."</span></span><br><span class="line">      + <span class="string">"CommitMemory is ("</span> + commitMemory + <span class="string">")"</span>); </span><br><span class="line">  <span class="keyword">return</span> unconditionalReserve(mapId, requestedSize, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到这里有一个判断：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">canShuffleToMemory</span><span class="params">(<span class="keyword">long</span> requestedSize)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (requestedSize &lt; maxSingleShuffleLimit); </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>意思就是map产生的文件大小是否符合我们的要求，如果小于要求则copy到内存中，否则直接copy到文件里，这里的maxSingleShuffleLimit是通过config设置的，我们可以自行根据自己的实际情况进行重写。</p>
+<p>通过这个方法我们知道，copy阶段存在内存copy和文件copy两种模式，根据我们设置的阈值去区分，好处是一些小文件copy到内存里，在之后的sort阶段可以直接在内存中排序，减少文件io。</p>
+<p>获取到mapOutput，会调用起shuffle方法去进行真正的数据copy，具体代码就不分析了，无非就是InputStream写内存或者写文件。</p>
+<p>在copy完毕之后，会调用scheduler的copySuccess方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">copySucceeded</span><span class="params">(TaskAttemptID mapId,</span><br><span class="line">                                       MapHost host,</span><br><span class="line">                                       <span class="keyword">long</span> bytes,</span><br><span class="line">                                       <span class="keyword">long</span> startMillis,</span><br><span class="line">                                       <span class="keyword">long</span> endMillis,</span><br><span class="line">                                       MapOutput&lt;K,V&gt; output</span><br><span class="line">                                       )</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  .....</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">if</span> (!finishedMaps[mapIndex]) &#123;</span><br><span class="line">    output.commit();</span><br><span class="line">    finishedMaps[mapIndex] = <span class="keyword">true</span>;</span><br><span class="line">    shuffledMapsCounter.increment(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">if</span> (--remainingMaps == <span class="number">0</span>) &#123;</span><br><span class="line">      notifyAll();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    .....</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法最关键的两步就是会改变2个变量：finishedMaps和remainingMaps。</p>
+<p>根据上面的学习我们可以得知，copy阶段最主要的功能就是获取map task结束后存储在文件中的数据，根据一定的规则决定是copy到内存中或者是copy到文件里。</p>
+<h1 id="sort阶段"><a href="#sort阶段" class="headerlink" title="sort阶段"></a>sort阶段</h1><p>我们回到shuffleConsumerPlugin的run方法，看一下后续的操作：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> RawKeyValueIterator <span class="title">run</span><span class="params">()</span> <span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</span><br><span class="line">  </span><br><span class="line">  .....</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Wait for shuffle to complete successfully</span></span><br><span class="line">  <span class="keyword">while</span> (!scheduler.waitUntilDone(PROGRESS_FREQUENCY)) &#123;</span><br><span class="line">    reporter.progress();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (throwable != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ShuffleError(<span class="string">"error in shuffle in "</span> + throwingThreadName,</span><br><span class="line">                               throwable);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Stop the event-fetcher thread</span></span><br><span class="line">  eventFetcher.shutDown();</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// Stop the map-output fetcher threads</span></span><br><span class="line">  <span class="keyword">for</span> (Fetcher&lt;K,V&gt; fetcher : fetchers) &#123;</span><br><span class="line">    fetcher.shutDown();</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// stop the scheduler</span></span><br><span class="line">  scheduler.close();</span><br><span class="line"></span><br><span class="line">  copyPhase.complete(); <span class="comment">// copy is already complete</span></span><br><span class="line">  taskStatus.setPhase(TaskStatus.Phase.SORT);</span><br><span class="line">  reduceTask.statusUpdate(umbilical);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Finish the on-going merges...</span></span><br><span class="line">  RawKeyValueIterator kvIter = <span class="keyword">null</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    kvIter = merger.close();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> ShuffleError(<span class="string">"Error while doing final merge "</span> , e);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  .....</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> kvIter;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到有一个while循环，条件是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scheduler.waitUntilDone(PROGRESS_FREQUENCY)</span><br></pre></td></tr></table></figure>
+<p>我们去看一下具体的实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">boolean</span> <span class="title">waitUntilDone</span><span class="params">(<span class="keyword">int</span> millis</span><br><span class="line">                                          )</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (remainingMaps &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    wait(millis);</span><br><span class="line">    <span class="keyword">return</span> remainingMaps == <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从文字上我们也很好理解，就是去判断是否还有剩余的map没有处理，如果已经全部处理完了(remainingMaps == 0)就执行后续的操作。而copy阶段的分析中我们已经知道，在copy完成之后，会调用scheduler的copySuccess方法更新remainingMaps。</p>
+<p>真正的sort是在merge的close方法中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kvIter = merger.close();</span><br></pre></td></tr></table></figure>
+<p>这个方法比较复杂，我们就不进去看来，其中主要的逻辑就是先将copy阶段产生的内存数据进行排序然后输出到文件中，再将其和copy阶段产生的文件进行堆排序，然后进行文件的merge。</p>
+<h1 id="reduce阶段"><a href="#reduce阶段" class="headerlink" title="reduce阶段"></a>reduce阶段</h1><p>copy和sort阶段完成之后，让我们回到ReduceTask的run方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">(JobConf job, <span class="keyword">final</span> TaskUmbilicalProtocol umbilical)</span></span><br><span class="line">  <span class="keyword">throws</span> IOException, InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  job.setBoolean(JobContext.SKIP_RECORDS, isSkipping());</span><br><span class="line"></span><br><span class="line">  .....</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (useNewApi) &#123;</span><br><span class="line">    runNewReducer(job, umbilical, reporter, rIter, comparator, </span><br><span class="line">                  keyClass, valueClass);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    runOldReducer(job, umbilical, reporter, rIter, comparator, </span><br><span class="line">                  keyClass, valueClass);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  shuffleConsumerPlugin.close();</span><br><span class="line">  done(umbilical, reporter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的代码和map阶段就几乎是一模一样了，runNewReducer中就是读取数据，然后调用我们自己的Reduce类去进行操作，具体的代码就不看了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/bigdat-mr/" rel="tag">#bigdat mr</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/29/MapReduce中的job-setNumReduceTasks-0-原理探究/" rel="next" title="MapReduce中的job.setNumReduceTasks(0)原理探究">
+                <i class="fa fa-chevron-left"></i> MapReduce中的job.setNumReduceTasks(0)原理探究
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">51</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#总体概览"><span class="nav-number">1.</span> <span class="nav-text">总体概览</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#copy阶段"><span class="nav-number">2.</span> <span class="nav-text">copy阶段</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#sort阶段"><span class="nav-number">3.</span> <span class="nav-text">sort阶段</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#reduce阶段"><span class="nav-number">4.</span> <span class="nav-text">reduce阶段</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

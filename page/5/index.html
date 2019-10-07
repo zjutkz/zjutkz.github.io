@@ -293,6 +293,106 @@ $(function() {
             
               
                 
+                <a class="post-title-link" href="/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/" itemprop="url">
+                  当你准备开发一个热修复框架的时候，你需要了解的一切
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-23T19:42:32+08:00" content="2016-05-23">
+              2016-05-23
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/" class="leancloud_visitors" data-flag-title="当你准备开发一个热修复框架的时候，你需要了解的一切">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>最近的几篇文章都是关于hotpatch或者插件化的，原因是这两个星期公司里在搞相关的东西，当时得知有这样的开发意向的时候还是挺激动的，因为感觉不是在重复造轮子，而是在做一些创造价值的事情。所以一边忙论文和答辩的事，一边调研相关的代码，中间和小伙伴也讨论过很多次，到昨天为止也算是有了一个大概的框架。所以这里写这样一篇文章，一方面是对这段时间的总结，另一方面也算是给对这方面感兴趣的同学一个大纲吧。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/05/23/当你准备开发一个热修复框架的时候，你需要了解的一切/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/05/15/记一次苦逼的资源逆向分析/" itemprop="url">
                   记一次苦逼的资源逆向分析
                 </a>
@@ -1200,113 +1300,11 @@ $(function() {
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" itemprop="url">
-                  重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-03-29T16:34:02+08:00" content="2016-03-29">
-              2016-03-29
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-             <span id="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/" class="leancloud_visitors" data-flag-title="重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析">
-               &nbsp; | &nbsp;
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               <span class="post-meta-item-text">阅读次数 </span>
-               <span class="leancloud-visitors-count"></span>
-              </span>
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>说起RecyclerView，大家肯定都不陌生，从名字可以知道它是只专注于recycle的一个组件，视图显示？交给LayoutManager，动画？交给SimpleItemAnimator，分割线？交给ItemDecoration，等等等等。这样的好处是各个功能之间充分解耦，用使用上来说就是list，grid，瀑布流随意切换，divider样式自定义，动画百花齐放。但是这种模式同样存在一些问题，比如谷歌并没有封装点击事件给我们调用，也没有像ListView那样有API可以直接生成header和footer。</p>
-<p>如果你要求比较低，直接拿RecyclerView来用是没问题的，大不了点击事件什么的自己写嘛，不过作为一个有追求的程序员，这样显然是满足不了我的，所以我选择了对其进行封装。</p>
-<p>看到这里可能有人会说，github上不是有一个封装的很好的库叫做<a href="https://github.com/cymcsg/UltimateRecyclerView">UltimateRecyclerView</a>了吗，为什么你还要花时间去重复造轮子呢？这里我想说，这样的第三方库直接拿来用确实很方便，但是我觉得你更应该去花时间自己封装一下，因为这期间你能学到的东西是很多的。比如说，你了解android的嵌套滑动机制吗？你知道recyclerView的工作原理吗？你明白adapter和view之间的观察者模式吗？这些如果你不了解没关系，你可以选择和我一样自己去封装一遍recyclerView，相信你会了解的，不过在这儿我会给大家带来我的分析，希望大家看完以后会有收获～</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2016/03/29/重复造轮子也是有意义的！PowerfulRecyclerView使用指导和源码分析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/4/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span>
+    <a class="extend prev" rel="prev" href="/page/4/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/6/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1346,7 +1344,7 @@ $(function() {
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">50</span>
+              <span class="site-state-item-count">51</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1356,7 +1354,7 @@ $(function() {
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">34</span>
+                <span class="site-state-item-count">35</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
