@@ -1,0 +1,886 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="bitdata mr," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="这段时间在阅读《Hadoop权威指南》，阅读闲暇之余结合书本里的内容看看MapReduce的源码。这里对于writeSplits这个方法做一个源码探究。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="writeSplits细节探究">
+<meta property="og:url" content="http://zjutkz.net/2019/10/28/writeSplits细节探究/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="这段时间在阅读《Hadoop权威指南》，阅读闲暇之余结合书本里的内容看看MapReduce的源码。这里对于writeSplits这个方法做一个源码探究。">
+<meta property="og:updated_time" content="2019-10-28T14:09:48.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="writeSplits细节探究">
+<meta name="twitter:description" content="这段时间在阅读《Hadoop权威指南》，阅读闲暇之余结合书本里的内容看看MapReduce的源码。这里对于writeSplits这个方法做一个源码探究。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> writeSplits细节探究 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                writeSplits细节探究
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-10-28T21:40:59+08:00" content="2019-10-28">
+              2019-10-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/10/28/writeSplits细节探究/" class="leancloud_visitors" data-flag-title="writeSplits细节探究">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这段时间在阅读《Hadoop权威指南》，阅读闲暇之余结合书本里的内容看看MapReduce的源码。这里对于writeSplits这个方法做一个源码探究。</p>
+<a id="more"></a>
+<h1 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h1><p>我为什么会想去看writeSplits这个方法呢？因为在阅读《Hadoop权威指南》MapReduce相关章节的时候，发现书中提到map任务会尽量选择数据所在的那个节点运行map任务，用来减少网络I/O。看到这里我就比较好奇了，任务提交到Yarn之后，它是怎么知道每一个map任务所需要的数据在哪个节点，从而让调度器去分配的呢？于是又回去扒了扒MapReduce的源码，发现了其中的奥秘。</p>
+<h1 id="源码探究"><a href="#源码探究" class="headerlink" title="源码探究"></a>源码探究</h1><p>我们在前面的文章中提到过，map任务会对一个输入文件进行切分，切分成一个个小的分片(split)，既然如此，那我们就从这里看到看：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">writeSplits</span><span class="params">(org.apache.hadoop.mapreduce.JobContext job,</span><br><span class="line">    Path jobSubmitDir)</span> <span class="keyword">throws</span> IOException,</span><br><span class="line">    InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  JobConf jConf = (JobConf)job.getConfiguration();</span><br><span class="line">  <span class="keyword">int</span> maps;</span><br><span class="line">  <span class="keyword">if</span> (jConf.getUseNewMapper()) &#123;</span><br><span class="line">    maps = writeNewSplits(job, jobSubmitDir);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    maps = writeOldSplits(jConf, jobSubmitDir);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> maps;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> &lt;T extends InputSplit&gt;</span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">writeNewSplits</span><span class="params">(JobContext job, Path jobSubmitDir)</span> <span class="keyword">throws</span> IOException,</span><br><span class="line">      InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">    Configuration conf = job.getConfiguration();</span><br><span class="line">    InputFormat&lt;?, ?&gt; input =</span><br><span class="line">      ReflectionUtils.newInstance(job.getInputFormatClass(), conf);</span><br><span class="line"></span><br><span class="line">    List&lt;InputSplit&gt; splits = input.getSplits(job);</span><br><span class="line">    T[] array = (T[]) splits.toArray(<span class="keyword">new</span> InputSplit[splits.size()]);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// sort the splits into order based on size, so that the biggest</span></span><br><span class="line">    <span class="comment">// go first</span></span><br><span class="line">    Arrays.sort(array, <span class="keyword">new</span> SplitComparator());</span><br><span class="line">    JobSplitWriter.createSplitFiles(jobSubmitDir, conf, </span><br><span class="line">        jobSubmitDir.getFileSystem(conf), array);</span><br><span class="line">    <span class="keyword">return</span> array.length;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>在writeNewSplit方法中，通过input.getSplits(job)去获取map中的分片：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;InputSplit&gt; <span class="title">getSplits</span><span class="params">(JobContext job)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  StopWatch sw = <span class="keyword">new</span> StopWatch().start();</span><br><span class="line">  <span class="keyword">long</span> minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(job));</span><br><span class="line">  <span class="keyword">long</span> maxSize = getMaxSplitSize(job);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// generate splits</span></span><br><span class="line">  List&lt;InputSplit&gt; splits = <span class="keyword">new</span> ArrayList&lt;InputSplit&gt;();</span><br><span class="line">  List&lt;FileStatus&gt; files = listStatus(job);</span><br><span class="line">  <span class="keyword">for</span> (FileStatus file: files) &#123;</span><br><span class="line">    Path path = file.getPath();</span><br><span class="line">    <span class="keyword">long</span> length = file.getLen();</span><br><span class="line">    <span class="keyword">if</span> (length != <span class="number">0</span>) &#123;</span><br><span class="line">      BlockLocation[] blkLocations;</span><br><span class="line">      <span class="keyword">if</span> (file <span class="keyword">instanceof</span> LocatedFileStatus) &#123;</span><br><span class="line">        blkLocations = ((LocatedFileStatus) file).getBlockLocations();</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        FileSystem fs = path.getFileSystem(job.getConfiguration());</span><br><span class="line">        blkLocations = fs.getFileBlockLocations(file, <span class="number">0</span>, length);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (isSplitable(job, path)) &#123;</span><br><span class="line">        <span class="keyword">long</span> blockSize = file.getBlockSize();</span><br><span class="line">        <span class="keyword">long</span> splitSize = computeSplitSize(blockSize, minSize, maxSize);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">long</span> bytesRemaining = length;</span><br><span class="line">        <span class="keyword">while</span> (((<span class="keyword">double</span>) bytesRemaining)/splitSize &gt; SPLIT_SLOP) &#123;</span><br><span class="line">          <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">          splits.add(makeSplit(path, length-bytesRemaining, splitSize,</span><br><span class="line">                      blkLocations[blkIndex].getHosts(),</span><br><span class="line">                      blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">          bytesRemaining -= splitSize;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (bytesRemaining != <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">          splits.add(makeSplit(path, length-bytesRemaining, bytesRemaining,</span><br><span class="line">                     blkLocations[blkIndex].getHosts(),</span><br><span class="line">                     blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123; <span class="comment">// not splitable</span></span><br><span class="line">        splits.add(makeSplit(path, <span class="number">0</span>, length, blkLocations[<span class="number">0</span>].getHosts(),</span><br><span class="line">                    blkLocations[<span class="number">0</span>].getCachedHosts()));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">      <span class="comment">//Create empty hosts array for zero length files</span></span><br><span class="line">      splits.add(makeSplit(path, <span class="number">0</span>, length, <span class="keyword">new</span> String[<span class="number">0</span>]));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// Save the number of input files for metrics/loadgen</span></span><br><span class="line">  job.getConfiguration().setLong(NUM_INPUT_FILES, files.size());</span><br><span class="line">  sw.stop();</span><br><span class="line">  <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">    LOG.debug(<span class="string">"Total # of splits generated by getSplits: "</span> + splits.size()</span><br><span class="line">        + <span class="string">", TimeTaken: "</span> + sw.now(TimeUnit.MILLISECONDS));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> splits;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是FileInputFormat的getSplits方法，我们来看几点关键的步骤：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">List&lt;FileStatus&gt; files = listStatus(job);</span><br></pre></td></tr></table></figure>
+<p>首先先来看listStatus：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> List&lt;FileStatus&gt; <span class="title">listStatus</span><span class="params">(JobContext job</span><br><span class="line">                                      )</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  Path[] dirs = getInputPaths(job);</span><br><span class="line">  <span class="keyword">if</span> (dirs.length == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">"No input paths specified in job"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// get tokens for all the required FileSystems..</span></span><br><span class="line">  TokenCache.obtainTokensForNamenodes(job.getCredentials(), dirs, </span><br><span class="line">                                      job.getConfiguration());</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Whether we need to recursive look into the directory structure</span></span><br><span class="line">  <span class="keyword">boolean</span> recursive = getInputDirRecursive(job);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// creates a MultiPathFilter with the hiddenFileFilter and the</span></span><br><span class="line">  <span class="comment">// user provided one (if any).</span></span><br><span class="line">  List&lt;PathFilter&gt; filters = <span class="keyword">new</span> ArrayList&lt;PathFilter&gt;();</span><br><span class="line">  filters.add(hiddenFileFilter);</span><br><span class="line">  PathFilter jobFilter = getInputPathFilter(job);</span><br><span class="line">  <span class="keyword">if</span> (jobFilter != <span class="keyword">null</span>) &#123;</span><br><span class="line">    filters.add(jobFilter);</span><br><span class="line">  &#125;</span><br><span class="line">  PathFilter inputFilter = <span class="keyword">new</span> MultiPathFilter(filters);</span><br><span class="line">  </span><br><span class="line">  List&lt;FileStatus&gt; result = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">int</span> numThreads = job.getConfiguration().getInt(LIST_STATUS_NUM_THREADS,</span><br><span class="line">      DEFAULT_LIST_STATUS_NUM_THREADS);</span><br><span class="line">  StopWatch sw = <span class="keyword">new</span> StopWatch().start();</span><br><span class="line">  <span class="keyword">if</span> (numThreads == <span class="number">1</span>) &#123;</span><br><span class="line">    result = singleThreadedListStatus(job, dirs, inputFilter, recursive);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    Iterable&lt;FileStatus&gt; locatedFiles = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      LocatedFileStatusFetcher locatedFileStatusFetcher = <span class="keyword">new</span> LocatedFileStatusFetcher(</span><br><span class="line">          job.getConfiguration(), dirs, recursive, inputFilter, <span class="keyword">true</span>);</span><br><span class="line">      locatedFiles = locatedFileStatusFetcher.getFileStatuses();</span><br><span class="line">    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">"Interrupted while getting file statuses"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    result = Lists.newArrayList(locatedFiles);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  sw.stop();</span><br><span class="line">  <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">    LOG.debug(<span class="string">"Time taken to get FileStatuses: "</span></span><br><span class="line">        + sw.now(TimeUnit.MILLISECONDS));</span><br><span class="line">  &#125;</span><br><span class="line">  LOG.info(<span class="string">"Total input paths to process : "</span> + result.size()); </span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中通过getInputPaths这个方法获取我们配置的输入路径，然后具体方法我们来看singleThreadedListStatus：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> List&lt;FileStatus&gt; <span class="title">singleThreadedListStatus</span><span class="params">(JobContext job, Path[] dirs,</span><br><span class="line">    PathFilter inputFilter, <span class="keyword">boolean</span> recursive)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  List&lt;FileStatus&gt; result = <span class="keyword">new</span> ArrayList&lt;FileStatus&gt;();</span><br><span class="line">  List&lt;IOException&gt; errors = <span class="keyword">new</span> ArrayList&lt;IOException&gt;();</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; dirs.length; ++i) &#123;</span><br><span class="line">    Path p = dirs[i];</span><br><span class="line">    FileSystem fs = p.getFileSystem(job.getConfiguration()); </span><br><span class="line">    FileStatus[] matches = fs.globStatus(p, inputFilter);</span><br><span class="line">    <span class="keyword">if</span> (matches == <span class="keyword">null</span>) &#123;</span><br><span class="line">      errors.add(<span class="keyword">new</span> IOException(<span class="string">"Input path does not exist: "</span> + p));</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (matches.length == <span class="number">0</span>) &#123;</span><br><span class="line">      errors.add(<span class="keyword">new</span> IOException(<span class="string">"Input Pattern "</span> + p + <span class="string">" matches 0 files"</span>));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">for</span> (FileStatus globStat: matches) &#123;</span><br><span class="line">        <span class="keyword">if</span> (globStat.isDirectory()) &#123;</span><br><span class="line">          RemoteIterator&lt;LocatedFileStatus&gt; iter =</span><br><span class="line">              fs.listLocatedStatus(globStat.getPath());</span><br><span class="line">          <span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">            LocatedFileStatus stat = iter.next();</span><br><span class="line">            <span class="keyword">if</span> (inputFilter.accept(stat.getPath())) &#123;</span><br><span class="line">              <span class="keyword">if</span> (recursive &amp;&amp; stat.isDirectory()) &#123;</span><br><span class="line">                addInputPathRecursively(result, fs, stat.getPath(),</span><br><span class="line">                    inputFilter);</span><br><span class="line">              &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                result.add(stat);</span><br><span class="line">              &#125;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          result.add(globStat);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>该方法中，通过Hadoop的FileSystem去根据输入路径获取到文件状态FileStatus，并且根据过滤条件去过滤掉非法的文件。</p>
+<p>我们来看看FileStatus中都有什么内容：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Path path;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">long</span> length;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">boolean</span> isdir;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">short</span> block_replication;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">long</span> blocksize;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">long</span> modification_time;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">long</span> access_time;</span><br><span class="line"><span class="keyword">private</span> FsPermission permission;</span><br><span class="line"><span class="keyword">private</span> String owner;</span><br><span class="line"><span class="keyword">private</span> String group;</span><br><span class="line"><span class="keyword">private</span> Path symlink;</span><br></pre></td></tr></table></figure>
+<p>可以看到，FileStatus中存储了文件的很多元数据信息，像文件路径，文件大小，block块数以及副本数等等。</p>
+<p>让我们回到getSplits方法，在获取到FileStatus之后，getSplits方法内部就去切分分片了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">BlockLocation[] blkLocations;</span><br><span class="line"><span class="keyword">if</span> (file <span class="keyword">instanceof</span> LocatedFileStatus) &#123;</span><br><span class="line">  blkLocations = ((LocatedFileStatus) file).getBlockLocations();</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  FileSystem fs = path.getFileSystem(job.getConfiguration());</span><br><span class="line">  blkLocations = fs.getFileBlockLocations(file, <span class="number">0</span>, length);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (isSplitable(job, path)) &#123;</span><br><span class="line">  <span class="keyword">long</span> blockSize = file.getBlockSize();</span><br><span class="line">  <span class="keyword">long</span> splitSize = computeSplitSize(blockSize, minSize, maxSize);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">long</span> bytesRemaining = length;</span><br><span class="line">  <span class="keyword">while</span> (((<span class="keyword">double</span>) bytesRemaining)/splitSize &gt; SPLIT_SLOP) &#123;</span><br><span class="line">    <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">    splits.add(makeSplit(path, length-bytesRemaining, splitSize,</span><br><span class="line">                blkLocations[blkIndex].getHosts(),</span><br><span class="line">                blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">    bytesRemaining -= splitSize;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (bytesRemaining != <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">    splits.add(makeSplit(path, length-bytesRemaining, bytesRemaining,</span><br><span class="line">               blkLocations[blkIndex].getHosts(),</span><br><span class="line">               blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">  &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123; <span class="comment">// not splitable</span></span><br><span class="line">  splits.add(makeSplit(path, <span class="number">0</span>, length, blkLocations[<span class="number">0</span>].getHosts(),</span><br><span class="line">              blkLocations[<span class="number">0</span>].getCachedHosts()));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先还是使用FileSystem这个类去获取到对应文件所有block的定位信息，让我们看看BlockLocation中都有什么：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> String[] hosts; <span class="comment">// Datanode hostnames</span></span><br><span class="line"><span class="keyword">private</span> String[] cachedHosts; <span class="comment">// Datanode hostnames with a cached replica</span></span><br><span class="line"><span class="keyword">private</span> String[] names; <span class="comment">// Datanode IP:xferPort for accessing the block</span></span><br><span class="line"><span class="keyword">private</span> String[] topologyPaths; <span class="comment">// Full path name in network topology</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">long</span> offset;  <span class="comment">// Offset of the block in the file</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">long</span> length;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">boolean</span> corrupt;</span><br></pre></td></tr></table></figure>
+<p>其实到这里，文章开头的问题已经迎刃而解了。在BlockLocation中，存储了对应节点的信息和该节点中内容相对于文件的偏移量，而正因为有了节点的信息，在提交任务到Yarn之后，Yarn就能明确的知道每一个分片该在哪个节点上工作了。</p>
+<p>最后我们来看一下文件分片是如何进行的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">long</span> blockSize = file.getBlockSize();</span><br><span class="line"><span class="keyword">long</span> splitSize = computeSplitSize(blockSize, minSize, maxSize);</span><br><span class="line"></span><br><span class="line"><span class="keyword">long</span> bytesRemaining = length;</span><br><span class="line"><span class="keyword">while</span> (((<span class="keyword">double</span>) bytesRemaining)/splitSize &gt; SPLIT_SLOP) &#123;</span><br><span class="line">  <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">  splits.add(makeSplit(path, length-bytesRemaining, splitSize,</span><br><span class="line">              blkLocations[blkIndex].getHosts(),</span><br><span class="line">              blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">  bytesRemaining -= splitSize;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (bytesRemaining != <span class="number">0</span>) &#123;</span><br><span class="line">  <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">  splits.add(makeSplit(path, length-bytesRemaining, bytesRemaining,</span><br><span class="line">             blkLocations[blkIndex].getHosts(),</span><br><span class="line">             blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先获取到每一个block的大小，默认是128M。然后计算出需要的分片数，这个数字就非常有讲究了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">long</span> <span class="title">computeSplitSize</span><span class="params">(<span class="keyword">long</span> blockSize, <span class="keyword">long</span> minSize,</span><br><span class="line">                                <span class="keyword">long</span> maxSize)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> Math.max(minSize, Math.min(maxSize, blockSize));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">long</span> minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(job));</span><br><span class="line"><span class="keyword">long</span> maxSize = getMaxSplitSize(job);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">long</span> <span class="title">getFormatMinSplitSize</span><span class="params">()</span> </span>&#123;</span><br><span class="line">   <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">long</span> <span class="title">getMinSplitSize</span><span class="params">(JobContext job)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">return</span> job.getConfiguration().getLong(SPLIT_MINSIZE, <span class="number">1L</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">long</span> <span class="title">getMaxSplitSize</span><span class="params">(JobContext context)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">return</span> context.getConfiguration().getLong(SPLIT_MAXSIZE, </span><br><span class="line">                                              Long.MAX_VALUE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据上面的算法，默认情况下，分片的大小是等于block的大小的，也就是128M，这样能够保证每一个分片刚好读一个block的文件数据，充分利用数据本地化的特点。</p>
+<p>在计算得出block的大小和分片的大小之后，代码中又通过getBlockIndex获取到了对应的block。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">getBlockIndex</span><span class="params">(BlockLocation[] blkLocations, </span><br><span class="line">                            <span class="keyword">long</span> offset)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span> ; i &lt; blkLocations.length; i++) &#123;</span><br><span class="line">    <span class="comment">// is the offset inside this block?</span></span><br><span class="line">    <span class="keyword">if</span> ((blkLocations[i].getOffset() &lt;= offset) &amp;&amp;</span><br><span class="line">        (offset &lt; blkLocations[i].getOffset() + blkLocations[i].getLength()))&#123;</span><br><span class="line">      <span class="keyword">return</span> i;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  BlockLocation last = blkLocations[blkLocations.length -<span class="number">1</span>];</span><br><span class="line">  <span class="keyword">long</span> fileLength = last.getOffset() + last.getLength() -<span class="number">1</span>;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Offset "</span> + offset + </span><br><span class="line">                                     <span class="string">" is outside of file (0.."</span> +</span><br><span class="line">                                     fileLength + <span class="string">")"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>前文我们提到过，BlockLocation中存储了这个block相当于文件的偏移量，而函数的入参offset是length-bytesRemaining，也就是文件分片划分到了哪个位置。所以整个函数的作用就是计算出当前分片所需的数据对应的block。</p>
+<p>所有数据都准备就绪之后u，就通过一个while循环去切分，最终得到了所有的分片。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/bitdata-mr/" rel="tag">#bitdata mr</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/07/MapReduce之reduce过程浅析/" rel="next" title="MapReduce之reduce过程浅析">
+                <i class="fa fa-chevron-left"></i> MapReduce之reduce过程浅析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">52</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">36</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#起因"><span class="nav-number">1.</span> <span class="nav-text">起因</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码探究"><span class="nav-number">2.</span> <span class="nav-text">源码探究</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
