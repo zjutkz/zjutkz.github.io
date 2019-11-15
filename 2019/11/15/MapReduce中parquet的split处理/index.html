@@ -1,0 +1,895 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="mr," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="zjutkz's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="在阅读《Hadoop权威指南》中parquet相关章节的时候，我想到了之前看到的MapReduce中split分片的代码，当时只看了基础的FileInputFormat，这次就借着这个机会来看看parquet是如何处理的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce中parquet的split处理">
+<meta property="og:url" content="http://zjutkz.net/2019/11/15/MapReduce中parquet的split处理/index.html">
+<meta property="og:site_name" content="zjutkz's blog">
+<meta property="og:description" content="在阅读《Hadoop权威指南》中parquet相关章节的时候，我想到了之前看到的MapReduce中split分片的代码，当时只看了基础的FileInputFormat，这次就借着这个机会来看看parquet是如何处理的。">
+<meta property="og:updated_time" content="2019-11-15T12:24:58.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce中parquet的split处理">
+<meta name="twitter:description" content="在阅读《Hadoop权威指南》中parquet相关章节的时候，我想到了之前看到的MapReduce中split分片的代码，当时只看了基础的FileInputFormat，这次就借着这个机会来看看parquet是如何处理的。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> MapReduce中parquet的split处理 | zjutkz's blog </title>
+</head>
+
+
+     <!-- custom analytics part create by xiamo -->
+<script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+<script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+<script>
+function showTime(Counter) {
+	var query = new AV.Query(Counter);
+	$(".leancloud_visitors").each(function() {
+		var url = $(this).attr("id").trim();
+		query.equalTo("url", url);
+		query.find({
+			success: function(results) {
+				if (results.length == 0) {
+					var content = $(document.getElementById(url)).text() + ': 0';
+					$(document.getElementById(url)).text(content);
+					return;
+				}
+				for (var i = 0; i < results.length; i++) {
+					var object = results[i];
+					var content = $(document.getElementById(url)).text() + ': ' + object.get('time');
+					$(document.getElementById(url)).text(content);
+				}
+			},
+			error: function(object, error) {
+				console.log("Error: " + error.code + " " + error.message);
+			}
+		});
+
+	});
+}
+
+function addCount(Counter) {
+	var Counter = AV.Object.extend("Counter");
+	url = $(".leancloud_visitors").attr('id').trim();
+	title = $(".leancloud_visitors").attr('data-flag-title').trim();
+	var query = new AV.Query(Counter);
+	query.equalTo("url", url);
+	query.find({
+		success: function(results) {
+			if (results.length > 0) {
+				var counter = results[0];
+				counter.fetchWhenSave(true);
+				counter.increment("time");
+				counter.save(null, {
+					success: function(counter) {
+						var content = $(document.getElementById(url)).text() + ': ' + counter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(counter, error) {
+						console.log('Failed to save Visitor num, with error message: ' + error.message);
+					}
+				});
+			} else {
+				var newcounter = new Counter();
+				newcounter.set("title", title);
+				newcounter.set("url", url);
+				newcounter.set("time", 1);
+				newcounter.save(null, {
+					success: function(newcounter) {
+					    console.log("newcounter.get('time')="+newcounter.get('time'));
+						var content = $(document.getElementById(url)).text() + ': ' + newcounter.get('time');
+						$(document.getElementById(url)).text(content);
+					},
+					error: function(newcounter, error) {
+						console.log('Failed to create');
+					}
+				});
+			}
+		},
+		error: function(error) {
+			console.log('Error:' + error.code + " " + error.message);
+		}
+	});
+}
+$(function() {
+	var Counter = AV.Object.extend("Counter");
+	if ($('.leancloud_visitors').length == 1) {
+		addCount(Counter);
+	} else if ($('.post-title-link').length > 1) {
+		showTime(Counter);
+	}
+}); 
+</script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">zjutkz's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">try everything</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-rss">
+          <a href="/atom.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-rss fa-fw"></i> <br />
+            
+            rss订阅
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MapReduce中parquet的split处理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-11-15T20:05:17+08:00" content="2019-11-15">
+              2019-11-15
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/11/15/MapReduce中parquet的split处理/" class="leancloud_visitors" data-flag-title="MapReduce中parquet的split处理">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在阅读《Hadoop权威指南》中parquet相关章节的时候，我想到了之前看到的MapReduce中split分片的代码，当时只看了基础的FileInputFormat，这次就借着这个机会来看看parquet是如何处理的。</p>
+<a id="more"></a>
+<h1 id="文件格式"><a href="#文件格式" class="headerlink" title="文件格式"></a>文件格式</h1><p>有关parquet文件格式的内容我这里就不多赘述了，网上有很多不错的文章，大家可以参考。</p>
+<p>这里有一篇<a href="https://www.cnblogs.com/yangsy0915/p/5565309.html" target="_blank" rel="external">快速入门的文章</a>，看完之后我总结一下：</p>
+<p>parquet主要分为3个部分：</p>
+<ol>
+<li>Header</li>
+<li>Block</li>
+<li>Footer</li>
+</ol>
+<p>文件相关的元数据都在Footer中，而Block中则是一个Row Group，其中有一族Column Chunk。</p>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><p>大致了解了一下parquet的文件格式之后，我们来看具体的源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * &#123;<span class="doctag">@inheritDoc</span>&#125;</span><br><span class="line"> */</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> List&lt;InputSplit&gt; <span class="title">getSplits</span><span class="params">(JobContext jobContext)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  Configuration configuration = ContextUtil.getConfiguration(jobContext);</span><br><span class="line">  List&lt;InputSplit&gt; splits = <span class="keyword">new</span> ArrayList&lt;InputSplit&gt;();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (isTaskSideMetaData(configuration)) &#123;</span><br><span class="line">    <span class="comment">// Although not required by the API, some clients may depend on always</span></span><br><span class="line">    <span class="comment">// receiving ParquetInputSplit. Translation is required at some point.</span></span><br><span class="line">    <span class="keyword">for</span> (InputSplit split : <span class="keyword">super</span>.getSplits(jobContext)) &#123;</span><br><span class="line">      Preconditions.checkArgument(split <span class="keyword">instanceof</span> FileSplit,</span><br><span class="line">          <span class="string">"Cannot wrap non-FileSplit: "</span> + split);</span><br><span class="line">      splits.add(ParquetInputSplit.from((FileSplit) split));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> splits;</span><br><span class="line"></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    splits.addAll(getSplits(configuration, getFooters(jobContext)));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> splits;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">isTaskSideMetaData</span><span class="params">(Configuration configuration)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> configuration.getBoolean(TASK_SIDE_METADATA, TRUE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先在源码中根据TASK_SIDE_METADATA，也就是parquet.task.side.metadata这个属性值去区分分片的逻辑，默认为true的情况下，走的是父类FileInputFormat的逻辑，也就是根据split size(默认128M)去进行分片。而如果这个值为false，则走另外一种形式的分片逻辑，这也是我们今年要了解的内容。</p>
+<p>我们先来看getFooters方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;Footer&gt; <span class="title">getFooters</span><span class="params">(JobContext jobContext)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  List&lt;FileStatus&gt; statuses = listStatus(jobContext);</span><br><span class="line">  <span class="keyword">if</span> (statuses.isEmpty()) &#123;</span><br><span class="line">    <span class="keyword">return</span> Collections.emptyList();</span><br><span class="line">  &#125;</span><br><span class="line">  Configuration config = ContextUtil.getConfiguration(jobContext);</span><br><span class="line">  List&lt;Footer&gt; footers = <span class="keyword">new</span> ArrayList&lt;Footer&gt;(statuses.size());</span><br><span class="line">  Set&lt;FileStatus&gt; missingStatuses = <span class="keyword">new</span> HashSet&lt;FileStatus&gt;();</span><br><span class="line">  Map&lt;Path, FileStatusWrapper&gt; missingStatusesMap =</span><br><span class="line">          <span class="keyword">new</span> HashMap&lt;Path, FileStatusWrapper&gt;(missingStatuses.size());</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (footersCache == <span class="keyword">null</span>) &#123;</span><br><span class="line">    footersCache =</span><br><span class="line">            <span class="keyword">new</span> LruCache&lt;FileStatusWrapper, FootersCacheValue&gt;(Math.max(statuses.size(), MIN_FOOTER_CACHE_SIZE));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> (FileStatus status : statuses) &#123;</span><br><span class="line">    FileStatusWrapper statusWrapper = <span class="keyword">new</span> FileStatusWrapper(status);</span><br><span class="line">    FootersCacheValue cacheEntry =</span><br><span class="line">            footersCache.getCurrentValue(statusWrapper);</span><br><span class="line">    <span class="keyword">if</span> (Log.DEBUG) &#123;</span><br><span class="line">      LOG.debug(<span class="string">"Cache entry "</span> + (cacheEntry == <span class="keyword">null</span> ? <span class="string">"not "</span> : <span class="string">""</span>)</span><br><span class="line">              + <span class="string">" found for '"</span> + status.getPath() + <span class="string">"'"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (cacheEntry != <span class="keyword">null</span>) &#123;</span><br><span class="line">      footers.add(cacheEntry.getFooter());</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      missingStatuses.add(status);</span><br><span class="line">      missingStatusesMap.put(status.getPath(), statusWrapper);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (Log.DEBUG) &#123;</span><br><span class="line">    LOG.debug(<span class="string">"found "</span> + footers.size() + <span class="string">" footers in cache and adding up "</span></span><br><span class="line">            + <span class="string">"to "</span> + missingStatuses.size() + <span class="string">" missing footers to the cache"</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (missingStatuses.isEmpty()) &#123;</span><br><span class="line">    <span class="keyword">return</span> footers;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  List&lt;Footer&gt; newFooters = getFooters(config, missingStatuses);</span><br><span class="line">  <span class="keyword">for</span> (Footer newFooter : newFooters) &#123;</span><br><span class="line">    <span class="comment">// Use the original file status objects to make sure we store a</span></span><br><span class="line">    <span class="comment">// conservative (older) modification time (i.e. in case the files and</span></span><br><span class="line">    <span class="comment">// footers were modified and it's not clear which version of the footers</span></span><br><span class="line">    <span class="comment">// we have)</span></span><br><span class="line">    FileStatusWrapper fileStatus = missingStatusesMap.get(newFooter.getFile());</span><br><span class="line">    footersCache.put(fileStatus, <span class="keyword">new</span> FootersCacheValue(fileStatus, newFooter));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  footers.addAll(newFooters);</span><br><span class="line">  <span class="keyword">return</span> footers;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>顾名思义，这个方法就是去获取parquet文件的footer，而根据上面文件格式的学习我们可以得知，footer中有parquet文件的元数据，其中最重要的就是schema信息还有对应每一个block的元数据了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> FileMetaData fileMetaData;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> List&lt;BlockMetaData&gt; blocks;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">FileMetaData</span> <span class="keyword">implements</span> <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="number">1L</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> MessageType schema;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, String&gt; keyValueMetaData;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> String createdBy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在获取到了文件的footer之后，调用了getSplits方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;ParquetInputSplit&gt; <span class="title">getSplits</span><span class="params">(Configuration configuration, List&lt;Footer&gt; footers)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">boolean</span> strictTypeChecking = configuration.getBoolean(STRICT_TYPE_CHECKING, <span class="keyword">true</span>);</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">long</span> maxSplitSize = configuration.getLong(<span class="string">"mapred.max.split.size"</span>, Long.MAX_VALUE);</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">long</span> minSplitSize = Math.max(getFormatMinSplitSize(), configuration.getLong(<span class="string">"mapred.min.split.size"</span>, <span class="number">0L</span>));</span><br><span class="line">  <span class="keyword">if</span> (maxSplitSize &lt; <span class="number">0</span> || minSplitSize &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> ParquetDecodingException(<span class="string">"maxSplitSize or minSplitSize should not be negative: maxSplitSize = "</span> + maxSplitSize + <span class="string">"; minSplitSize = "</span> + minSplitSize);</span><br><span class="line">  &#125;</span><br><span class="line">  GlobalMetaData globalMetaData = ParquetFileWriter.getGlobalMetaData(footers, strictTypeChecking);</span><br><span class="line">  ReadContext readContext = getReadSupport(configuration).init(<span class="keyword">new</span> InitContext(</span><br><span class="line">      configuration,</span><br><span class="line">      globalMetaData.getKeyValueMetaData(),</span><br><span class="line">      globalMetaData.getSchema()));</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> ClientSideMetadataSplitStrategy().getSplits(</span><br><span class="line">      configuration, footers, maxSplitSize, minSplitSize, readContext);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>让我们来看最后的getSplits：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">List&lt;ParquetInputSplit&gt; <span class="title">getSplits</span><span class="params">(Configuration configuration, List&lt;Footer&gt; footers,</span><br><span class="line">    <span class="keyword">long</span> maxSplitSize, <span class="keyword">long</span> minSplitSize, ReadContext readContext)</span></span><br><span class="line">    <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  List&lt;ParquetInputSplit&gt; splits = <span class="keyword">new</span> ArrayList&lt;ParquetInputSplit&gt;();</span><br><span class="line">  Filter filter = ParquetInputFormat.getFilter(configuration);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">long</span> rowGroupsDropped = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">long</span> totalRowGroups = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (Footer footer : footers) &#123;</span><br><span class="line">    <span class="keyword">final</span> Path file = footer.getFile();</span><br><span class="line">    LOG.debug(file);</span><br><span class="line">    FileSystem fs = file.getFileSystem(configuration);</span><br><span class="line">    FileStatus fileStatus = fs.getFileStatus(file);</span><br><span class="line">    ParquetMetadata parquetMetaData = footer.getParquetMetadata();</span><br><span class="line">    List&lt;BlockMetaData&gt; blocks = parquetMetaData.getBlocks();</span><br><span class="line"></span><br><span class="line">    List&lt;BlockMetaData&gt; filteredBlocks;</span><br><span class="line"></span><br><span class="line">    totalRowGroups += blocks.size();</span><br><span class="line">    filteredBlocks = RowGroupFilter.filterRowGroups(filter, blocks, parquetMetaData.getFileMetaData().getSchema());</span><br><span class="line">    rowGroupsDropped += blocks.size() - filteredBlocks.size();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (filteredBlocks.isEmpty()) &#123;</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BlockLocation[] fileBlockLocations = fs.getFileBlockLocations(fileStatus, <span class="number">0</span>, fileStatus.getLen());</span><br><span class="line">    splits.addAll(</span><br><span class="line">        generateSplits(</span><br><span class="line">            filteredBlocks,</span><br><span class="line">            fileBlockLocations,</span><br><span class="line">            fileStatus,</span><br><span class="line">            readContext.getRequestedSchema().toString(),</span><br><span class="line">            readContext.getReadSupportMetadata(),</span><br><span class="line">            minSplitSize,</span><br><span class="line">            maxSplitSize)</span><br><span class="line">        );</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (rowGroupsDropped &gt; <span class="number">0</span> &amp;&amp; totalRowGroups &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">int</span> percentDropped = (<span class="keyword">int</span>) ((((<span class="keyword">double</span>) rowGroupsDropped) / totalRowGroups) * <span class="number">100</span>);</span><br><span class="line">    LOG.info(<span class="string">"Dropping "</span> + rowGroupsDropped + <span class="string">" row groups that do not pass filter predicate! ("</span> + percentDropped + <span class="string">"%)"</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    LOG.info(<span class="string">"There were no row groups that could be dropped due to filter predicates"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> splits;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该方法首先根据Hadoop的FileSystem获取到了文件所对应的block信息，这一步和FileInputFormat如出一辙。</p>
+<p>接着调用了generateSplits方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> &lt;T&gt; <span class="function">List&lt;ParquetInputSplit&gt; <span class="title">generateSplits</span><span class="params">(</span><br><span class="line">        List&lt;BlockMetaData&gt; rowGroupBlocks,</span><br><span class="line">        BlockLocation[] hdfsBlocksArray,</span><br><span class="line">        FileStatus fileStatus,</span><br><span class="line">        String requestedSchema,</span><br><span class="line">        Map&lt;String, String&gt; readSupportMetadata, <span class="keyword">long</span> minSplitSize, <span class="keyword">long</span> maxSplitSize)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line"></span><br><span class="line">  List&lt;SplitInfo&gt; splitRowGroups =</span><br><span class="line">      generateSplitInfo(rowGroupBlocks, hdfsBlocksArray, minSplitSize, maxSplitSize);</span><br><span class="line"></span><br><span class="line">  <span class="comment">//generate splits from rowGroups of each split</span></span><br><span class="line">  List&lt;ParquetInputSplit&gt; resultSplits = <span class="keyword">new</span> ArrayList&lt;ParquetInputSplit&gt;();</span><br><span class="line">  <span class="keyword">for</span> (SplitInfo splitInfo : splitRowGroups) &#123;</span><br><span class="line">    ParquetInputSplit split = splitInfo.getParquetInputSplit(fileStatus, requestedSchema, readSupportMetadata);</span><br><span class="line">    resultSplits.add(split);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> resultSplits;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该方法中又调用了generateSplitInfo：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> List&lt;SplitInfo&gt; <span class="title">generateSplitInfo</span><span class="params">(</span><br><span class="line">    List&lt;BlockMetaData&gt; rowGroupBlocks,</span><br><span class="line">    BlockLocation[] hdfsBlocksArray,</span><br><span class="line">    <span class="keyword">long</span> minSplitSize, <span class="keyword">long</span> maxSplitSize)</span> </span>&#123;</span><br><span class="line">  List&lt;SplitInfo&gt; splitRowGroups;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (maxSplitSize &lt; minSplitSize || maxSplitSize &lt; <span class="number">0</span> || minSplitSize &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> ParquetDecodingException(<span class="string">"maxSplitSize and minSplitSize should be positive and max should be greater or equal to the minSplitSize: maxSplitSize = "</span> + maxSplitSize + <span class="string">"; minSplitSize is "</span> + minSplitSize);</span><br><span class="line">  &#125;</span><br><span class="line">  HDFSBlocks hdfsBlocks = <span class="keyword">new</span> HDFSBlocks(hdfsBlocksArray);</span><br><span class="line">  hdfsBlocks.checkBelongingToANewHDFSBlock(rowGroupBlocks.get(<span class="number">0</span>));</span><br><span class="line">  SplitInfo currentSplit = <span class="keyword">new</span> SplitInfo(hdfsBlocks.getCurrentBlock());</span><br><span class="line"></span><br><span class="line">  <span class="comment">//assign rowGroups to splits</span></span><br><span class="line">  splitRowGroups = <span class="keyword">new</span> ArrayList&lt;SplitInfo&gt;();</span><br><span class="line">  checkSorted(rowGroupBlocks);<span class="comment">//assert row groups are sorted</span></span><br><span class="line">  <span class="keyword">for</span> (BlockMetaData rowGroupMetadata : rowGroupBlocks) &#123;</span><br><span class="line">    <span class="keyword">if</span> ((hdfsBlocks.checkBelongingToANewHDFSBlock(rowGroupMetadata)</span><br><span class="line">           &amp;&amp; currentSplit.getCompressedByteSize() &gt;= minSplitSize</span><br><span class="line">           &amp;&amp; currentSplit.getCompressedByteSize() &gt; <span class="number">0</span>)</span><br><span class="line">         || currentSplit.getCompressedByteSize() &gt;= maxSplitSize) &#123;</span><br><span class="line">      <span class="comment">//create a new split</span></span><br><span class="line">      splitRowGroups.add(currentSplit);<span class="comment">//finish previous split</span></span><br><span class="line">      currentSplit = <span class="keyword">new</span> SplitInfo(hdfsBlocks.getCurrentBlock());</span><br><span class="line">    &#125;</span><br><span class="line">    currentSplit.addRowGroup(rowGroupMetadata);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (currentSplit.getRowGroupCount() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    splitRowGroups.add(currentSplit);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> splitRowGroups;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法就是最核心的方法了，其中的逻辑大致是就是根据checkBelongingToANewHDFSBlock这个方法去判断parquet文件的某一个block是否在hdfs的block中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">checkBelongingToANewHDFSBlock</span><span class="params">(BlockMetaData rowGroupMetadata)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">boolean</span> isNewHdfsBlock = <span class="keyword">false</span>;</span><br><span class="line">  <span class="keyword">long</span> rowGroupMidPoint = rowGroupMetadata.getStartingPos() + (rowGroupMetadata.getCompressedSize() / <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">//if mid point is not in the current HDFS block any more, return true</span></span><br><span class="line">  <span class="keyword">while</span> (rowGroupMidPoint &gt; getHDFSBlockEndingPosition(currentMidPointHDFSBlockIndex)) &#123;</span><br><span class="line">    isNewHdfsBlock = <span class="keyword">true</span>;</span><br><span class="line">    currentMidPointHDFSBlockIndex++;</span><br><span class="line">    <span class="keyword">if</span> (currentMidPointHDFSBlockIndex &gt;= hdfsBlocks.length)</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> ParquetDecodingException(<span class="string">"the row group is not in hdfs blocks in the file: midpoint of row groups is "</span></span><br><span class="line">              + rowGroupMidPoint</span><br><span class="line">              + <span class="string">", the end of the hdfs block is "</span></span><br><span class="line">              + getHDFSBlockEndingPosition(currentMidPointHDFSBlockIndex - <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (rowGroupMetadata.getStartingPos() &gt; getHDFSBlockEndingPosition(currentStartHdfsBlockIndex)) &#123;</span><br><span class="line">    currentStartHdfsBlockIndex++;</span><br><span class="line">    <span class="keyword">if</span> (currentStartHdfsBlockIndex &gt;= hdfsBlocks.length)</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> ParquetDecodingException(<span class="string">"The row group does not start in this file: row group offset is "</span></span><br><span class="line">              + rowGroupMetadata.getStartingPos()</span><br><span class="line">              + <span class="string">" but the end of hdfs blocks of file is "</span></span><br><span class="line">              + getHDFSBlockEndingPosition(currentStartHdfsBlockIndex));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> isNewHdfsBlock;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，checkBelongingToANewHDFSBlock内部就是通过文件offset的方式去判断的。</p>
+<p>由上可知，generateSplitInfo就是去做了一个parquet的block和hdfs的block的映射，一个hdfs的block可以对应多个parquet文件的block。换句话说，代码中的SplitInfo就可以对应多个parquet的block：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">SplitInfo</span> </span>&#123;</span><br><span class="line">  List&lt;BlockMetaData&gt; rowGroups = <span class="keyword">new</span> ArrayList&lt;BlockMetaData&gt;();</span><br><span class="line">  BlockLocation hdfsBlock;</span><br><span class="line">  <span class="keyword">long</span> compressedByteSize = <span class="number">0L</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后让我们来看一下SplitInfo的getParquetInputSplit方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> ParquetInputSplit <span class="title">getParquetInputSplit</span><span class="params">(FileStatus fileStatus, String requestedSchema, Map&lt;String, String&gt; readSupportMetadata)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    MessageType requested = MessageTypeParser.parseMessageType(requestedSchema);</span><br><span class="line">    <span class="keyword">long</span> length = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (BlockMetaData block : <span class="keyword">this</span>.getRowGroups()) &#123;</span><br><span class="line">      List&lt;ColumnChunkMetaData&gt; columns = block.getColumns();</span><br><span class="line">      <span class="keyword">for</span> (ColumnChunkMetaData column : columns) &#123;</span><br><span class="line">        <span class="keyword">if</span> (requested.containsPath(column.getPath().toArray())) &#123;</span><br><span class="line">          length += column.getTotalSize();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BlockMetaData lastRowGroup = <span class="keyword">this</span>.getRowGroups().get(<span class="keyword">this</span>.getRowGroupCount() - <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">long</span> end = lastRowGroup.getStartingPos() + lastRowGroup.getTotalByteSize();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span>[] rowGroupOffsets = <span class="keyword">new</span> <span class="keyword">long</span>[<span class="keyword">this</span>.getRowGroupCount()];</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; rowGroupOffsets.length; i++) &#123;</span><br><span class="line">      rowGroupOffsets[i] = <span class="keyword">this</span>.getRowGroups().get(i).getStartingPos();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ParquetInputSplit(</span><br><span class="line">            fileStatus.getPath(),</span><br><span class="line">            hdfsBlock.getOffset(),</span><br><span class="line">            end,</span><br><span class="line">            length,</span><br><span class="line">            hdfsBlock.getHosts(),</span><br><span class="line">            rowGroupOffsets</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很简单，就是去生成一个FileSplit，length就是对应所有Row Group的大小。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>通过上面的学习，我们可以知道，ParquetInputFormat内部有2种分片策略：</p>
+<ol>
+<li>使用其父类的FileInputFormat的分片策略，根据split size来进行划分。</li>
+<li>结合parquet文件格式自身的特性，根据block，也就是Row Group进行划分。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/mr/" rel="tag">#mr</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/28/writeSplits细节探究/" rel="next" title="writeSplits细节探究">
+                <i class="fa fa-chevron-left"></i> writeSplits细节探究
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="zjutkz" />
+          <p class="site-author-name" itemprop="name">zjutkz</p>
+          <p class="site-description motion-element" itemprop="description">写下结果因为人们爱追溯，省略过程因为时间爱催促。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">53</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#文件格式"><span class="nav-number">1.</span> <span class="nav-text">文件格式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zjutkz</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always') {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("NW3PqfRBQc5fFTl1qj3NHoIz-gzGzoHsz", "6yROqDeLiKrgr5XOqHenkt7m");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
